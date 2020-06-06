@@ -55,6 +55,7 @@ class _BillScreenState extends State<BillScreen> {
         key: _scaffoldKey,
         backgroundColor: Variables.lightGreyColor,
         appBar: CustomAppBar(
+            bgColor: Colors.white,
             title: Text("Annai Store", style: Variables.appBarTextStyle),
             actions: null,
             leading: GestureDetector(
@@ -181,15 +182,25 @@ class _BillScreenState extends State<BillScreen> {
                                     Container(
                                       width: 50,
                                       height: 100,
-                                      child: ListView.builder(
-                                          itemCount: category.length,
-                                          itemBuilder: (BuildContext context,
-                                              int index) {
-                                            return Text(category[index],
-                                                style: TextStyle(
-                                                    fontSize: 16,
-                                                    color:
-                                                        Variables.blackColor));
+                                      child: StreamBuilder<List<String>>(
+                                          stream:
+                                              Stream<List<String>>.fromIterable(
+                                            [
+                                              // category.ge
+                                            ],
+                                          ),
+                                          builder: (context, snapshot) {
+                                            return ListView.builder(
+                                                itemCount: category.length,
+                                                itemBuilder:
+                                                    (BuildContext context,
+                                                        int index) {
+                                                  return Text(category[index],
+                                                      style: TextStyle(
+                                                          fontSize: 16,
+                                                          color: Variables
+                                                              .blackColor));
+                                                });
                                           }),
                                     ),
                                     Spacer(),

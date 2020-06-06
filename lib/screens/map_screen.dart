@@ -1,11 +1,8 @@
-import 'dart:async';
-
 import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
 import 'package:annaistore/widgets/map.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class MapScreen extends StatefulWidget {
   MapScreen({Key key}) : super(key: key);

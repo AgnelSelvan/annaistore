@@ -1,10 +1,20 @@
+import 'package:annaistore/models/user.dart';
+import 'package:annaistore/resources/auth_methods.dart';
+import 'package:annaistore/screens/bill_screen.dart';
 import 'package:annaistore/screens/canvas_screen.dart';
 import 'package:annaistore/screens/map_screen.dart';
+import 'package:annaistore/screens/stock_screen.dart';
 import 'package:annaistore/screens/thread_screen.dart';
 import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/widgets/bouncy_page_route.dart';
+import 'package:annaistore/widgets/custom_appbar.dart';
+import 'package:annaistore/widgets/custom_divider.dart';
+import 'package:annaistore/widgets/custom_drawer.dart';
 import 'package:annaistore/widgets/map.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_icons/flutter_icons.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -13,16 +23,53 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
+  GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   TabController _tabController;
+  final AuthMethods _authMethods = AuthMethods();
+  User currentUser;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+
+    _authMethods.getCurrentUser().then((FirebaseUser user) {
+      setState(() {
+        currentUser = User(
+            uid: user.uid,
+            name: user.displayName,
+            email: user.email,
+            profilePhoto: user.photoUrl);
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    return Scaffold(
+      key: _scaffoldKey,
+      appBar: CustomAppBar(
+        bgColor: Colors.white,
+        title: Text("Annai Store", style: Variables.appBarTextStyle),
+        actions: null,
+        leading: IconButton(
+            icon: Icon(
+              Icons.menu,
+              color: Variables.primaryColor,
+            ),
+            onPressed: () {
+              _scaffoldKey.currentState.openDrawer();
+            }),
+        centerTitle: null,
+      ),
+      drawer: customDrawer(context, currentUser.profilePhoto, currentUser.name),
+      body: Container(
+        child: buildBody(context),
+      ),
+    );
+  }
+
+  ListView buildBody(BuildContext context) {
     return ListView(
       physics: const BouncingScrollPhysics(),
       padding: EdgeInsets.only(left: 10.0),

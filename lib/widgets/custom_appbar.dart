@@ -1,4 +1,3 @@
-import 'package:annaistore/utils/universal_variables.dart';
 import 'package:flutter/material.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -6,6 +5,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final List<Widget> actions;
   final Widget leading;
   final bool centerTitle;
+  final Color bgColor;
 
   const CustomAppBar({
     Key key,
@@ -13,13 +13,14 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     @required this.actions,
     @required this.leading, 
     @required this.centerTitle,
+    @required this.bgColor
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
       child: AppBar(
-        backgroundColor:  Colors.white,
+        backgroundColor:  bgColor,
         elevation: 0,
         leading: leading,
         actions: actions,

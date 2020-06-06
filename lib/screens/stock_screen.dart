@@ -18,6 +18,7 @@ class _StockScreenState extends State<StockScreen> {
     return Scaffold(
       backgroundColor: Variables.lightGreyColor,
       appBar: CustomAppBar(
+        bgColor: Colors.white,
           title: Text("Annai Store", style: Variables.appBarTextStyle),
           actions: null,
           leading: GestureDetector(

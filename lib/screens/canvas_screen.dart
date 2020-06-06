@@ -1,4 +1,3 @@
-import 'package:annaistore/main.dart';
 import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/widgets/custom_divider.dart';
 import 'package:expandable/expandable.dart';

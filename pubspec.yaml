@@ -32,6 +32,10 @@ dependencies:
   provider:
   expandable:
   google_maps_flutter:
+  cloud_firestore:
+  firebase_auth:
+  google_sign_in:
+  cached_network_image:
 
 dev_dependencies:
   flutter_test:

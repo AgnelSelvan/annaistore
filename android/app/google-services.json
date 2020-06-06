@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "408510175944",
+    "firebase_url": "https://annaistore.firebaseio.com",
+    "project_id": "annaistore",
+    "storage_bucket": "annaistore.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:408510175944:android:ab68d3c19d3855b54a23fd",
+        "android_client_info": {
+          "package_name": "com.example.annaistore"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "408510175944-g4rsemcfc0qqtsqlchouq7hssteoabbj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.annaistore",
+            "certificate_hash": "bfbb8ca348ccfed89330597f95e2fa910c84265a"
+          }
+        },
+        {
+          "client_id": "408510175944-rmktgeaq59uuj296vuj8m17857jl2fpr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBrxQZ5gnFi6PMTGr0sh4V5xR_CpM1UFaw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "408510175944-rmktgeaq59uuj296vuj8m17857jl2fpr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
