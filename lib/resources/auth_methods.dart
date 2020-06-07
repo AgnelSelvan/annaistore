@@ -8,6 +8,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 class AuthMethods {
   static final Firestore _firestore = Firestore.instance;
 
+  CollectionReference _userCollection = _firestore.collection(USERS_COLLECTION);
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
   GoogleSignIn _googleSignIn = GoogleSignIn();
 
@@ -59,4 +61,17 @@ class AuthMethods {
         .document(currentUser.uid)
         .setData(user.toMap(user));
   }
+
+  Future<User> getUserDetailsById(String userId) async {
+    try {
+      print("UserId: $userId");
+      DocumentSnapshot doc = await _userCollection.document(userId).get();
+      print(doc.data);
+      return User.fromMap(doc.data);
+    } catch (e) {
+      print("get user by details error: $e");
+      return null;
+    }
+  }
+
 }

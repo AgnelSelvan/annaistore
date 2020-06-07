@@ -4,6 +4,7 @@ import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
 import 'package:annaistore/widgets/custom_divider.dart';
 import 'package:annaistore/widgets/header.dart';
+import 'package:annaistore/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 
@@ -41,16 +42,16 @@ class _BillScreenState extends State<BillScreen> {
     _totalPriceController = TextEditingController();
   }
 
+  void showWidget() {
+    print(viewVisible);
+    setState(() {
+      viewVisible = !viewVisible;
+    });
+    print(viewVisible);
+  }
+
   @override
   Widget build(BuildContext context) {
-    void showWidget() {
-      print(viewVisible);
-      setState(() {
-        viewVisible = !viewVisible;
-      });
-      print(viewVisible);
-    }
-
     return Scaffold(
         key: _scaffoldKey,
         backgroundColor: Variables.lightGreyColor,
@@ -547,14 +548,7 @@ class _BillScreenState extends State<BillScreen> {
           selectedOption = value;
         });
 
-        final snackBar = SnackBar(
-          content: Text(
-            'Selected product value is $value',
-            style: TextStyle(color: Variables.blackColor),
-          ),
-          duration: Duration(seconds: 1),
-          backgroundColor: Colors.yellow[100],
-        );
+        final snackBar = customSnackBar('Selected product value is $value', Variables.blackColor);
 
         _scaffoldKey.currentState.showSnackBar(snackBar);
       },

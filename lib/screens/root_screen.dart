@@ -21,8 +21,6 @@ class RootScreen extends StatefulWidget {
 
 class _RootScreenState extends State<RootScreen> {
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  final AuthMethods _authMethods = AuthMethods();
-  User currentUser;
   int _page = 0;
 
   final tabs = [HomeScreen(), ProfileScreen()];
@@ -30,15 +28,6 @@ class _RootScreenState extends State<RootScreen> {
   @override
   void initState() {
     super.initState();
-    _authMethods.getCurrentUser().then((FirebaseUser user) {
-      setState(() {
-        currentUser = User(
-            uid: user.uid,
-            name: user.displayName,
-            email: user.email,
-            profilePhoto: user.photoUrl);
-      });
-    });
   }
 
   void navigationTapped(int page) {
@@ -53,7 +42,6 @@ class _RootScreenState extends State<RootScreen> {
       key: _scaffoldKey,
       backgroundColor: Variables.lightGreyColor,
       body: tabs[_page],
-      drawer: customDrawer(context),
       bottomNavigationBar: BottomNavigationBar(
           elevation: 0,
           backgroundColor: Colors.white,
@@ -93,115 +81,4 @@ class _RootScreenState extends State<RootScreen> {
     );
   }
 
-  Drawer customDrawer(BuildContext context) {
-    return Drawer(
-      child: ListView(
-        children: <Widget>[
-          drawerHeader(context),
-          DrawerListItem(
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(context, BouncyPageRoute(widget: StockScreen()));
-            },
-            icon: FontAwesome.stack_exchange,
-            text: "In Stock",
-          ),
-          CustomDivider(leftSpacing: 20, rightSpacing: 20),
-          DrawerListItem(
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(context, BouncyPageRoute(widget: BillScreen()));
-            },
-            icon: FontAwesome.file_excel_o,
-            text: "Billing",
-          ),
-          CustomDivider(leftSpacing: 20, rightSpacing: 20),
-          // GestureDetector(
-          //   child: ListTile(
-          //     title: Text(
-          //       "Dark Theme",
-          //       style: Variables.drawerListTextStyle,
-          //     ),
-          //     leading: Icon(
-          //       FontAwesome.adjust,
-          //       size: 18,
-          //     ),
-          //     trailing: Switch(
-          //       // value: darkThemeEnabled,
-          //       onChanged: themeController.changeTheme,
-          //     ),
-          //   ),
-          // ),
-          // CustomDivider(leftSpacing: 20, rightSpacing: 20)
-        ],
-      ),
-    );
-  }
-
-  DrawerHeader drawerHeader(BuildContext context) {
-    return DrawerHeader(
-      decoration: BoxDecoration(
-        color: Variables.greyColor,
-      ),
-      child: Stack(
-        children: <Widget>[
-          Align(
-            alignment: Alignment.centerLeft,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(50),
-              child: CachedNetworkImage(imageUrl: currentUser.profilePhoto),
-            ),
-          ),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: Icon(
-              Icons.check_circle,
-              color: Colors.green,
-              size: 16,
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              currentUser.name,
-              style: TextStyle(
-                  color: Variables.primaryColor,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w400,
-                  letterSpacing: 0.5),
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerRight + Alignment(0, .3),
-            child: Text(
-              'Annai Store',
-              style: TextStyle(color: Variables.blackColor),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class DrawerListItem extends StatelessWidget {
-  final GestureTapCallback onTap;
-  final String text;
-  final IconData icon;
-  const DrawerListItem(
-      {@required this.onTap, @required this.text, @required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: ListTile(
-        leading: Icon(
-          icon,
-          size: 18,
-        ),
-        title: Text(text, style: Variables.drawerListTextStyle),
-      ),
-    );
-  }
 }

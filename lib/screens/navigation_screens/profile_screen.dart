@@ -1,6 +1,13 @@
 import 'package:annaistore/models/user.dart';
 import 'package:annaistore/resources/auth_methods.dart';
+import 'package:annaistore/screens/admin/add_category.dart';
+import 'package:annaistore/screens/admin/add_product.dart';
+import 'package:annaistore/screens/admin/add_sub_category.dart';
+import 'package:annaistore/screens/admin/add_unit.dart';
+import 'package:annaistore/screens/custom_loading.dart';
+import 'package:annaistore/screens/edit_profile_screen.dart';
 import 'package:annaistore/utils/universal_variables.dart';
+import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
 import 'package:annaistore/widgets/custom_drawer.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -19,16 +26,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   AuthMethods _authMethods = AuthMethods();
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   User currentUser;
+  String currentUserId;
 
   @override
   void initState() {
     super.initState();
     _authMethods.getCurrentUser().then((FirebaseUser user) {
       setState(() {
-        currentUser = User(
-            uid: user.uid, name: user.displayName, profilePhoto: user.photoUrl);
+        currentUserId = user.uid;
+      });
+      print("Haha:$currentUserId");
+    });
+    _authMethods.getUserDetailsById(currentUserId).then((User user) {
+      setState(() {
+        currentUser = user;
       });
     });
+    print("currentUser: $currentUser");
   }
 
   @override
@@ -49,7 +63,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             }),
         centerTitle: null,
       ),
-      drawer: customDrawer(context, currentUser.profilePhoto, currentUser.name),
+      drawer: customDrawer(context, currentUserId),
       backgroundColor: Colors.yellow[50],
       body: ListView(
         physics: BouncingScrollPhysics(),
@@ -61,31 +75,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               children: <Widget>[
                 SizedBox(height: 30),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: CachedNetworkImage(imageUrl: currentUser.profilePhoto),
-                ),
-                SizedBox(height: 10),
-                Text(
-                  currentUser.name,
-                  style: TextStyle(
-                    color: Variables.blackColor,
-                    fontWeight: FontWeight.w400,
-                    fontSize: 18,
-                    letterSpacing: 0.7,
-                  ),
-                ),
-                SizedBox(height: 10),
-                Container(
-                  padding: EdgeInsets.symmetric(vertical: 7, horizontal: 15),
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(50),
-                      color: Colors.white),
-                  child: Text(
-                    "agnelselvan007",
-                    style: TextStyle(color: Variables.primaryColor),
-                  ),
-                ),
+                FutureBuilder(
+                    future: _authMethods.getUserDetailsById(currentUserId),
+                    builder: (context, snapshot) {
+                      User currentUser = snapshot.data;
+                      if (snapshot.hasData) {
+                        return Column(
+                          children: <Widget>[
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: CachedNetworkImage(
+                                  imageUrl: currentUser.profilePhoto),
+                            ),
+                            SizedBox(height: 10),
+                            Text(
+                              currentUser.name,
+                              style: TextStyle(
+                                color: Variables.blackColor,
+                                fontWeight: FontWeight.w400,
+                                fontSize: 18,
+                                letterSpacing: 0.7,
+                              ),
+                            ),
+                            SizedBox(height: 10),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 7, horizontal: 15),
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(50),
+                                  color: Colors.white),
+                              child: Text(
+                                "agnelselvan007",
+                                style: TextStyle(color: Variables.primaryColor),
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                      return CustomCircularLoading();
+                    }),
                 SizedBox(height: 10),
                 Expanded(
                   child: Container(
@@ -94,7 +122,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius:
-                            BorderRadius.vertical(top: Radius.circular(34))),
+                            BorderRadius.vertical(top: Radius.circular(50))),
                     child: ListView(
                       physics: BouncingScrollPhysics(),
                       children: <Widget>[
@@ -114,6 +142,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                         ListTile(
+                          onTap: () {
+                            Navigator.push(
+                                context, BouncyPageRoute(widget: AddCategory()));
+                          },
+                          leading: Icon(
+                            FontAwesome.list_alt,
+                            size: 16,
+                            color: Variables.primaryColor,
+                          ),
+                          title: Text(
+                            "Add Category",
+                            style: TextStyle(
+                                color: Variables.blackColor,
+                                fontSize: 20,
+                                letterSpacing: 0.3,
+                                fontWeight: FontWeight.w400),
+                          ),
+                        ),
+                        ListTile(
+                          onTap: () {
+                            Navigator.push(
+                                context, BouncyPageRoute(widget: AddSubCategory()));
+                          },
+                          leading: Icon(
+                            FontAwesome.list_alt,
+                            size: 16,
+                            color: Variables.primaryColor,
+                          ),
+                          title: Text(
+                            "Add Sub-Category",
+                            style: TextStyle(
+                                color: Variables.blackColor,
+                                fontSize: 20,
+                                letterSpacing: 0.3,
+                                fontWeight: FontWeight.w400),
+                          ),
+                        ),                        
+                        ListTile(
+                          onTap: () {
+                            Navigator.push(
+                                context, BouncyPageRoute(widget: EditScreen()));
+                          },
                           leading: Icon(
                             Icons.edit,
                             size: 16,
@@ -144,6 +214,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                         ListTile(
+                          onTap: () {
+                            Navigator.push(
+                                context, BouncyPageRoute(widget: AddProduct()));
+                          },
                           leading: Icon(
                             FontAwesome.product_hunt,
                             size: 16,
@@ -151,6 +225,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           title: Text(
                             "Add Product",
+                            style: TextStyle(
+                                color: Variables.blackColor,
+                                fontSize: 20,
+                                letterSpacing: 0.3,
+                                fontWeight: FontWeight.w400),
+                          ),
+                        ),
+                        ListTile(
+                          onTap: () {
+                            Navigator.push(
+                                context, BouncyPageRoute(widget: AddUnit()));
+                          },
+                          leading: Icon(
+                            Icons.ac_unit,
+                            size: 16,
+                            color: Variables.primaryColor,
+                          ),
+                          title: Text(
+                            "Add Unit",
                             style: TextStyle(
                                 color: Variables.blackColor,
                                 fontSize: 20,
@@ -185,3 +278,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
+// FutureBuilder(
+//                     future: _authMethods.getUserDetailsById(_currentUserId),
+//                     builder: (context, snapshot) {
+//                       User currentUser = snapshot.data;
+//                       if (snapshot.hasData) {
+//                         return Column(
+//                           children: <Widget>[
+//                             ClipRRect(
+//                               borderRadius: BorderRadius.circular(20),
+//                               child: CachedNetworkImage(
+//                                   imageUrl: currentUser.profilePhoto),
+//                             ),
+//                             SizedBox(height: 10),
+//                             Text(
+//                               currentUser.name,
+//                               style: TextStyle(
+//                                 color: Variables.blackColor,
+//                                 fontWeight: FontWeight.w400,
+//                                 fontSize: 18,
+//                                 letterSpacing: 0.7,
+//                               ),
+//                             ),
+//                             SizedBox(height: 10),
+//                             Container(
+//                               padding: EdgeInsets.symmetric(
+//                                   vertical: 7, horizontal: 15),
+//                               decoration: BoxDecoration(
+//                                   borderRadius: BorderRadius.circular(50),
+//                                   color: Colors.white),
+//                               child: Text(
+//                                 "agnelselvan007",
+//                                 style: TextStyle(color: Variables.primaryColor),
+//                               ),
+//                             ),
+//                           ],
+//                         );
+//                       }
+//                       return CustomCircularLoading();
+//                     }),

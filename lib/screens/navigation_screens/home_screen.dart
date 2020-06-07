@@ -26,7 +26,7 @@ class _HomeScreenState extends State<HomeScreen>
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   TabController _tabController;
   final AuthMethods _authMethods = AuthMethods();
-  User currentUser;
+  String currentUserId;
 
   @override
   void initState() {
@@ -35,11 +35,7 @@ class _HomeScreenState extends State<HomeScreen>
 
     _authMethods.getCurrentUser().then((FirebaseUser user) {
       setState(() {
-        currentUser = User(
-            uid: user.uid,
-            name: user.displayName,
-            email: user.email,
-            profilePhoto: user.photoUrl);
+        currentUserId = user.uid;
       });
     });
   }
@@ -62,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen>
             }),
         centerTitle: null,
       ),
-      drawer: customDrawer(context, currentUser.profilePhoto, currentUser.name),
+      drawer: customDrawer(context, currentUserId),
       body: Container(
         child: buildBody(context),
       ),
