@@ -5,6 +5,7 @@ import 'package:annaistore/models/sub-category.dart';
 import 'package:annaistore/models/unit.dart';
 import 'package:annaistore/models/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 
 class AdminMethods {
   static final _firestore = Firestore.instance;
@@ -151,5 +152,23 @@ class AdminMethods {
         mobileNo: mobileNo,
         gstin: gstin);
     _customerCollection.document(docId).setData(user.toMap(user));
+  }
+
+  Future<bool> isCustomerExists(String name) async {
+    try {
+      QuerySnapshot docs = await _customerCollection
+          .where('name', isEqualTo: name)
+          .getDocuments();
+
+      List<DocumentSnapshot> doc = docs.documents;
+
+      return doc.length == 0 ? false : true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Stream<QuerySnapshot> fetchAllCustomer() {
+    return _customerCollection.snapshots();
   }
 }

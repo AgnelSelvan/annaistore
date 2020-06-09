@@ -1,25 +1,25 @@
-import 'package:annaistore/models/product.dart';
 import 'package:annaistore/resources/admin_methods.dart';
-import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
-import 'package:annaistore/widgets/custom_divider.dart';
+import 'package:annaistore/widgets/dialogs.dart';
 import 'package:annaistore/widgets/header.dart';
 import 'package:annaistore/widgets/widgets.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 
+import '../custom_loading.dart';
+
 AdminMethods _adminMethods = AdminMethods();
 
-class RegularCustomer extends StatefulWidget {
-  RegularCustomer({Key key}) : super(key: key);
+class BorrowScreen extends StatefulWidget {
+  BorrowScreen({Key key}) : super(key: key);
 
   @override
-  _RegularCustomerState createState() => _RegularCustomerState();
+  _BorrowScreenState createState() => _BorrowScreenState();
 }
 
-class _RegularCustomerState extends State<RegularCustomer> {
+class _BorrowScreenState extends State<BorrowScreen> {
   TextEditingController _emailFieldController = TextEditingController();
   TextEditingController _nameFieldController = TextEditingController();
   TextEditingController _addressController = TextEditingController();
@@ -30,8 +30,13 @@ class _RegularCustomerState extends State<RegularCustomer> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   final _formKey = GlobalKey<FormState>();
   bool viewVisible = false;
+  bool _checkBoxValue = false;
   String currentState;
   String currentUnit;
+  String currentName;
+  String currentProduct;
+  var productList = new List();
+  var qtyList = new List();
 
   List<String> state = [
     'Maharashtra',
@@ -76,6 +81,69 @@ class _RegularCustomerState extends State<RegularCustomer> {
         ));
   }
 
+  createAlertDialog(BuildContext context, String currentProduct) {
+    TextEditingController qtyController = TextEditingController();
+
+    return showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            title: Text("Enter Quantity"),
+            content: Container(
+              padding: EdgeInsets.symmetric(horizontal: 15),
+              decoration: BoxDecoration(
+                  color: Colors.yellow[100],
+                  borderRadius: BorderRadius.circular(8)),
+              child: TextFormField(
+                cursorColor: Variables.primaryColor,
+                validator: (value) {
+                  if (value.isEmpty)
+                    return "You cannot have an empty Purchase Price!";
+                  if (value.length != 6) return "Enter valid pincode!";
+                },
+                maxLines: 1,
+                keyboardType: TextInputType.number,
+                style: Variables.inputTextStyle,
+                decoration: InputDecoration(
+                    border: InputBorder.none, hintText: 'Quantity'),
+                controller: qtyController,
+              ),
+            ),
+            actions: <Widget>[
+              FlatButton(
+                onPressed: () {
+                  Navigator.of(context).pop(DialogAction.Abort);
+                },
+                child: Text(
+                  "No",
+                  style: TextStyle(color: Variables.primaryColor),
+                ),
+              ),
+              RaisedButton(
+                elevation: 0,
+                color: Variables.primaryColor,
+                onPressed: () {
+                  if (!productList.contains(currentProduct)) {
+                    productList.add(currentProduct);
+                    qtyList.add(int.parse(qtyController.text));
+                  }
+                  Navigator.of(context).pop(DialogAction.Abort);
+                  print(productList);
+                  print(qtyList);
+                },
+                child: Text(
+                  "Yes",
+                  style: TextStyle(color: Variables.lightGreyColor),
+                ),
+              )
+            ],
+          );
+        });
+  }
+
   handleDeleteUnit(String unitId) {
     _adminMethods.deleteUnit(unitId);
     final snackBar =
@@ -92,20 +160,7 @@ class _RegularCustomerState extends State<RegularCustomer> {
   }
 
   addCustomerToDb() {
-    if (_formKey.currentState.validate()) {
-      _adminMethods.isCustomerExists(_nameFieldController.text).then((value) {
-        if (!value) {
-          _adminMethods.addCustomerToDb(
-              _nameFieldController.text,
-              _emailFieldController.text,
-              _addressController.text,
-              currentState,
-              int.parse(_pincodeController.text),
-              int.parse(_mobileNoController.text),
-              _gstinController.text);
-        }
-      });
-    }
+    print(productList);
   }
 
   Card buildCustomerCard() {
@@ -118,13 +173,33 @@ class _RegularCustomerState extends State<RegularCustomer> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              BuildHeader(
-                text: "Customer",
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  BuildHeader(
+                    text: "Customer",
+                  ),
+                  Row(
+                    children: <Widget>[
+                      Checkbox(
+                          activeColor: Variables.primaryColor,
+                          focusColor: Variables.primaryColor,
+                          value: _checkBoxValue,
+                          onChanged: (bool value) {
+                            print(value);
+                            setState(() {
+                              _checkBoxValue = value;
+                            });
+                          }),
+                      Text("Regular Customer")
+                    ],
+                  )
+                ],
               ),
               SizedBox(
                 height: 15,
               ),
-              viewVisible ? buildVisibility() : Container(),
+              viewVisible ? buildCustomer() : Container(),
               Row(
                 mainAxisAlignment: viewVisible
                     ? MainAxisAlignment.spaceAround
@@ -138,6 +213,19 @@ class _RegularCustomerState extends State<RegularCustomer> {
           ),
         ),
       ),
+    );
+  }
+
+  buildCustomer() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        buildVisibility(),
+        buildProductDropdown(),
+        SizedBox(
+          height: 20,
+        ),
+      ],
     );
   }
 
@@ -180,7 +268,7 @@ class _RegularCustomerState extends State<RegularCustomer> {
               width: 15,
             ),
             Text(
-              "Add Customer",
+              "Add Borrow",
               style: TextStyle(
                   letterSpacing: 1, fontSize: 16, color: Variables.blackColor),
             )
@@ -191,55 +279,239 @@ class _RegularCustomerState extends State<RegularCustomer> {
   }
 
   Visibility buildVisibility() {
-    return Visibility(
-        maintainSize: true,
-        maintainAnimation: true,
-        maintainState: true,
-        visible: viewVisible,
-        child: Container(
-            child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            buildNameField(),
-            SizedBox(
-              height: 20,
-            ),
-            buildEmailField(),
-            SizedBox(
-              height: 20,
-            ),
-            buildAddressField(),
-            SizedBox(
-              height: 20,
-            ),
-            buildStateDropDown(),
-            SizedBox(
-              height: 20,
-            ),
-            buildPincodeField(),
-            SizedBox(
-              height: 20,
-            ),
-            buildMobileNoField(),
-            SizedBox(
-              height: 20,
-            ),
-            buildGSTINField(),
-            SizedBox(
-              height: 20,
-            ),
-          ],
-        )));
+    return _checkBoxValue
+        ? Visibility(
+            maintainSize: true,
+            maintainAnimation: true,
+            maintainState: true,
+            visible: viewVisible,
+            child: Container(
+                child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[buildRegularCustomerDetails()],
+            )))
+        : Visibility(
+            maintainSize: true,
+            maintainAnimation: true,
+            maintainState: true,
+            visible: viewVisible,
+            child: Container(
+                child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                buildNameField(),
+                SizedBox(
+                  height: 20,
+                ),
+                buildEmailField(),
+                SizedBox(
+                  height: 20,
+                ),
+                buildAddressField(),
+                SizedBox(
+                  height: 20,
+                ),
+                buildStateDropDown(),
+                SizedBox(
+                  height: 20,
+                ),
+                buildPincodeField(),
+                SizedBox(
+                  height: 20,
+                ),
+                buildMobileNoField(),
+                SizedBox(
+                  height: 20,
+                ),
+                buildGSTINField(),
+                SizedBox(
+                  height: 20,
+                ),
+              ],
+            )));
   }
 
-  Column buildUnitDropDown() {
+  buildRegularCustomerDetails() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        buildNameDropdown(),
+        SizedBox(
+          height: 20,
+        ),
+        buildEmailField(),
+        SizedBox(
+          height: 20,
+        ),
+        buildAddressField(),
+        SizedBox(
+          height: 20,
+        ),
+        buildStateDropDown(),
+        SizedBox(
+          height: 20,
+        ),
+        buildPincodeField(),
+        SizedBox(
+          height: 20,
+        ),
+        buildMobileNoField(),
+        SizedBox(
+          height: 20,
+        ),
+        buildGSTINField(),
+        SizedBox(
+          height: 20,
+        ),
+      ],
+    );
+  }
+
+  Widget buildProductList() {
+    return Container(
+      height: 300,
+      padding: EdgeInsets.all(10),
+      child: ListView.builder(
+          physics: BouncingScrollPhysics(),
+          itemBuilder: (context, index) {
+            return Container(
+              margin: EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                  color: Variables.greyColor,
+                  borderRadius: BorderRadius.circular(10)),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    Text(productList[index]),
+                    Text('(${qtyList[index]})'),
+                    IconButton(
+                        icon: Icon(
+                          FontAwesome.times_circle,
+                          color: Colors.red[200],
+                        ),
+                        onPressed: null)
+                  ],
+                ),
+              ),
+            );
+          },
+          itemCount: productList.length),
+    );
+  }
+
+  Widget buildQtyList() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          "Quantity",
+          style: Variables.inputLabelTextStyle,
+        ),
+        Container(
+          height: 48,
+          width: 100,
+          padding: EdgeInsets.symmetric(horizontal: 15),
+          decoration: BoxDecoration(
+              color: Colors.yellow[100],
+              borderRadius: BorderRadius.circular(8)),
+          child: TextFormField(
+            cursorColor: Variables.primaryColor,
+            validator: (value) {
+              if (value.isEmpty)
+                return "You cannot have an empty Purchase Price!";
+              if (value.length != 6) return "Enter valid pincode!";
+            },
+            maxLines: 1,
+            keyboardType: TextInputType.number,
+            style: Variables.inputTextStyle,
+            decoration:
+                InputDecoration(border: InputBorder.none, hintText: 'Quantity'),
+            controller: _pincodeController,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildProductDropdown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        currentProduct == null ? Container() : buildProductList(),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: <Widget>[
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(left: 10.0),
+                  child: Text(
+                    "Product",
+                    style: Variables.inputLabelTextStyle,
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 15),
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.yellow[100]),
+                  child: StreamBuilder<QuerySnapshot>(
+                      stream: _adminMethods.fetchAllProduct(),
+                      builder: (BuildContext context,
+                          AsyncSnapshot<QuerySnapshot> snapshot) {
+                        if (snapshot.hasError) {
+                          print(snapshot.error);
+                        } else {
+                          if (!snapshot.hasData) {
+                            return CustomCircularLoading();
+                          }
+
+                          return new DropdownButton<DocumentSnapshot>(
+                            dropdownColor: Colors.yellow[100],
+                            underline: SizedBox(),
+                            onChanged: (DocumentSnapshot newValue) {
+                              setState(() {
+                                currentProduct = newValue.data['name'];
+                                createAlertDialog(context, currentProduct);
+                              });
+                              // print(currentProduct);
+                            },
+                            hint: currentProduct == null
+                                ? Text('Select Name')
+                                : Text(currentProduct),
+                            items: snapshot.data.documents
+                                .map((DocumentSnapshot document) {
+                              return new DropdownMenuItem<DocumentSnapshot>(
+                                  value: document,
+                                  child: new Text(
+                                    document.data['name'],
+                                  ));
+                            }).toList(),
+                          );
+                        }
+                        return CustomCircularLoading();
+                      }),
+                ),
+              ],
+            ),
+            // buildQtyList()
+          ],
+        ),
+      ],
+    );
+  }
+
+  buildNameDropdown() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Padding(
           padding: const EdgeInsets.only(left: 10.0),
           child: Text(
-            "Unit",
+            "Name",
             style: Variables.inputLabelTextStyle,
           ),
         ),
@@ -248,7 +520,49 @@ class _RegularCustomerState extends State<RegularCustomer> {
           decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               color: Colors.yellow[100]),
-          child: buildUnitDropdownButton(),
+          child: StreamBuilder<QuerySnapshot>(
+              stream: _adminMethods.fetchAllCustomer(),
+              builder: (BuildContext context,
+                  AsyncSnapshot<QuerySnapshot> snapshot) {
+                if (snapshot.hasError) {
+                  print(snapshot.error);
+                } else {
+                  if (!snapshot.hasData) {
+                    return CustomCircularLoading();
+                  }
+
+                  return new DropdownButton<DocumentSnapshot>(
+                    dropdownColor: Colors.yellow[100],
+                    underline: SizedBox(),
+                    onChanged: (DocumentSnapshot newValue) {
+                      setState(() {
+                        currentName = newValue.data['name'];
+                        _emailFieldController =
+                            TextEditingController(text: newValue.data['email']);
+                        _addressController = TextEditingController(
+                            text: newValue.data['address']);
+                        currentState = newValue.data['state'];
+                        _pincodeController = TextEditingController(
+                            text: newValue.data['pincode']);
+                        _gstinController =
+                            TextEditingController(text: newValue.data['gstin']);
+                      });
+                    },
+                    hint: currentName == null
+                        ? Text('Select Name')
+                        : Text(currentName),
+                    items: snapshot.data.documents
+                        .map((DocumentSnapshot document) {
+                      return new DropdownMenuItem<DocumentSnapshot>(
+                          value: document,
+                          child: new Text(
+                            document.data['name'],
+                          ));
+                    }).toList(),
+                  );
+                }
+                return CustomCircularLoading();
+              }),
         ),
       ],
     );

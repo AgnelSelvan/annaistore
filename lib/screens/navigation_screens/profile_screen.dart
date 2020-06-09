@@ -6,6 +6,7 @@ import 'package:annaistore/screens/admin/add_product.dart';
 import 'package:annaistore/screens/admin/add_regular_customer.dart';
 import 'package:annaistore/screens/admin/add_sub_category.dart';
 import 'package:annaistore/screens/admin/add_unit.dart';
+import 'package:annaistore/screens/admin/borrow.dart';
 import 'package:annaistore/screens/auth_screen.dart';
 import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/screens/edit_profile_screen.dart';
@@ -327,6 +328,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 fontWeight: FontWeight.w400),
                           ),
                         ),
+                        ListTile(
+                          onTap: () {
+                            Navigator.push(
+                                context, BouncyPageRoute(widget: BorrowScreen()));
+                          },
+                          leading: Icon(
+                            FontAwesome.tasks,
+                            size: 16,
+                            color: Variables.primaryColor,
+                          ),
+                          title: Text(
+                            "Borrow",
+                            style: TextStyle(
+                                color: Variables.blackColor,
+                                fontSize: 18,
+                                letterSpacing: 0.3,
+                                fontWeight: FontWeight.w400),
+                          ),
+                        ),
+                        
                         ListTile(
                           leading: Icon(
                             Icons.report,
