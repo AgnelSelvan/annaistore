@@ -8,6 +8,7 @@ import 'package:annaistore/widgets/custom_appbar.dart';
 import 'package:annaistore/widgets/custom_divider.dart';
 import 'package:annaistore/widgets/header.dart';
 import 'package:annaistore/widgets/widgets.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 
@@ -117,159 +118,7 @@ class _AddCategoryState extends State<AddCategory> {
               SizedBox(
                 height: 15,
               ),
-              StreamBuilder(
-                  stream: _adminMethods.fetchAllCategory(),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      if (snapshot.data.documents.length != 0) {
-                        return Column(
-                          children: <Widget>[
-                            Column(
-                              children: <Widget>[
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceAround,
-                                  children: <Widget>[
-                                    Container(
-                                        width: 80,
-                                        child: Column(
-                                          children: <Widget>[
-                                            Text(
-                                              'HSN Code',
-                                              style: TextStyle(
-                                                  fontSize: 16,
-                                                  color: Variables.blackColor),
-                                            ),
-                                            CustomDivider(
-                                                leftSpacing: 2, rightSpacing: 2)
-                                          ],
-                                        )),
-                                    Container(
-                                        width: 80,
-                                        child: Column(
-                                          children: <Widget>[
-                                            Text(
-                                              "Name",
-                                              style: TextStyle(
-                                                  fontSize: 16,
-                                                  color: Variables.blackColor),
-                                            ),
-                                            CustomDivider(
-                                                leftSpacing: 2, rightSpacing: 2)
-                                          ],
-                                        )),
-                                    Container(
-                                        width: 80,
-                                        child: Column(
-                                          children: <Widget>[
-                                            Text(
-                                              'Tax',
-                                              style: TextStyle(
-                                                  fontSize: 16,
-                                                  color: Variables.blackColor),
-                                            ),
-                                            CustomDivider(
-                                                leftSpacing: 2, rightSpacing: 2)
-                                          ],
-                                        )),
-                                    Container(
-                                      width: 5,
-                                    )
-                                  ],
-                                ),
-                                Container(
-                                  width: double.infinity,
-                                  height: 100,
-                                  child: StreamBuilder(
-                                    stream: _adminMethods.fetchAllCategory(),
-                                    builder: (context, snapshot) {
-                                      var docs = snapshot.data.documents;
-                                      if (snapshot.hasData) {
-                                        return ListView.builder(
-                                          physics: BouncingScrollPhysics(),
-                                          itemCount: docs.length,
-                                          itemBuilder: (context, index) {
-                                            Category category =
-                                                Category.fromMap(
-                                                    docs[index].data);
-                                            return Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.spaceAround,
-                                              children: <Widget>[
-                                                Container(
-                                                    width: 80,
-                                                    child: Text(
-                                                        category.hsnCode,
-                                                        style: TextStyle(
-                                                            fontSize: 16,
-                                                            color: Variables
-                                                                .blackColor))),
-                                                Container(
-                                                    width: 80,
-                                                    child: Text(
-                                                        category.productName,
-                                                        style: TextStyle(
-                                                            fontSize: 16,
-                                                            color: Variables
-                                                                .blackColor))),
-                                                Container(
-                                                    width: 80,
-                                                    child: Text(
-                                                        category.tax.toString(),
-                                                        style: TextStyle(
-                                                            fontSize: 16,
-                                                            color: Variables
-                                                                .blackColor))),
-                                                GestureDetector(
-                                                  onTap: () {
-                                                    handleDeleteCategory(
-                                                        category.id);
-                                                  },
-                                                  child: Container(
-                                                      width: 5,
-                                                      child: Icon(
-                                                        FontAwesome
-                                                            .times_circle,
-                                                        size: 20,
-                                                        color: Colors.red,
-                                                      )),
-                                                )
-                                              ],
-                                            );
-                                          },
-                                        );
-                                      }
-                                      return CustomCircularLoading();
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(
-                              height: 15,
-                            ),
-                          ],
-                        );
-                      } else {
-                        return Column(
-                          children: <Widget>[
-                            Container(
-                              child: Text(
-                                "Click Add Category for adding units!",
-                                style: TextStyle(
-                                    color: Variables.blackColor,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w300,
-                                    letterSpacing: 0.5),
-                              ),
-                            ),
-                            SizedBox(height: 20)
-                          ],
-                        );
-                      }
-                    }
-                    return CustomCircularLoading();
-                  }),
+              buildCategoryTable(),
               viewVisible ? buildVisibility() : Container(),
               Row(
                 mainAxisAlignment: viewVisible
@@ -284,6 +133,146 @@ class _AddCategoryState extends State<AddCategory> {
           ),
         ),
       ),
+    );
+  }
+
+  StreamBuilder<QuerySnapshot> buildCategoryTable() {
+    return StreamBuilder(
+        stream: _adminMethods.fetchAllCategory(),
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            if (snapshot.data.documents.length != 0) {
+              return Column(
+                children: <Widget>[
+                  Column(
+                    children: <Widget>[
+                      buildCategoryHeader(),
+                      buildTableBody(),
+                    ],
+                  ),
+                  SizedBox(
+                    height: 15,
+                  ),
+                ],
+              );
+            } else {
+              return Column(
+                children: <Widget>[
+                  Container(
+                    child: Text(
+                      "Click Add Category for adding units!",
+                      style: TextStyle(
+                          color: Variables.blackColor,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w300,
+                          letterSpacing: 0.5),
+                    ),
+                  ),
+                  SizedBox(height: 20)
+                ],
+              );
+            }
+          }
+          return CustomCircularLoading();
+        });
+  }
+
+  Container buildTableBody() {
+    return Container(
+      width: double.infinity,
+      height: 100,
+      child: StreamBuilder(
+        stream: _adminMethods.fetchAllCategory(),
+        builder: (context, snapshot) {
+          var docs = snapshot.data.documents;
+          if (snapshot.hasData) {
+            return ListView.builder(
+              physics: BouncingScrollPhysics(),
+              itemCount: docs.length,
+              itemBuilder: (context, index) {
+                Category category = Category.fromMap(docs[index].data);
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: <Widget>[
+                    Container(
+                        width: 80,
+                        child: Text(category.hsnCode,
+                            style: TextStyle(
+                                fontSize: 16, color: Variables.blackColor))),
+                    Container(
+                        width: 80,
+                        child: Text(category.productName,
+                            style: TextStyle(
+                                fontSize: 16, color: Variables.blackColor))),
+                    Container(
+                        width: 80,
+                        child: Text(category.tax.toString(),
+                            style: TextStyle(
+                                fontSize: 16, color: Variables.blackColor))),
+                    GestureDetector(
+                      onTap: () {
+                        handleDeleteCategory(category.id);
+                      },
+                      child: Container(
+                          width: 5,
+                          child: Icon(
+                            FontAwesome.times_circle,
+                            size: 20,
+                            color: Colors.red,
+                          )),
+                    )
+                  ],
+                );
+              },
+            );
+          }
+          return CustomCircularLoading();
+        },
+      ),
+    );
+  }
+
+  Row buildCategoryHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: <Widget>[
+        Container(
+            width: 80,
+            child: Column(
+              children: <Widget>[
+                Text(
+                  'HSN Code',
+                  style: TextStyle(fontSize: 16, color: Variables.blackColor),
+                ),
+                CustomDivider(leftSpacing: 2, rightSpacing: 2)
+              ],
+            )),
+        Container(
+            width: 80,
+            child: Column(
+              children: <Widget>[
+                Text(
+                  "Name",
+                  style: TextStyle(fontSize: 16, color: Variables.blackColor),
+                ),
+                CustomDivider(leftSpacing: 2, rightSpacing: 2)
+              ],
+            )),
+        Container(
+            width: 80,
+            child: Column(
+              children: <Widget>[
+                Text(
+                  'Tax',
+                  style: TextStyle(fontSize: 16, color: Variables.blackColor),
+                ),
+                CustomDivider(leftSpacing: 2, rightSpacing: 2)
+              ],
+            )),
+        Container(
+          width: 5,
+        )
+      ],
     );
   }
 

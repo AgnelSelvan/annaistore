@@ -1,11 +1,18 @@
+import 'package:annaistore/models/product.dart';
 import 'package:annaistore/models/unit.dart';
+import 'package:annaistore/resources/admin_methods.dart';
 import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
 import 'package:annaistore/widgets/custom_divider.dart';
 import 'package:annaistore/widgets/header.dart';
+import 'package:annaistore/widgets/widgets.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_icons/flutter_icons.dart';
+
+AdminMethods _adminMethods = AdminMethods();
 
 class AddProduct extends StatefulWidget {
   AddProduct({Key key}) : super(key: key);
@@ -17,43 +24,58 @@ class AddProduct extends StatefulWidget {
 class _AddProductState extends State<AddProduct> {
   TextEditingController _codeFieldController = TextEditingController();
   TextEditingController _nameFieldController = TextEditingController();
-  TextEditingController _hsnFieldController = TextEditingController();
-  // TextEditingController _hsnFieldController = TextEditingController();
+  TextEditingController _purchasePriceController = TextEditingController();
+  TextEditingController _sellingPriceFieldController = TextEditingController();
+
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   final _formKey = GlobalKey<FormState>();
   bool viewVisible = false;
+  String currenthsnCode;
+  String currentUnit;
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
-          title: Text("Annai Store", style: Variables.appBarTextStyle),
-          actions: null,
-          leading: IconButton(
-              icon: Icon(
-                Icons.arrow_back_ios,
-                color: Variables.primaryColor,
-                size: 16,
+        key: _scaffoldKey,
+        appBar: CustomAppBar(
+            title: Text("Annai Store", style: Variables.appBarTextStyle),
+            actions: null,
+            leading: IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios,
+                  color: Variables.primaryColor,
+                  size: 16,
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                }),
+            centerTitle: true,
+            bgColor: Colors.white),
+        body: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: ListView(
+            physics: const BouncingScrollPhysics(),
+            children: <Widget>[
+              Container(
+                padding: EdgeInsets.only(left: 5),
+                color: Colors.white,
+                child: buildSymbolCard(),
               ),
-              onPressed: () {
-                Navigator.pop(context);
-              }),
-          centerTitle: true,
-          bgColor: Colors.white),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: ListView(
-          physics: const BouncingScrollPhysics(),
-          children: <Widget>[
-            Container(
-              padding: EdgeInsets.only(left: 5),
-              color: Colors.white,
-              child: buildSymbolCard(),
-            ),
-          ],
-        ),
-      ),
-    );
+            ],
+          ),
+        ));
+  }
+
+  handleDeleteUnit(String unitId) {
+    _adminMethods.deleteUnit(unitId);
+    final snackBar =
+        customSnackBar('Delete Successfull!', Variables.blackColor);
+    _scaffoldKey.currentState.showSnackBar(snackBar);
   }
 
   void showWidget() {
@@ -62,6 +84,39 @@ class _AddProductState extends State<AddProduct> {
       viewVisible = !viewVisible;
     });
     print(viewVisible);
+  }
+
+  addProductToDb() {
+    _adminMethods.isProductExists(_nameFieldController.text).then((value) {
+      if (!value) {
+        var purchasePrice = int.parse(_purchasePriceController.text);
+        var sellingPrice = int.parse(_sellingPriceFieldController.text);
+        _adminMethods.addProductToDb(
+            _codeFieldController.text,
+            _nameFieldController.text,
+            purchasePrice,
+            sellingPrice,
+            currenthsnCode,
+            currentUnit);
+
+        SnackBar snackbar =
+            customSnackBar("Added Successfully", Variables.blackColor);
+        _scaffoldKey.currentState.showSnackBar(snackbar);
+
+        setState(() {
+          _nameFieldController.clear();
+          _codeFieldController.clear();
+          _purchasePriceController.clear();
+          _sellingPriceFieldController.clear();
+          currenthsnCode = null;
+          currentUnit = null;
+        });
+      } else {
+        SnackBar snackbar = customSnackBar(
+            "${_nameFieldController.text} Already Exists", Colors.red);
+        _scaffoldKey.currentState.showSnackBar(snackbar);
+      }
+    });
   }
 
   Card buildSymbolCard() {
@@ -75,142 +130,144 @@ class _AddProductState extends State<AddProduct> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               BuildHeader(
-                text: "Add Product",
+                text: "Product",
               ),
               SizedBox(
                 height: 15,
               ),
               StreamBuilder(
-                  // stream: _adminMethods.fetchAllUnit(),
+                  stream: _adminMethods.fetchAllProduct(),
                   builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  if (snapshot.data.documents.length != 0) {
-                    return Column(
-                      children: <Widget>[
-                        Column(
+                    if (snapshot.hasData) {
+                      if (snapshot.data.documents.length != 0) {
+                        return Column(
                           children: <Widget>[
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            Column(
                               children: <Widget>[
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                  children: <Widget>[
+                                    Container(
+                                        width: 95,
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: <Widget>[
+                                            Text(
+                                              'Symbol',
+                                              style: TextStyle(
+                                                  fontSize: 16,
+                                                  color: Variables.blackColor),
+                                            ),
+                                            CustomDivider(
+                                                leftSpacing: 2, rightSpacing: 2)
+                                          ],
+                                        )),
+                                    Container(
+                                        width: 95,
+                                        child: Column(
+                                          children: <Widget>[
+                                            Text(
+                                              "Formal Name",
+                                              style: TextStyle(
+                                                  fontSize: 16,
+                                                  color: Variables.blackColor),
+                                            ),
+                                            CustomDivider(
+                                                leftSpacing: 2, rightSpacing: 2)
+                                          ],
+                                        )),
+                                    Container(
+                                      width: 5,
+                                    )
+                                  ],
+                                ),
                                 Container(
-                                    width: 95,
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: <Widget>[
-                                        Text(
-                                          'Symbol',
-                                          style: TextStyle(
-                                              fontSize: 16,
-                                              color: Variables.blackColor),
-                                        ),
-                                        CustomDivider(
-                                            leftSpacing: 2, rightSpacing: 2)
-                                      ],
-                                    )),
-                                Container(
-                                    width: 95,
-                                    child: Column(
-                                      children: <Widget>[
-                                        Text(
-                                          "Formal Name",
-                                          style: TextStyle(
-                                              fontSize: 16,
-                                              color: Variables.blackColor),
-                                        ),
-                                        CustomDivider(
-                                            leftSpacing: 2, rightSpacing: 2)
-                                      ],
-                                    )),
-                                Container(
-                                  width: 5,
-                                )
+                                  width: double.infinity,
+                                  height: 100,
+                                  child: StreamBuilder(
+                                    stream: _adminMethods.fetchAllProduct(),
+                                    builder: (context, snapshot) {
+                                      var docs = snapshot.data.documents;
+                                      if (snapshot.hasData) {
+                                        return ListView.builder(
+                                          physics: BouncingScrollPhysics(),
+                                          itemCount: docs.length,
+                                          itemBuilder: (context, index) {
+                                            Product product = Product.fromMap(
+                                                docs[index].data);
+                                            return Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.spaceAround,
+                                              children: <Widget>[
+                                                Container(
+                                                    width: 95,
+                                                    height: 22,
+                                                    child: Text(product.unit,
+                                                        style: TextStyle(
+                                                            fontSize: 16,
+                                                            color: Variables
+                                                                .blackColor))),
+                                                Container(
+                                                    width: 95,
+                                                    height: 22,
+                                                    child: Text(product.name,
+                                                        style: TextStyle(
+                                                            fontSize: 16,
+                                                            color: Variables
+                                                                .blackColor))),
+                                                GestureDetector(
+                                                  onTap: () {
+                                                    handleDeleteUnit(
+                                                        product.id);
+                                                  },
+                                                  child: Container(
+                                                      width: 5,
+                                                      height: 20,
+                                                      child: Icon(
+                                                        FontAwesome
+                                                            .times_circle,
+                                                        size: 20,
+                                                        color: Colors.red,
+                                                      )),
+                                                )
+                                              ],
+                                            );
+                                          },
+                                        );
+                                      }
+                                      return CustomCircularLoading();
+                                    },
+                                  ),
+                                ),
                               ],
                             ),
-                            Container(
-                              width: double.infinity,
-                              height: 100,
-                              child: StreamBuilder(
-                                // stream: _adminMethods.fetchAllUnit(),
-                                builder: (context, snapshot) {
-                                  var docs = snapshot.data.documents;
-                                  if (snapshot.hasData) {
-                                    return ListView.builder(
-                                      physics: BouncingScrollPhysics(),
-                                      itemCount: docs.length,
-                                      itemBuilder: (context, index) {
-                                        Unit unit =
-                                            Unit.fromMap(docs[index].data);
-                                        return Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceAround,
-                                          children: <Widget>[
-                                            Container(
-                                                width: 95,
-                                                height: 22,
-                                                child: Text(unit.unit,
-                                                    style: TextStyle(
-                                                        fontSize: 16,
-                                                        color: Variables
-                                                            .blackColor))),
-                                            Container(
-                                                width: 95,
-                                                height: 22,
-                                                child: Text(unit.formalName,
-                                                    style: TextStyle(
-                                                        fontSize: 16,
-                                                        color: Variables
-                                                            .blackColor))),
-                                            GestureDetector(
-                                              // onTap: () {
-                                              //   handleDeleteUnit(
-                                              //       unit.unitId);
-                                              // },
-                                              child: Container(
-                                                  width: 5,
-                                                  height: 20,
-                                                  child: Icon(
-                                                    FontAwesome.times_circle,
-                                                    size: 20,
-                                                    color: Colors.red,
-                                                  )),
-                                            )
-                                          ],
-                                        );
-                                      },
-                                    );
-                                  }
-                                  return CustomCircularLoading();
-                                },
-                              ),
+                            SizedBox(
+                              height: 15,
                             ),
                           ],
-                        ),
-                        SizedBox(
-                          height: 15,
-                        ),
-                      ],
-                    );
-                  } else {
-                    return Column(
-                      children: <Widget>[
-                        Container(
-                          child: Text(
-                            "Click Add Unit for adding units!",
-                            style: TextStyle(
-                                color: Variables.blackColor,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w300,
-                                letterSpacing: 0.5),
-                          ),
-                        ),
-                        SizedBox(height: 20)
-                      ],
-                    );
-                  }
-                }
-                return CustomCircularLoading();
-              }),
+                        );
+                      } else {
+                        return Column(
+                          children: <Widget>[
+                            Container(
+                              child: Text(
+                                "Click Add Product for adding more products!",
+                                style: TextStyle(
+                                    color: Variables.blackColor,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w300,
+                                    letterSpacing: 0.5),
+                              ),
+                            ),
+                            SizedBox(height: 20)
+                          ],
+                        );
+                      }
+                    }
+                    return CustomCircularLoading();
+                  }),
               viewVisible ? buildVisibility() : Container(),
               Row(
                 mainAxisAlignment: viewVisible
@@ -230,7 +287,7 @@ class _AddProductState extends State<AddProduct> {
 
   GestureDetector buildSubmissionButton() {
     return GestureDetector(
-      // onTap: addUnitToDb,
+      onTap: addProductToDb,
       child: Icon(
         Icons.check_circle,
         size: 30,
@@ -267,7 +324,7 @@ class _AddProductState extends State<AddProduct> {
               width: 15,
             ),
             Text(
-              "Add Unit",
+              "Add Product",
               style: TextStyle(
                   letterSpacing: 1, fontSize: 16, color: Variables.blackColor),
             )
@@ -285,12 +342,29 @@ class _AddProductState extends State<AddProduct> {
         visible: viewVisible,
         child: Container(
             child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             buildCodeField(),
             SizedBox(
               height: 20,
             ),
-            buildFormalNameField(),
+            buildNameField(),
+            SizedBox(
+              height: 20,
+            ),
+            buildCategoryDropDown(),
+            SizedBox(
+              height: 20,
+            ),
+            buildUnitDropDown(),
+            SizedBox(
+              height: 20,
+            ),
+            buildPurchasePriceField(),
+            SizedBox(
+              height: 20,
+            ),
+            buildSellingPriceField(),
             SizedBox(
               height: 20,
             ),
@@ -298,12 +372,133 @@ class _AddProductState extends State<AddProduct> {
         )));
   }
 
-  Widget buildFormalNameField() {
+  Column buildUnitDropDown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.only(left: 10.0),
+          child: Text(
+            "Unit",
+            style: Variables.inputLabelTextStyle,
+          ),
+        ),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 15),
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.yellow[100]),
+          child: buildUnitDropdownButton(),
+        ),
+      ],
+    );
+  }
+
+  StreamBuilder buildUnitDropdownButton() {
+    return StreamBuilder<QuerySnapshot>(
+        stream: _adminMethods.fetchAllUnit(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) {
+            print(snapshot.error);
+          } else {
+            if (!snapshot.hasData) {
+              return CustomCircularLoading();
+            }
+
+            return new DropdownButton<DocumentSnapshot>(
+              dropdownColor: Colors.yellow[100],
+              underline: SizedBox(),
+              onChanged: (DocumentSnapshot newValue) {
+                setState(() {
+                  currentUnit = newValue.data['unit'];
+                });
+              },
+              hint:
+                  currentUnit == null ? Text('Select Unit') : Text(currentUnit),
+              items: snapshot.data.documents.map((DocumentSnapshot document) {
+                return new DropdownMenuItem<DocumentSnapshot>(
+                    value: document,
+                    child: new Text(
+                      document.data['unit'],
+                    ));
+              }).toList(),
+            );
+          }
+          return CustomCircularLoading();
+        });
+  }
+
+  Column buildCategoryDropDown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.only(left: 10.0),
+          child: Text(
+            "Category",
+            style: Variables.inputLabelTextStyle,
+          ),
+        ),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 15),
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.yellow[100]),
+          child: buildCategoryDropdownButton(),
+        ),
+      ],
+    );
+  }
+
+  StreamBuilder buildCategoryDropdownButton() {
+    return StreamBuilder<QuerySnapshot>(
+        stream: _adminMethods.fetchAllCategory(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) {
+            print(snapshot.error);
+          } else {
+            if (!snapshot.hasData) {
+              return CustomCircularLoading();
+            }
+
+            return new DropdownButton<DocumentSnapshot>(
+              dropdownColor: Colors.yellow[100],
+              underline: SizedBox(),
+              onChanged: (DocumentSnapshot newValue) {
+                setState(() {
+                  currenthsnCode = newValue.data['hsn_code'];
+                });
+              },
+              hint: currenthsnCode == null
+                  ? Text('Select Category')
+                  : Text(currenthsnCode),
+              items: snapshot.data.documents.map((DocumentSnapshot document) {
+                return new DropdownMenuItem<DocumentSnapshot>(
+                    value: document,
+                    child: Row(
+                      children: <Widget>[
+                        new Text(
+                          document.data['hsn_code'],
+                        ),
+                        new Text(
+                          "   (${document.data['product_name']})",
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ));
+              }).toList(),
+            );
+          }
+          return CustomCircularLoading();
+        });
+  }
+
+  Widget buildSellingPriceField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          "Formal Name",
+          "Selling Price",
           style: Variables.inputLabelTextStyle,
         ),
         Container(
@@ -315,12 +510,76 @@ class _AddProductState extends State<AddProduct> {
           child: TextFormField(
             cursorColor: Variables.primaryColor,
             validator: (value) {
-              if (value.isEmpty) return "You cannot have an empty formal name!";
+              if (value.isEmpty)
+                return "You cannot have an empty Selling Price!";
             },
             maxLines: 1,
             style: Variables.inputTextStyle,
+            keyboardType: TextInputType.number,
             decoration:
-                InputDecoration(border: InputBorder.none, hintText: 'bx'),
+                InputDecoration(border: InputBorder.none, hintText: '240'),
+            controller: _sellingPriceFieldController,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildPurchasePriceField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          "Purchase Price",
+          style: Variables.inputLabelTextStyle,
+        ),
+        Container(
+          height: 48,
+          padding: EdgeInsets.symmetric(horizontal: 15),
+          decoration: BoxDecoration(
+              color: Colors.yellow[100],
+              borderRadius: BorderRadius.circular(8)),
+          child: TextFormField(
+            cursorColor: Variables.primaryColor,
+            validator: (value) {
+              if (value.isEmpty)
+                return "You cannot have an empty Purchase Price!";
+            },
+            maxLines: 1,
+            keyboardType: TextInputType.number,
+            style: Variables.inputTextStyle,
+            decoration:
+                InputDecoration(border: InputBorder.none, hintText: '230'),
+            controller: _purchasePriceController,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildNameField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          "Name",
+          style: Variables.inputLabelTextStyle,
+        ),
+        Container(
+          height: 48,
+          padding: EdgeInsets.symmetric(horizontal: 15),
+          decoration: BoxDecoration(
+              color: Colors.yellow[100],
+              borderRadius: BorderRadius.circular(8)),
+          child: TextFormField(
+            cursorColor: Variables.primaryColor,
+            validator: (value) {
+              if (value.isEmpty) return "You cannot have an empty name!";
+            },
+            maxLines: 1,
+            style: Variables.inputTextStyle,
+            decoration: InputDecoration(
+                border: InputBorder.none, hintText: '.25 Inch Elastic'),
             controller: _nameFieldController,
           ),
         ),
@@ -345,12 +604,12 @@ class _AddProductState extends State<AddProduct> {
           child: TextFormField(
             cursorColor: Variables.primaryColor,
             validator: (value) {
-              if (value.isEmpty) return "You cannot have an empty code!";
+              if (value.isEmpty) return "You cannot have an Code!";
             },
             maxLines: 1,
             style: Variables.inputTextStyle,
-            decoration:
-                InputDecoration(border: InputBorder.none, hintText: 'box'),
+            decoration: InputDecoration(
+                border: InputBorder.none, hintText: '0.25 Eagle'),
             controller: _codeFieldController,
           ),
         ),

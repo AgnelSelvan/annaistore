@@ -20,7 +20,7 @@ SnackBar customSnackBar(String text, Color textColor) {
       text,
       style: TextStyle(color: textColor),
     ),
-    duration: Duration(seconds: 1),
+    duration: Duration(seconds: 2),
     backgroundColor: Colors.yellow[100],
   );
 }

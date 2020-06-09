@@ -62,8 +62,6 @@ class _AddSubCategoryState extends State<AddSubCategory> {
     );
   }
 
-  handleSubmit(){}
-
   void showWidget() {
     print(viewVisible);
     setState(() {
@@ -72,9 +70,29 @@ class _AddSubCategoryState extends State<AddSubCategory> {
     print(viewVisible);
   }
 
-  void addCategoryToDb() {}
+  void addCategoryToDb() {
+    _adminMethods
+        .isSubCategoryExists(_nameFieldController.text, currenthsnCode)
+        .then((value) {
+      if (!value) {
+        _adminMethods.addSubCategoryToDb(
+            _nameFieldController.text, currenthsnCode);
+        SnackBar snackbar =
+            customSnackBar('Added Successfully!', Variables.blackColor);
+        _scaffoldKey.currentState.showSnackBar(snackbar);
+        setState(() {
+          currenthsnCode = null;
+          _nameFieldController.clear();
+        });
+      } else {
+        SnackBar snackbar = customSnackBar('Data Already Exists!', Colors.red);
+        _scaffoldKey.currentState.showSnackBar(snackbar);
+      }
+    });
+  }
 
-  void handleDeleteCategory(String id) {
+  void handleDeleteSubCategory(String id) {
+    _adminMethods.deleteSubCategory(id);
     final snackbar =
         customSnackBar("Deleted Successfullt!", Variables.blackColor);
     _scaffoldKey.currentState.showSnackBar(snackbar);
@@ -117,43 +135,43 @@ class _AddSubCategoryState extends State<AddSubCategory> {
 
   StreamBuilder buildSubCategoryTable() {
     return StreamBuilder(
-        // stream: _adminMethods.fetchAllCategory(),
+        stream: _adminMethods.fetchAllSubCategory(),
         builder: (context, snapshot) {
-      if (snapshot.hasData) {
-        if (snapshot.data.documents.length != 0) {
-          return Column(
-            children: <Widget>[
-              Column(
+          if (snapshot.hasData) {
+            if (snapshot.data.documents.length != 0) {
+              return Column(
                 children: <Widget>[
-                  buildTableHeader(),
-                  buildTableBody(),
+                  Column(
+                    children: <Widget>[
+                      buildTableHeader(),
+                      buildTableBody(),
+                    ],
+                  ),
+                  SizedBox(
+                    height: 15,
+                  ),
                 ],
-              ),
-              SizedBox(
-                height: 15,
-              ),
-            ],
-          );
-        } else {
-          return Column(
-            children: <Widget>[
-              Container(
-                child: Text(
-                  "Click Add Sub-Category for adding units!",
-                  style: TextStyle(
-                      color: Variables.blackColor,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w300,
-                      letterSpacing: 0.5),
-                ),
-              ),
-              SizedBox(height: 20)
-            ],
-          );
-        }
-      }
-      return CustomCircularLoading();
-    });
+              );
+            } else {
+              return Column(
+                children: <Widget>[
+                  Container(
+                    child: Text(
+                      "Click Add Sub-Category for adding units!",
+                      style: TextStyle(
+                          color: Variables.blackColor,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w300,
+                          letterSpacing: 0.5),
+                    ),
+                  ),
+                  SizedBox(height: 20)
+                ],
+              );
+            }
+          }
+          return CustomCircularLoading();
+        });
   }
 
   Container buildTableBody() {
@@ -161,7 +179,7 @@ class _AddSubCategoryState extends State<AddSubCategory> {
       width: double.infinity,
       height: 100,
       child: StreamBuilder(
-        // stream: _adminMethods.fetchAllCategory(),
+        stream: _adminMethods.fetchAllSubCategory(),
         builder: (context, snapshot) {
           var docs = snapshot.data.documents;
           if (snapshot.hasData) {
@@ -169,28 +187,23 @@ class _AddSubCategoryState extends State<AddSubCategory> {
               physics: BouncingScrollPhysics(),
               itemCount: docs.length,
               itemBuilder: (context, index) {
-                Category category = Category.fromMap(docs[index].data);
+                SubCategory subCategory = SubCategory.fromMap(docs[index].data);
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: <Widget>[
                     Container(
                         width: 80,
-                        child: Text(category.hsnCode,
+                        child: Text(subCategory.hsnCode,
                             style: TextStyle(
                                 fontSize: 16, color: Variables.blackColor))),
                     Container(
                         width: 80,
-                        child: Text(category.productName,
-                            style: TextStyle(
-                                fontSize: 16, color: Variables.blackColor))),
-                    Container(
-                        width: 80,
-                        child: Text(category.tax.toString(),
+                        child: Text(subCategory.productName,
                             style: TextStyle(
                                 fontSize: 16, color: Variables.blackColor))),
                     GestureDetector(
                       onTap: () {
-                        handleDeleteCategory(category.id);
+                        handleDeleteSubCategory(subCategory.id);
                       },
                       child: Container(
                           width: 5,
@@ -238,17 +251,6 @@ class _AddSubCategoryState extends State<AddSubCategory> {
               ],
             )),
         Container(
-            width: 80,
-            child: Column(
-              children: <Widget>[
-                Text(
-                  'Tax',
-                  style: TextStyle(fontSize: 16, color: Variables.blackColor),
-                ),
-                CustomDivider(leftSpacing: 2, rightSpacing: 2)
-              ],
-            )),
-        Container(
           width: 5,
         )
       ],
@@ -257,9 +259,7 @@ class _AddSubCategoryState extends State<AddSubCategory> {
 
   GestureDetector buildSubmissionButton() {
     return GestureDetector(
-      onTap: () {
-        handleSubmit();
-      },
+      onTap: addCategoryToDb,
       child: Icon(
         Icons.check_circle,
         size: 30,

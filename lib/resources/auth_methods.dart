@@ -48,13 +48,12 @@ class AuthMethods {
     String username = Utils.getUsername(currentUser.email);
 
     User user = User(
-      email: currentUser.email,
-      uid: currentUser.uid,
-      name: currentUser.displayName,
-      profilePhoto: currentUser.photoUrl,
-      username: username,
-      role: USER_STRING
-    );
+        email: currentUser.email,
+        uid: currentUser.uid,
+        name: currentUser.displayName,
+        profilePhoto: currentUser.photoUrl,
+        username: username,
+        role: USER_STRING);
 
     _firestore
         .collection(USERS_COLLECTION)
@@ -74,4 +73,8 @@ class AuthMethods {
     }
   }
 
+  Future<void> signOut() async {
+    await _googleSignIn.signOut();
+    return _auth.signOut();
+  }
 }
