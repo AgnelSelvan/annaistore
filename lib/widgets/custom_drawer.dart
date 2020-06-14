@@ -1,8 +1,8 @@
 import 'package:annaistore/models/user.dart';
 import 'package:annaistore/resources/auth_methods.dart';
+import 'package:annaistore/screens/admin/stock_screen.dart';
 import 'package:annaistore/screens/bill_screen.dart';
 import 'package:annaistore/screens/custom_loading.dart';
-import 'package:annaistore/screens/stock_screen.dart';
 import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_divider.dart';

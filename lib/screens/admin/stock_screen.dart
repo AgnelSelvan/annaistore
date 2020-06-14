@@ -1,3 +1,5 @@
+import 'package:annaistore/screens/admin/stock/add_stock.dart';
+import 'package:annaistore/screens/admin/stock/stock_items.dart';
 import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
 import 'package:annaistore/widgets/header.dart';
@@ -12,13 +14,22 @@ class StockScreen extends StatefulWidget {
   _StockScreenState createState() => _StockScreenState();
 }
 
-class _StockScreenState extends State<StockScreen> {
+class _StockScreenState extends State<StockScreen>
+    with SingleTickerProviderStateMixin {
+  TabController _stockTabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _stockTabController = TabController(length: 2, vsync: this);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Variables.lightGreyColor,
       appBar: CustomAppBar(
-        bgColor: Colors.white,
+          bgColor: Colors.white,
           title: Text("Annai Store", style: Variables.appBarTextStyle),
           actions: null,
           leading: GestureDetector(
@@ -31,24 +42,44 @@ class _StockScreenState extends State<StockScreen> {
             ),
           ),
           centerTitle: null),
-      body: ExpandableTheme(
-        data: const ExpandableThemeData(
-          // iconColor: Variables.primaryColor,
-          useInkWell: true,
-        ),
-        child: ListView(
-          physics: const BouncingScrollPhysics(),
-          children: <Widget>[
-            SizedBox(height: 15.0),
-            Padding(
-              padding: EdgeInsets.only(left: 10.0),
-              child: BuildHeader(text: "ITEMS IN STOCK")
+      body: ListView(
+        physics: const BouncingScrollPhysics(),
+        children: <Widget>[
+          Container(
+            width: MediaQuery.of(context).size.width,
+            color: Colors.white,
+            padding: EdgeInsets.symmetric(horizontal: 15),
+            child: TabBar(
+              controller: _stockTabController,
+              indicatorColor: Colors.transparent,
+              labelColor: Variables.primaryColor,
+              isScrollable: true,
+              labelPadding: EdgeInsets.only(right: 45.0),
+              unselectedLabelColor: Color(0xFFCDCDCD),
+              tabs: <Widget>[
+                Tab(
+                  child: Text('Add Stock',
+                      style: TextStyle(
+                        fontSize: 18.0,
+                      )),
+                ),
+                Tab(
+                  child: Text('Items In Stock',
+                      style: TextStyle(
+                        fontSize: 18.0,
+                      )),
+                ),
+              ],
             ),
-            Card1(),
-            Card2(),
-            Card2(),
-          ],
-        ),
+          ),
+          Container(
+            height: MediaQuery.of(context).size.height,
+            width: double.infinity,
+            child: TabBarView(
+                controller: _stockTabController,
+                children: [AddStock(), StockItems()]),
+          )
+        ],
       ),
     );
 
@@ -288,7 +319,6 @@ class Card1 extends StatelessWidget {
                   );
                 },
               ),
-            
             ),
           ],
         ),

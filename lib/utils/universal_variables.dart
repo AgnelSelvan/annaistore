@@ -5,7 +5,7 @@ class Variables {
   static final Color blackColor = Color(0xff686868);
   static final Color lightGreyColor = Color(0xffFCFCFC);
   // static const Color primaryColor = Color(0xffFFC300);
-  static final Color primaryColor = Colors.yellow[800];
+  static final Color primaryColor = Colors.yellow[700];
   static const Color lightPrimaryColor = Color(0xffFFD95F);
 
   static final TextStyle drawerListTextStyle =

@@ -3,7 +3,6 @@ import 'package:annaistore/resources/auth_methods.dart';
 import 'package:annaistore/screens/bill_screen.dart';
 import 'package:annaistore/screens/navigation_screens/home_screen.dart';
 import 'package:annaistore/screens/navigation_screens/profile_screen.dart';
-import 'package:annaistore/screens/stock_screen.dart';
 import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';

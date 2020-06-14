@@ -1,12 +1,19 @@
+import 'package:annaistore/models/borrow.dart';
+import 'package:annaistore/models/category.dart';
+import 'package:annaistore/models/user.dart';
 import 'package:annaistore/resources/admin_methods.dart';
 import 'package:annaistore/utils/universal_variables.dart';
+import 'package:annaistore/utils/utilities.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
 import 'package:annaistore/widgets/dialogs.dart';
 import 'package:annaistore/widgets/header.dart';
 import 'package:annaistore/widgets/widgets.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:flutter_icons/flutter_icons.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../custom_loading.dart';
 
@@ -26,26 +33,43 @@ class _BorrowScreenState extends State<BorrowScreen> {
   TextEditingController _pincodeController = TextEditingController();
   TextEditingController _mobileNoController = TextEditingController();
   TextEditingController _gstinController = TextEditingController();
+  TextEditingController _priceController = TextEditingController();
+  TextEditingController _taxController = TextEditingController();
+  TextEditingController _totalPriceController = TextEditingController();
 
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   final _formKey = GlobalKey<FormState>();
+
   bool viewVisible = false;
   bool _checkBoxValue = false;
+
   String currentState;
   String currentUnit;
   String currentName;
   String currentProduct;
+
   var productList = new List();
   var qtyList = new List();
+  var taxList = new List<dynamic>();
+  var sellingRateList = new List<dynamic>();
+  int totalPrice;
+  int tax;
 
   List<String> state = [
     'Maharashtra',
     'Tamil Nadu',
   ];
 
+  User _selectedUser;
+
   @override
   void initState() {
     super.initState();
+  }
+
+  Future<Null> sendSms(var mobileNumber, var body) async {
+    var uri = 'sms:$mobileNumber?body=$body';
+    await launch(uri);
   }
 
   @override
@@ -133,12 +157,62 @@ class _BorrowScreenState extends State<BorrowScreen> {
                   Navigator.of(context).pop(DialogAction.Abort);
                   print(productList);
                   print(qtyList);
+                  print(taxList);
+                  print(sellingRateList);
+                  var sum = 0;
+                  tax = 0;
+                  totalPrice = 0;
+                  for (var i = 0; i < sellingRateList.length; i++) {
+                    sum += sellingRateList[i] * qtyList[i];
+                    tax += taxList[i];
+                  }
+                  totalPrice = (sum * (tax / 100)).round();
+                  setState(() {
+                    _priceController =
+                        TextEditingController(text: sum.toString());
+                    _taxController =
+                        TextEditingController(text: tax.toString());
+                    _totalPriceController =
+                        TextEditingController(text: totalPrice.toString());
+                  });
                 },
                 child: Text(
                   "Yes",
                   style: TextStyle(color: Variables.lightGreyColor),
                 ),
               )
+            ],
+          );
+        });
+  }
+
+  createAllreadyExistsDialog(BuildContext context) {
+    return showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            title: Text(
+              "Error",
+              style: TextStyle(color: Colors.red[200]),
+            ),
+            content: Container(
+              padding: EdgeInsets.symmetric(horizontal: 15),
+              decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
+              child: Text("Product Already Exists!"),
+            ),
+            actions: <Widget>[
+              FlatButton(
+                onPressed: () {
+                  Navigator.of(context).pop(DialogAction.Abort);
+                },
+                child: Text(
+                  "Ok",
+                  style: TextStyle(color: Colors.red[200]),
+                ),
+              ),
             ],
           );
         });
@@ -191,7 +265,10 @@ class _BorrowScreenState extends State<BorrowScreen> {
                               _checkBoxValue = value;
                             });
                           }),
-                      Text("Regular Customer")
+                      Text(
+                        "Regular Customer",
+                        style: TextStyle(fontSize: 16),
+                      )
                     ],
                   )
                 ],
@@ -216,12 +293,24 @@ class _BorrowScreenState extends State<BorrowScreen> {
     );
   }
 
-  buildCustomer() {
+  Widget buildCustomer() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         buildVisibility(),
         buildProductDropdown(),
+        SizedBox(
+          height: 20,
+        ),
+        buildPriceField(),
+        SizedBox(
+          height: 20,
+        ),
+        buildTaxField(),
+        SizedBox(
+          height: 20,
+        ),
+        buildTotalPriceField(),
         SizedBox(
           height: 20,
         ),
@@ -231,7 +320,75 @@ class _BorrowScreenState extends State<BorrowScreen> {
 
   GestureDetector buildSubmissionButton() {
     return GestureDetector(
-      onTap: addCustomerToDb,
+      onTap: () async {
+        User user;
+        if (_checkBoxValue) {
+          user = _selectedUser;
+        } else {
+          user = User(
+            uid: Utils.getDocId(),
+            name: _nameFieldController.text,
+            email: _emailFieldController.text,
+            address: _addressController.text,
+            state: currentState,
+            pincode: int.parse(_pincodeController.text),
+            mobileNo: int.parse(_mobileNoController.text),
+          );
+        }
+        Borrow borrow = Borrow(
+            borrowId: Utils.getDocId(),
+            user: user,
+            taxList: taxList,
+            productList: productList,
+            isRegularCustomer: _checkBoxValue,
+            priceList: sellingRateList,
+            totalPrice: totalPrice,
+            qtyList: qtyList);
+        _adminMethods.addBorrowToDb(borrow);
+
+        SnackBar snackbar = customSnackBar(
+            'Borrowed Details Added Successfullt!', Variables.blackColor);
+        _scaffoldKey.currentState.showSnackBar(snackbar);
+
+        var stringProduct = productList.join(", ");
+        var stringQty = qtyList.join(", ");
+        var stringPrice = sellingRateList.join(", ");
+        String stringBody =
+            'Product: $stringProduct \nQuantity: $stringQty \nPrice: $stringPrice \nTax: $tax \nTotal Price: $totalPrice \nPlease Give soon as possible!';
+
+        final Email email = Email(
+          body: stringBody,
+          subject: 'Give this ammount',
+          recipients: [_selectedUser.email],
+          // cc: ['cc@example.com'],
+          // bcc: ['bcc@example.com'],
+          // attachmentPaths: ['/path/to/attachment.zip'],
+          isHTML: false,
+        );
+
+        try {
+          await FlutterEmailSender.send(email);
+          print("SUCESS");
+        } catch (error) {
+          print(error);
+        }
+
+        if (!mounted) return;
+        
+        SnackBar snackBar =
+            customSnackBar('Email sent Successfull', Variables.blackColor);
+        _scaffoldKey.currentState.showSnackBar(snackBar);
+
+        setState(() {
+          _selectedUser = null;
+          productList = [];
+          _priceController.clear();
+          _taxController.clear();
+          _totalPriceController.clear();
+        });
+
+        await sendSms(_mobileNoController.text, stringBody);
+      },
       child: Icon(
         Icons.check_circle,
         size: 30,
@@ -369,7 +526,7 @@ class _BorrowScreenState extends State<BorrowScreen> {
 
   Widget buildProductList() {
     return Container(
-      height: 300,
+      height: 200,
       padding: EdgeInsets.all(10),
       child: ListView.builder(
           physics: BouncingScrollPhysics(),
@@ -382,9 +539,9 @@ class _BorrowScreenState extends State<BorrowScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
                     Text(productList[index]),
+                    Spacer(),
                     Text('(${qtyList[index]})'),
                     IconButton(
                         icon: Icon(
@@ -401,104 +558,156 @@ class _BorrowScreenState extends State<BorrowScreen> {
     );
   }
 
-  Widget buildQtyList() {
+  Widget buildProductDropdown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        productList.isEmpty ? Container() : buildProductList(),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.only(left: 10.0),
+              child: Text(
+                "Product",
+                style: Variables.inputLabelTextStyle,
+              ),
+            ),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 15),
+              decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.yellow[100]),
+              child: StreamBuilder<QuerySnapshot>(
+                  stream: _adminMethods.fetchAllProduct(),
+                  builder: (BuildContext context,
+                      AsyncSnapshot<QuerySnapshot> snapshot) {
+                    if (snapshot.hasError) {
+                      print(snapshot.error);
+                    } else {
+                      if (!snapshot.hasData) {
+                        return CustomCircularLoading();
+                      }
+
+                      return new DropdownButton<DocumentSnapshot>(
+                        dropdownColor: Colors.yellow[100],
+                        underline: SizedBox(),
+                        onChanged: (DocumentSnapshot newValue) async {
+                          setState(() async {
+                            currentProduct = newValue.data['name'];
+                            if (productList.contains(currentProduct)) {
+                              createAllreadyExistsDialog(context);
+                            } else {
+                              createAlertDialog(context, currentProduct);
+                              Category category = await _adminMethods
+                                  .getTaxFromHsn(newValue.data['hsn_code']);
+                              if (!productList.contains(currentProduct)) {
+                                taxList.add(category.tax);
+                                sellingRateList
+                                    .add(newValue.data['selling_rate']);
+                              }
+                            }
+                          });
+                          // print(currentProduct);
+                        },
+                        hint: currentProduct == null
+                            ? Text('Select Product')
+                            : Text(currentProduct),
+                        items: snapshot.data.documents
+                            .map((DocumentSnapshot document) {
+                          return new DropdownMenuItem<DocumentSnapshot>(
+                              value: document,
+                              child: new Text(
+                                document.data['name'],
+                              ));
+                        }).toList(),
+                      );
+                    }
+                    return CustomCircularLoading();
+                  }),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget buildPriceField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          "Quantity",
+          "Price",
           style: Variables.inputLabelTextStyle,
         ),
         Container(
           height: 48,
-          width: 100,
           padding: EdgeInsets.symmetric(horizontal: 15),
           decoration: BoxDecoration(
               color: Colors.yellow[100],
               borderRadius: BorderRadius.circular(8)),
           child: TextFormField(
             cursorColor: Variables.primaryColor,
-            validator: (value) {
-              if (value.isEmpty)
-                return "You cannot have an empty Purchase Price!";
-              if (value.length != 6) return "Enter valid pincode!";
-            },
             maxLines: 1,
-            keyboardType: TextInputType.number,
             style: Variables.inputTextStyle,
             decoration:
-                InputDecoration(border: InputBorder.none, hintText: 'Quantity'),
-            controller: _pincodeController,
+                InputDecoration(border: InputBorder.none, hintText: '1234'),
+            controller: _priceController,
           ),
         ),
       ],
     );
   }
 
-  Widget buildProductDropdown() {
+  Widget buildTaxField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        currentProduct == null ? Container() : buildProductList(),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.only(left: 10.0),
-                  child: Text(
-                    "Product",
-                    style: Variables.inputLabelTextStyle,
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 15),
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.yellow[100]),
-                  child: StreamBuilder<QuerySnapshot>(
-                      stream: _adminMethods.fetchAllProduct(),
-                      builder: (BuildContext context,
-                          AsyncSnapshot<QuerySnapshot> snapshot) {
-                        if (snapshot.hasError) {
-                          print(snapshot.error);
-                        } else {
-                          if (!snapshot.hasData) {
-                            return CustomCircularLoading();
-                          }
+        Text(
+          "Tax",
+          style: Variables.inputLabelTextStyle,
+        ),
+        Container(
+          height: 48,
+          padding: EdgeInsets.symmetric(horizontal: 15),
+          decoration: BoxDecoration(
+              color: Colors.yellow[100],
+              borderRadius: BorderRadius.circular(8)),
+          child: TextFormField(
+            cursorColor: Variables.primaryColor,
+            maxLines: 1,
+            style: Variables.inputTextStyle,
+            decoration:
+                InputDecoration(border: InputBorder.none, hintText: '1234'),
+            controller: _taxController,
+          ),
+        ),
+      ],
+    );
+  }
 
-                          return new DropdownButton<DocumentSnapshot>(
-                            dropdownColor: Colors.yellow[100],
-                            underline: SizedBox(),
-                            onChanged: (DocumentSnapshot newValue) {
-                              setState(() {
-                                currentProduct = newValue.data['name'];
-                                createAlertDialog(context, currentProduct);
-                              });
-                              // print(currentProduct);
-                            },
-                            hint: currentProduct == null
-                                ? Text('Select Name')
-                                : Text(currentProduct),
-                            items: snapshot.data.documents
-                                .map((DocumentSnapshot document) {
-                              return new DropdownMenuItem<DocumentSnapshot>(
-                                  value: document,
-                                  child: new Text(
-                                    document.data['name'],
-                                  ));
-                            }).toList(),
-                          );
-                        }
-                        return CustomCircularLoading();
-                      }),
-                ),
-              ],
-            ),
-            // buildQtyList()
-          ],
+  Widget buildTotalPriceField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          "Total Price",
+          style: Variables.inputLabelTextStyle,
+        ),
+        Container(
+          height: 48,
+          padding: EdgeInsets.symmetric(horizontal: 15),
+          decoration: BoxDecoration(
+              color: Colors.yellow[100],
+              borderRadius: BorderRadius.circular(8)),
+          child: TextFormField(
+            cursorColor: Variables.primaryColor,
+            maxLines: 1,
+            style: Variables.inputTextStyle,
+            decoration:
+                InputDecoration(border: InputBorder.none, hintText: '1234'),
+            controller: _totalPriceController,
+          ),
         ),
       ],
     );
@@ -524,82 +733,52 @@ class _BorrowScreenState extends State<BorrowScreen> {
               stream: _adminMethods.fetchAllCustomer(),
               builder: (BuildContext context,
                   AsyncSnapshot<QuerySnapshot> snapshot) {
+                print(snapshot.data.documents.length);
                 if (snapshot.hasError) {
                   print(snapshot.error);
                 } else {
-                  if (!snapshot.hasData) {
-                    return CustomCircularLoading();
+                  if (snapshot.hasData) {
+                    return new DropdownButton<DocumentSnapshot>(
+                      dropdownColor: Colors.yellow[100],
+                      underline: SizedBox(),
+                      onChanged: (DocumentSnapshot newValue) {
+                        setState(() {
+                          currentName = newValue.data['name'];
+                          _emailFieldController = TextEditingController(
+                              text: newValue.data['email']);
+                          _addressController = TextEditingController(
+                              text: newValue.data['address']);
+                          currentState = newValue.data['state'];
+                          _pincodeController = TextEditingController(
+                              text: newValue.data['pincode'].toString());
+                          _gstinController = TextEditingController(
+                              text: newValue.data['gstin']);
+                          _mobileNoController = TextEditingController(
+                              text: newValue.data['mobile_no'].toString());
+                          _selectedUser = User.fromMap(newValue.data);
+                          print(currentName);
+                        });
+                      },
+                      hint: currentName == null
+                          ? Text('Select Name')
+                          : Text(currentName),
+                      items: snapshot.data.documents
+                          .map((DocumentSnapshot document) {
+                        print(document);
+                        return new DropdownMenuItem<DocumentSnapshot>(
+                            value: document,
+                            child: new Text(
+                              document.data['name'],
+                            ));
+                      }).toList(),
+                    );
                   }
-
-                  return new DropdownButton<DocumentSnapshot>(
-                    dropdownColor: Colors.yellow[100],
-                    underline: SizedBox(),
-                    onChanged: (DocumentSnapshot newValue) {
-                      setState(() {
-                        currentName = newValue.data['name'];
-                        _emailFieldController =
-                            TextEditingController(text: newValue.data['email']);
-                        _addressController = TextEditingController(
-                            text: newValue.data['address']);
-                        currentState = newValue.data['state'];
-                        _pincodeController = TextEditingController(
-                            text: newValue.data['pincode']);
-                        _gstinController =
-                            TextEditingController(text: newValue.data['gstin']);
-                      });
-                    },
-                    hint: currentName == null
-                        ? Text('Select Name')
-                        : Text(currentName),
-                    items: snapshot.data.documents
-                        .map((DocumentSnapshot document) {
-                      return new DropdownMenuItem<DocumentSnapshot>(
-                          value: document,
-                          child: new Text(
-                            document.data['name'],
-                          ));
-                    }).toList(),
-                  );
                 }
                 return CustomCircularLoading();
               }),
         ),
       ],
     );
-  }
-
-  StreamBuilder buildUnitDropdownButton() {
-    return StreamBuilder<QuerySnapshot>(
-        stream: _adminMethods.fetchAllUnit(),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            print(snapshot.error);
-          } else {
-            if (!snapshot.hasData) {
-              return CustomCircularLoading();
-            }
-
-            return new DropdownButton<DocumentSnapshot>(
-              dropdownColor: Colors.yellow[100],
-              underline: SizedBox(),
-              onChanged: (DocumentSnapshot newValue) {
-                setState(() {
-                  currentUnit = newValue.data['unit'];
-                });
-              },
-              hint:
-                  currentUnit == null ? Text('Select Unit') : Text(currentUnit),
-              items: snapshot.data.documents.map((DocumentSnapshot document) {
-                return new DropdownMenuItem<DocumentSnapshot>(
-                    value: document,
-                    child: new Text(
-                      document.data['unit'],
-                    ));
-              }).toList(),
-            );
-          }
-          return CustomCircularLoading();
-        });
   }
 
   Column buildStateDropDown() {

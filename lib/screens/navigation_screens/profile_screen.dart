@@ -7,6 +7,7 @@ import 'package:annaistore/screens/admin/add_regular_customer.dart';
 import 'package:annaistore/screens/admin/add_sub_category.dart';
 import 'package:annaistore/screens/admin/add_unit.dart';
 import 'package:annaistore/screens/admin/borrow.dart';
+import 'package:annaistore/screens/admin/stock_screen.dart';
 import 'package:annaistore/screens/auth_screen.dart';
 import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/screens/edit_profile_screen.dart';
@@ -167,60 +168,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         tapBodyToCollapse: true,
                                       ),
                                       header: Padding(
-                                          padding: EdgeInsets.all(10),
-                                          child: ListTile(
-                                            leading: Icon(
-                                              Icons.add,
-                                              size: 16,
-                                              color: Variables.primaryColor,
-                                            ),
-                                            title: Text("Add",
-                                                style: TextStyle(
-                                                    color: Variables.blackColor,
-                                                    fontSize: 18,
-                                                    letterSpacing: 0.3,
-                                                    fontWeight:
-                                                        FontWeight.w400)),
-                                          )),
+                                        padding: EdgeInsets.all(10),
+                                        child: CustomTile(
+                                          text: "Add",
+                                          icon: Icons.add,
+                                          onTap: () {},
+                                        ),
+                                      ),
                                       expanded: Column(
                                         children: <Widget>[
-                                          ListTile(
-                                            leading: Icon(
-                                              FontAwesome.stack_overflow,
-                                              size: 16,
-                                              color: Variables.primaryColor,
-                                            ),
-                                            title: Text(
-                                              "Add Stock",
-                                              style: TextStyle(
-                                                  color: Variables.blackColor,
-                                                  fontSize: 18,
-                                                  letterSpacing: 0.3,
-                                                  fontWeight: FontWeight.w400),
-                                            ),
+                                          CustomTile(
+                                            text: "Add Stock",
+                                            icon: FontAwesome.stack_overflow,
+                                            onTap: () {
+                                              Navigator.push(
+                                                  context,
+                                                  BouncyPageRoute(
+                                                      widget: StockScreen()));
+                                            },
                                           ),
-                                          ListTile(
+                                          CustomTile(
+                                            text: "Add Category",
+                                            icon: FontAwesome.list_alt,
                                             onTap: () {
                                               Navigator.push(
                                                   context,
                                                   BouncyPageRoute(
                                                       widget: AddCategory()));
                                             },
-                                            leading: Icon(
-                                              FontAwesome.list_alt,
-                                              size: 16,
-                                              color: Variables.primaryColor,
-                                            ),
-                                            title: Text(
-                                              "Add Category",
-                                              style: TextStyle(
-                                                  color: Variables.blackColor,
-                                                  fontSize: 18,
-                                                  letterSpacing: 0.3,
-                                                  fontWeight: FontWeight.w400),
-                                            ),
                                           ),
-                                          ListTile(
+                                          CustomTile(
+                                            text: "Add Sub-Category",
+                                            icon: FontAwesome.list_alt,
                                             onTap: () {
                                               Navigator.push(
                                                   context,
@@ -228,156 +207,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                       widget:
                                                           AddSubCategory()));
                                             },
-                                            leading: Icon(
-                                              FontAwesome.list_alt,
-                                              size: 16,
-                                              color: Variables.primaryColor,
-                                            ),
-                                            title: Text(
-                                              "Add Sub-Category",
-                                              style: TextStyle(
-                                                  color: Variables.blackColor,
-                                                  fontSize: 18,
-                                                  letterSpacing: 0.3,
-                                                  fontWeight: FontWeight.w400),
-                                            ),
                                           ),
-                                          ListTile(
+                                          CustomTile(
+                                            text: "Add Product",
+                                            icon: FontAwesome.product_hunt,
                                             onTap: () {
                                               Navigator.push(
                                                   context,
                                                   BouncyPageRoute(
                                                       widget: AddProduct()));
                                             },
-                                            leading: Icon(
-                                              FontAwesome.product_hunt,
-                                              size: 16,
-                                              color: Variables.primaryColor,
-                                            ),
-                                            title: Text(
-                                              "Add Product",
-                                              style: TextStyle(
-                                                  color: Variables.blackColor,
-                                                  fontSize: 18,
-                                                  letterSpacing: 0.3,
-                                                  fontWeight: FontWeight.w400),
-                                            ),
                                           ),
-                                          ListTile(
+                                          CustomTile(
+                                            text: "Add Unit",
+                                            icon: Icons.ac_unit,
                                             onTap: () {
                                               Navigator.push(
                                                   context,
                                                   BouncyPageRoute(
                                                       widget: AddUnit()));
                                             },
-                                            leading: Icon(
-                                              Icons.ac_unit,
-                                              size: 16,
-                                              color: Variables.primaryColor,
-                                            ),
-                                            title: Text(
-                                              "Add Unit",
-                                              style: TextStyle(
-                                                  color: Variables.blackColor,
-                                                  fontSize: 18,
-                                                  letterSpacing: 0.3,
-                                                  fontWeight: FontWeight.w400),
-                                            ),
                                           ),
-                                          ListTile(
-                                            onTap: () {
-                                              Navigator.push(
-                                                  context,
-                                                  BouncyPageRoute(
-                                                      widget:
-                                                          RegularCustomer()));
-                                            },
-                                            leading: Icon(
-                                              Icons.report,
-                                              size: 16,
-                                              color: Variables.primaryColor,
-                                            ),
-                                            title: Text(
-                                              "Add Regular Customer",
-                                              style: TextStyle(
-                                                  color: Variables.blackColor,
-                                                  fontSize: 18,
-                                                  letterSpacing: 0.3,
-                                                  fontWeight: FontWeight.w400),
-                                            ),
-                                          ),
+                                          CustomTile(
+                                            text: "Add Regular Customer",
+                                            icon: Icons.report,
+                                            onTap: () {},
+                                          )
                                         ],
                                       ),
                                     )))),
-                        ListTile(
+                        CustomTile(
+                          text: "Edit Account",
+                          icon: Icons.edit,
                           onTap: () {
                             Navigator.push(
                                 context, BouncyPageRoute(widget: EditScreen()));
                           },
-                          leading: Icon(
-                            Icons.edit,
-                            size: 16,
-                            color: Variables.primaryColor,
-                          ),
-                          title: Text(
-                            "Edit Account",
-                            style: TextStyle(
-                                color: Variables.blackColor,
-                                fontSize: 18,
-                                letterSpacing: 0.3,
-                                fontWeight: FontWeight.w400),
-                          ),
                         ),
-                        ListTile(
+                        CustomTile(
+                          text: "Borrow",
+                          icon: FontAwesome.tasks,
                           onTap: () {
-                            Navigator.push(
-                                context, BouncyPageRoute(widget: BorrowScreen()));
+                            Navigator.push(context,
+                                BouncyPageRoute(widget: BorrowScreen()));
                           },
-                          leading: Icon(
-                            FontAwesome.tasks,
-                            size: 16,
-                            color: Variables.primaryColor,
-                          ),
-                          title: Text(
-                            "Borrow",
-                            style: TextStyle(
-                                color: Variables.blackColor,
-                                fontSize: 18,
-                                letterSpacing: 0.3,
-                                fontWeight: FontWeight.w400),
-                          ),
                         ),
-                        
-                        ListTile(
-                          leading: Icon(
-                            Icons.report,
-                            size: 16,
-                            color: Variables.primaryColor,
-                          ),
-                          title: Text(
-                            "Reports",
-                            style: TextStyle(
-                                color: Variables.blackColor,
-                                fontSize: 18,
-                                letterSpacing: 0.3,
-                                fontWeight: FontWeight.w400),
-                          ),
-                        ),
-                        ListTile(
-                          leading: Icon(
-                            Icons.chat,
-                            size: 16,
-                            color: Variables.primaryColor,
-                          ),
-                          title: Text(
-                            "Give your suggestion",
-                            style: TextStyle(
-                                color: Variables.blackColor,
-                                fontSize: 18,
-                                letterSpacing: 0.3,
-                                fontWeight: FontWeight.w400),
-                          ),
-                        ),
+                        CustomTile(text: "Reports", icon: Icons.report),
+                        CustomTile(
+                            text: "Give your suggestion", icon: Icons.chat),
                       ],
                     ),
                   ),
@@ -386,6 +263,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class CustomTile extends StatelessWidget {
+  final String text;
+  final IconData icon;
+  final GestureTapCallback onTap;
+
+  const CustomTile({@required this.text, @required this.icon, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      onTap: onTap,
+      leading: Icon(
+        icon,
+        size: 16,
+        color: Variables.primaryColor,
+      ),
+      title: Text(
+        text,
+        style: TextStyle(
+            color: Variables.blackColor,
+            fontSize: 18,
+            letterSpacing: 0.3,
+            fontWeight: FontWeight.w400),
       ),
     );
   }

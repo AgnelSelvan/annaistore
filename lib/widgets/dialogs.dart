@@ -40,11 +40,8 @@ class Dialogs {
     return (action != null) ? action : DialogAction.Abort;
   }
 
-  static Future<DialogAction> textFieldDialog(
-      BuildContext context,
-      String title,
-      GestureTapCallback yesOnTap,
-      String currentProduct) async {
+  static Future<DialogAction> textFieldDialog(BuildContext context,
+      String title, GestureTapCallback yesOnTap, String currentProduct) async {
     TextEditingController qtyController = TextEditingController();
 
     final action = await showDialog(
@@ -108,6 +105,44 @@ class Dialogs {
             ],
           );
         });
+    return (action != null) ? action : DialogAction.Abort;
+  }
+
+  static Future<DialogAction> okDialog(BuildContext context, String title,
+      String body, Color titleColor) async {
+    final action = await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            title: Text(
+              title,
+              style: TextStyle(color: titleColor),
+            ),
+            content: Container(
+              padding: EdgeInsets.symmetric(horizontal: 15),
+              decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
+              child: Text(
+                body,
+                style: TextStyle(color: Variables.blackColor),
+              ),
+            ),
+            actions: <Widget>[
+              FlatButton(
+                onPressed: () {
+                  Navigator.of(context).pop(DialogAction.Abort);
+                },
+                child: Text(
+                  "Ok",
+                  style: TextStyle(color: titleColor),
+                ),
+              ),
+            ],
+          );
+        });
+
     return (action != null) ? action : DialogAction.Abort;
   }
 }

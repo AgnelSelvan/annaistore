@@ -29,6 +29,6 @@ class Product {
     this.purchaseRate = mapData['purchase_rate'];
     this.sellingRate = mapData['selling_rate'];
     this.hsnCode = mapData['hsn_code'];
-    this.unit = mapData['unit'];
+    this.unit = mapData['unit']; 
   }
 }

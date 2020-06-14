@@ -103,6 +103,23 @@ class _RegularCustomerState extends State<RegularCustomer> {
               int.parse(_pincodeController.text),
               int.parse(_mobileNoController.text),
               _gstinController.text);
+          SnackBar snackbar =
+              customSnackBar('Added Successfully!', Variables.blackColor);
+          _scaffoldKey.currentState.showSnackBar(snackbar);
+          setState(() {
+            _nameFieldController.clear();
+            _emailFieldController.clear();
+            _addressController.clear();
+            currentState = null;
+            _pincodeController.clear();
+            _mobileNoController.clear();
+            _gstinController.clear();
+          });
+        }
+        else{
+          SnackBar snackbar =
+              customSnackBar('Data Already Exists!', Colors.red[200]);
+          _scaffoldKey.currentState.showSnackBar(snackbar);
         }
       });
     }

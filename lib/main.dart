@@ -3,9 +3,11 @@ import 'package:annaistore/screens/auth_screen.dart';
 import 'package:annaistore/screens/root_screen.dart';
 import 'package:annaistore/theme/theme_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 void main() {
+  // debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
   runApp(MyApp());
 }
 

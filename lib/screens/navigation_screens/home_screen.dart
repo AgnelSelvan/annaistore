@@ -1,20 +1,15 @@
-import 'package:annaistore/models/user.dart';
+
 import 'package:annaistore/resources/auth_methods.dart';
-import 'package:annaistore/screens/bill_screen.dart';
 import 'package:annaistore/screens/canvas_screen.dart';
 import 'package:annaistore/screens/map_screen.dart';
-import 'package:annaistore/screens/stock_screen.dart';
 import 'package:annaistore/screens/thread_screen.dart';
 import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
-import 'package:annaistore/widgets/custom_divider.dart';
 import 'package:annaistore/widgets/custom_drawer.dart';
 import 'package:annaistore/widgets/map.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_icons/flutter_icons.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -81,26 +76,26 @@ class _HomeScreenState extends State<HomeScreen>
             controller: _tabController,
             indicatorColor: Colors.transparent,
             labelColor: Variables.primaryColor,
-            isScrollable: true,
+            isScrollable: false,
             labelPadding: EdgeInsets.only(right: 45.0),
             unselectedLabelColor: Color(0xFFCDCDCD),
             tabs: [
               Tab(
                 child: Text('Threads',
                     style: TextStyle(
-                      fontSize: 21.0,
+                      fontSize: 18.0,
                     )),
               ),
               Tab(
                 child: Text('Paper Canvas',
                     style: TextStyle(
-                      fontSize: 21.0,
+                      fontSize: 18.0,
                     )),
               ),
               Tab(
                 child: Text('Rolls',
                     style: TextStyle(
-                      fontSize: 21.0,
+                      fontSize: 18.0,
                     )),
               )
             ]),

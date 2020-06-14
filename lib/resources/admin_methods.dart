@@ -1,9 +1,12 @@
 import 'package:annaistore/constants/strings.dart';
+import 'package:annaistore/models/borrow.dart';
 import 'package:annaistore/models/category.dart';
 import 'package:annaistore/models/product.dart';
+import 'package:annaistore/models/stock.dart';
 import 'package:annaistore/models/sub-category.dart';
 import 'package:annaistore/models/unit.dart';
 import 'package:annaistore/models/user.dart';
+import 'package:annaistore/utils/utilities.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 
@@ -16,7 +19,9 @@ class AdminMethods {
   CollectionReference _subCategoryCollection =
       _firestore.collection('sub_categories');
   CollectionReference _productCollection = _firestore.collection('product');
-  CollectionReference _customerCollection = _firestore.collection('customer');
+  CollectionReference _customerCollection = _firestore.collection('customers');
+  CollectionReference _borrowsCollection = _firestore.collection('borrows');
+  CollectionReference _stocksCollection = _firestore.collection('stocks');
 
   Future<void> addSymbolToDb(String formalName, String symbol) async {
     Unit unit = Unit(formalName: formalName, unit: symbol, unitId: symbol);
@@ -170,5 +175,72 @@ class AdminMethods {
 
   Stream<QuerySnapshot> fetchAllCustomer() {
     return _customerCollection.snapshots();
+  }
+
+  Future<Category> getTaxFromHsn(String hsnCode) async {
+    QuerySnapshot docs = await _categoryCollection
+        .where('hsn_code', isEqualTo: hsnCode)
+        .getDocuments();
+    List<DocumentSnapshot> doc = docs.documents;
+    print('doc:${doc[0].data["tax"]}');
+
+    Category category = Category.fromMap(doc[0].data);
+
+    return category;
+  }
+
+  Future<void> addBorrowToDb(Borrow borrow) async {
+    String docId = _borrowsCollection.document().documentID;
+    await _borrowsCollection.document(docId).setData(borrow.toMap(borrow));
+  }
+
+  Future<void> addStockToDb(String productId, String productName, String unitId,
+      String unitName, int qty) async {
+    String docId = Utils.getDocId();
+    Stock stock = Stock(
+        stockId: docId,
+        productId: productId,
+        productName: productName,
+        unitId: unitId,
+        unitName: unitName,
+        qty: qty);
+    _stocksCollection.document(docId).setData(stock.toMap(stock));
+  }
+
+  Future<bool> isStockExists(String productId, String unitId) async {
+    QuerySnapshot docs = await _stocksCollection
+        .where('product_id', isEqualTo: productId)
+        .where('unit_id', isEqualTo: unitId)
+        .getDocuments();
+    return docs.documents.length == 0 ? false : true;
+  }
+
+  Future<Stock> getStockDetails(String productId, String unitId) async {
+    Stock stock;
+    print(productId);
+    print(unitId);
+    QuerySnapshot docs = await _stocksCollection
+        .where('product_id', isEqualTo: productId)
+        .where('unit_id', isEqualTo: unitId)
+        .getDocuments();
+    List<DocumentSnapshot> doc = docs.documents;
+    print(doc.length);
+    if (doc.length == 1) {
+      print("Yes");
+      stock = Stock.fromMap(doc[0].data);
+    }
+
+    return stock;
+  }
+
+  Future<void> updateStockById(String stockId, int qty) async {
+    await _stocksCollection.document(stockId).updateData({'quantity': qty});
+  }
+
+  Stream<QuerySnapshot> getStockDetailsByProductId(String productId) {
+    Stream<QuerySnapshot> docs =
+        _stocksCollection.where('product_id', isEqualTo: productId).snapshots();
+    print(docs.length);
+    return docs;
   }
 }

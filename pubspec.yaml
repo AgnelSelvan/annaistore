@@ -37,6 +37,9 @@ dependencies:
   google_sign_in:
   cached_network_image:
   firebase_core:
+  flutter_email_sender:
+  url_launcher:
+  # flutter_sms: ^2.0.1+2
 
 dev_dependencies:
   flutter_test:
