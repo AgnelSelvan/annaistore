@@ -55,6 +55,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     print("currentUser: $currentUser");
   }
 
+  signOut() async {
+    final bool isSignOut = await _authMethods.signOut();
+    if (isSignOut) {
+      Navigator.pushAndRemoveUntil(
+          context, BouncyPageRoute(widget: AuthScreen()), (route) => false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,9 +80,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onPressed: () async {
                 await Dialogs.yesAbortDialog(
                     context, "Logout", "Are you sure want to logout?", () {
-                  _authMethods.signOut();
-                  Navigator.push(
-                      context, BouncyPageRoute(widget: AuthScreen()));
+                  signOut();
                 });
               })
         ],
@@ -107,11 +113,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       if (snapshot.hasData) {
                         return Column(
                           children: <Widget>[
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(20),
-                              child: CachedNetworkImage(
-                                  imageUrl: currentUser.profilePhoto),
-                            ),
+                            currentUser.profilePhoto == null
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(120),
+                                    child: Container(
+                                      width: 100,
+                                      child: Image.asset(
+                                          'assets/images/unknown_user.jpeg'),
+                                    ))
+                                : ClipRRect(
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: CachedNetworkImage(
+                                        imageUrl: currentUser.profilePhoto),
+                                  ),
                             SizedBox(height: 10),
                             Text(
                               currentUser.name,

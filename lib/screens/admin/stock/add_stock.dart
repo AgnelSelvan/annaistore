@@ -63,7 +63,7 @@ class _AddStockState extends State<AddStock> {
           selectedProduct.id,
           selectedProduct.name,
           selectedUnit.unitId,
-          selectedProduct.name,
+          selectedUnit.unit,
           int.parse(_qtyController.text));
     } else {
       Stock stock;

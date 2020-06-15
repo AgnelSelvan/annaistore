@@ -2,8 +2,11 @@ import 'package:annaistore/resources/auth_methods.dart';
 import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/screens/root_screen.dart';
 import 'package:annaistore/utils/universal_variables.dart';
+import 'package:annaistore/widgets/dialogs.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:provider/provider.dart';
 
 class AuthScreen extends StatefulWidget {
   @override
@@ -24,6 +27,11 @@ class AuthScreenState extends State<AuthScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   bool isLoginPressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -184,7 +192,22 @@ class AuthScreenState extends State<AuthScreen> {
                         RaisedButton(
                           color: Variables.primaryColor,
                           textColor: Colors.white,
-                          onPressed: () {},
+                          onPressed: () {
+                            _authMethods
+                                .signIn(emailController.text,
+                                    passwordController.text)
+                                .then((bool isSignedIn) {
+                              if (isSignedIn) {
+                                Navigator.pushReplacement(context,
+                                    MaterialPageRoute(builder: (context) {
+                                  return RootScreen();
+                                }));
+                              } else {
+                                Dialogs.okDialog(context, "Error",
+                                    "Error Signing In", Colors.red[200]);
+                              }
+                            });
+                          },
                           child: Text(
                             "LOGIN",
                             style: TextStyle(
@@ -213,7 +236,7 @@ class AuthScreenState extends State<AuthScreen> {
                           color: Color(0xffE3E3E3),
                           elevation: 0,
                           onPressed: () {
-                            performLogin();
+                            performGoogleLogin();
                           },
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -246,7 +269,7 @@ class AuthScreenState extends State<AuthScreen> {
                 ),
                 SizedBox(width: 10),
                 GestureDetector(
-                    onTap: () {
+                    onTap: () async {
                       setState(() {
                         isNew = true;
                       });
@@ -293,7 +316,26 @@ class AuthScreenState extends State<AuthScreen> {
                     SizedBox(height: 20),
                     RaisedButton(
                       color: Variables.primaryColor,
-                      onPressed: null,
+                      onPressed: () {
+                        _authMethods
+                            .signUp(
+                                emailController.text, passwordController.text)
+                            .then((FirebaseUser user) {
+                          _authMethods.authenticateUser(user).then((isNewUser) {
+                            if (isNewUser) {
+                              _authMethods
+                                  .addUserDataToDb(
+                                      user, userNameController.text)
+                                  .then((value) {
+                                setState(() {
+                                  userNameController.clear();
+                                  isNew = false;
+                                });
+                              });
+                            }
+                          });
+                        });
+                      },
                       child: Text(
                         "SIGN UP",
                         style: TextStyle(
@@ -346,19 +388,19 @@ class AuthScreenState extends State<AuthScreen> {
             fontWeight: FontWeight.bold,
             letterSpacing: 1.2),
       ),
-      onPressed: () => performLogin(),
+      onPressed: () => performGoogleLogin(),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
     );
   }
 
-  void performLogin() {
+  void performGoogleLogin() {
     print("tring to perform login");
 
     setState(() {
       isLoginPressed = true;
     });
 
-    _authMethods.signIn().then((FirebaseUser user) {
+    _authMethods.googleSignIn().then((FirebaseUser user) {
       if (user != null) {
         authenticateUser(user);
       } else {
@@ -374,7 +416,7 @@ class AuthScreenState extends State<AuthScreen> {
       });
 
       if (isNewUser) {
-        _authMethods.addDataToDb(user).then((value) {
+        _authMethods.addGoogleDataToDb(user).then((value) {
           Navigator.pushReplacement(context,
               MaterialPageRoute(builder: (context) {
             return RootScreen();

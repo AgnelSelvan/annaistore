@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:annaistore/resources/auth_methods.dart';
 import 'package:annaistore/screens/auth_screen.dart';
 import 'package:annaistore/screens/root_screen.dart';
@@ -6,8 +8,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+void _setTargetPlatformForDesktop() {
+  // No need to handle macOS, as it has now been added to TargetPlatform.
+  if (Platform.isLinux || Platform.isWindows) {
+    debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
+  }
+}
+
 void main() {
-  // debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
+  debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
   runApp(MyApp());
 }
 
@@ -33,10 +42,9 @@ class _MyAppState extends State<MyApp> {
         home: FutureBuilder(
           future: _authMethods.getCurrentUser(),
           builder: (context, AsyncSnapshot<FirebaseUser> snapshot) {
-            if(snapshot.hasData){
+            if (snapshot.hasData) {
               return RootScreen();
-            }
-            else{
+            } else {
               return AuthScreen();
             }
           },

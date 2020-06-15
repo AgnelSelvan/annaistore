@@ -19,7 +19,32 @@ class AuthMethods {
     return currentUser;
   }
 
-  Future<FirebaseUser> signIn() async {
+  Future<User> getUserDetails() async {
+    FirebaseUser currentUser = await getCurrentUser();
+
+    DocumentSnapshot documentSnapshot =
+        await _userCollection.document(currentUser.uid).get();
+    return User.fromMap(documentSnapshot.data);
+  }
+
+  Future<FirebaseUser> signUp(String email, String password) async {
+    AuthResult result = await _auth.createUserWithEmailAndPassword(
+        email: email, password: password);
+    FirebaseUser user = result.user;
+    return user;
+  }
+
+  Future<bool> signIn(String email, String password) async {
+    try {
+      AuthResult result = await _auth.signInWithEmailAndPassword(
+          email: email, password: password);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<FirebaseUser> googleSignIn() async {
     GoogleSignInAccount _signInAccount = await _googleSignIn.signIn();
     GoogleSignInAuthentication _signInAuthentication =
         await _signInAccount.authentication;
@@ -44,13 +69,31 @@ class AuthMethods {
     return docs.length == 0 ? true : false;
   }
 
-  Future<void> addDataToDb(FirebaseUser currentUser) async {
+  Future<void> addGoogleDataToDb(FirebaseUser currentUser) async {
     String username = Utils.getUsername(currentUser.email);
 
     User user = User(
         email: currentUser.email,
         uid: currentUser.uid,
         name: currentUser.displayName,
+        profilePhoto: currentUser.photoUrl,
+        username: username,
+        role: USER_STRING);
+
+    _firestore
+        .collection(USERS_COLLECTION)
+        .document(currentUser.uid)
+        .setData(user.toMap(user));
+  }
+
+  Future<void> addUserDataToDb(
+      FirebaseUser currentUser, String username) async {
+    String displayName = Utils.getUsername(currentUser.email);
+
+    User user = User(
+        email: currentUser.email,
+        uid: currentUser.uid,
+        name: displayName,
         profilePhoto: currentUser.photoUrl,
         username: username,
         role: USER_STRING);
@@ -73,8 +116,13 @@ class AuthMethods {
     }
   }
 
-  Future<void> signOut() async {
-    await _googleSignIn.signOut();
-    return _auth.signOut();
+  Future<bool> signOut() async {
+    try {
+      await _googleSignIn.signOut();
+      await _auth.signOut();
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 }

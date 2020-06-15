@@ -374,7 +374,7 @@ class _BorrowScreenState extends State<BorrowScreen> {
         }
 
         if (!mounted) return;
-        
+
         SnackBar snackBar =
             customSnackBar('Email sent Successfull', Variables.blackColor);
         _scaffoldKey.currentState.showSnackBar(snackBar);
@@ -737,6 +737,9 @@ class _BorrowScreenState extends State<BorrowScreen> {
                 if (snapshot.hasError) {
                   print(snapshot.error);
                 } else {
+                  if (!snapshot.hasData) {
+                    return CustomCircularLoading();
+                  }
                   if (snapshot.hasData) {
                     return new DropdownButton<DocumentSnapshot>(
                       dropdownColor: Colors.yellow[100],

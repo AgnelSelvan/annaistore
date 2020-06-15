@@ -124,6 +124,15 @@ class AdminMethods {
         purchaseRate: purchaseRate,
         sellingRate: sellingRate);
     _productCollection.document(docId).setData(product.toMap(product));
+    print('Sucessfull');
+    String unitName = await getUnitNameByUnitId(unit);
+    addStockToDb(docId, name, unit, unitName, 0);
+  }
+
+  Future<String> getUnitNameByUnitId(String unitId) async {
+    DocumentSnapshot doc = await _unitCollection.document(unitId).get();
+    Unit unit = Unit.fromMap(doc.data);
+    return unit.unit;
   }
 
   Future<bool> isProductExists(String name) async {
@@ -240,7 +249,11 @@ class AdminMethods {
   Stream<QuerySnapshot> getStockDetailsByProductId(String productId) {
     Stream<QuerySnapshot> docs =
         _stocksCollection.where('product_id', isEqualTo: productId).snapshots();
-    print(docs.length);
+    // print(docs.length);
     return docs;
+  }
+
+  Stream<QuerySnapshot> getProductFromHsn(String hsnCode) {
+    return _productCollection.where('hsn_code', isEqualTo: hsnCode).snapshots();
   }
 }
