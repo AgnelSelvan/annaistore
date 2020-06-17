@@ -9,14 +9,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 void _setTargetPlatformForDesktop() {
-  // No need to handle macOS, as it has now been added to TargetPlatform.
   if (Platform.isLinux || Platform.isWindows) {
     debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
   }
 }
 
 void main() {
-  debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
+  _setTargetPlatformForDesktop();
   runApp(MyApp());
 }
 

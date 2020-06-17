@@ -1,5 +1,9 @@
-
+import 'package:annaistore/flutter_barcode_scanner.dart';
+import 'package:annaistore/models/user.dart';
+import 'package:annaistore/resources/admin_methods.dart';
 import 'package:annaistore/resources/auth_methods.dart';
+import 'package:annaistore/screens/admin/add_product.dart';
+import 'package:annaistore/screens/admin/product_details.dart';
 import 'package:annaistore/screens/canvas_screen.dart';
 import 'package:annaistore/screens/map_screen.dart';
 import 'package:annaistore/screens/thread_screen.dart';
@@ -10,6 +14,10 @@ import 'package:annaistore/widgets/custom_drawer.dart';
 import 'package:annaistore/widgets/map.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_icons/flutter_icons.dart';
+
+AdminMethods _adminMethods = AdminMethods();
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -22,17 +30,21 @@ class _HomeScreenState extends State<HomeScreen>
   TabController _tabController;
   final AuthMethods _authMethods = AuthMethods();
   String currentUserId;
+  User currentUser;
+
+  getCurrentUserDetails() async {
+    FirebaseUser user = await _authMethods.getCurrentUser();
+    currentUserId = user.uid;
+    currentUser = await _authMethods.getUserDetailsById(currentUserId);
+    print('user:${currentUser.role}');
+  }
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
 
-    _authMethods.getCurrentUser().then((FirebaseUser user) {
-      setState(() {
-        currentUserId = user.uid;
-      });
-    });
+    getCurrentUserDetails();
   }
 
   @override
@@ -42,7 +54,14 @@ class _HomeScreenState extends State<HomeScreen>
       appBar: CustomAppBar(
         bgColor: Colors.white,
         title: Text("Annai Store", style: Variables.appBarTextStyle),
-        actions: null,
+        actions: [
+          IconButton(
+              icon: Icon(
+                FontAwesome.qrcode,
+                color: Variables.primaryColor,
+              ),
+              onPressed: () => scanQR())
+        ],
         leading: IconButton(
             icon: Icon(
               Icons.menu,
@@ -58,6 +77,38 @@ class _HomeScreenState extends State<HomeScreen>
         child: buildBody(context),
       ),
     );
+  }
+
+  Future<void> scanQR() async {
+    String barcodeScanRes;
+    // Platform messages may fail, so we use a try/catch PlatformException.
+    try {
+      barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+          "#ff6666", "Cancel", true, ScanMode.QR);
+      print(barcodeScanRes);
+    } on PlatformException {
+      barcodeScanRes = 'Failed to get platform version.';
+    }
+
+    if (!mounted) return;
+    final bool isQrExists = await _adminMethods.isQrExists(barcodeScanRes);
+    if (isQrExists) {
+      Navigator.push(
+          context,
+          BouncyPageRoute(
+              widget: ProductDetails(
+            qrCode: barcodeScanRes,
+          )));
+    } else if (!isQrExists) {
+      currentUser.role == 'admin'
+          ? Navigator.push(
+              context,
+              BouncyPageRoute(
+                  widget: AddProduct(
+                qrCode: barcodeScanRes,
+              )))
+          : Text("No Items");
+    }
   }
 
   ListView buildBody(BuildContext context) {

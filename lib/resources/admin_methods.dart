@@ -113,7 +113,7 @@ class AdminMethods {
   }
 
   Future<void> addProductToDb(String code, String name, int purchaseRate,
-      int sellingRate, String hsnCode, String unit) async {
+      int sellingRate, String hsnCode, String unit, int unitQty) async {
     String docId = _productCollection.document().documentID;
     Product product = Product(
         id: docId,
@@ -122,11 +122,10 @@ class AdminMethods {
         hsnCode: hsnCode,
         unit: unit,
         purchaseRate: purchaseRate,
-        sellingRate: sellingRate);
+        sellingRate: sellingRate,
+        unitQty: unitQty);
     _productCollection.document(docId).setData(product.toMap(product));
-    print('Sucessfull');
-    String unitName = await getUnitNameByUnitId(unit);
-    addStockToDb(docId, name, unit, unitName, 0);
+    addStockToDb(docId, code, 0);
   }
 
   Future<String> getUnitNameByUnitId(String unitId) async {
@@ -135,10 +134,10 @@ class AdminMethods {
     return unit.unit;
   }
 
-  Future<bool> isProductExists(String name) async {
+  Future<bool> isProductExists(String code) async {
     try {
       QuerySnapshot docs = await _productCollection
-          .where('name', isEqualTo: name)
+          .where('code', isEqualTo: code)
           .getDocuments();
 
       List<DocumentSnapshot> doc = docs.documents;
@@ -203,34 +202,29 @@ class AdminMethods {
     await _borrowsCollection.document(docId).setData(borrow.toMap(borrow));
   }
 
-  Future<void> addStockToDb(String productId, String productName, String unitId,
-      String unitName, int qty) async {
+  Future<void> addStockToDb(
+      String productId, String productCode, int qty) async {
     String docId = Utils.getDocId();
     Stock stock = Stock(
         stockId: docId,
         productId: productId,
-        productName: productName,
-        unitId: unitId,
-        unitName: unitName,
+        productCode: productCode,
         qty: qty);
     _stocksCollection.document(docId).setData(stock.toMap(stock));
   }
 
-  Future<bool> isStockExists(String productId, String unitId) async {
+  Future<bool> isStockExists(String productId) async {
     QuerySnapshot docs = await _stocksCollection
         .where('product_id', isEqualTo: productId)
-        .where('unit_id', isEqualTo: unitId)
         .getDocuments();
     return docs.documents.length == 0 ? false : true;
   }
 
-  Future<Stock> getStockDetails(String productId, String unitId) async {
+  Future<Stock> getStockDetails(String productId) async {
     Stock stock;
     print(productId);
-    print(unitId);
     QuerySnapshot docs = await _stocksCollection
         .where('product_id', isEqualTo: productId)
-        .where('unit_id', isEqualTo: unitId)
         .getDocuments();
     List<DocumentSnapshot> doc = docs.documents;
     print(doc.length);
@@ -255,5 +249,22 @@ class AdminMethods {
 
   Stream<QuerySnapshot> getProductFromHsn(String hsnCode) {
     return _productCollection.where('hsn_code', isEqualTo: hsnCode).snapshots();
+  }
+
+  Future<bool> isQrExists(String qrCode) async {
+    QuerySnapshot docs = await _productCollection
+        .where('code', isEqualTo: qrCode)
+        .getDocuments();
+
+    return docs.documents.length == 0 ? false : true;
+  }
+
+  Future<Product> getProductDetailsByQrCode(String qrCode) async {
+    QuerySnapshot docs = await _productCollection
+        .where('code', isEqualTo: qrCode)
+        .getDocuments();
+    List<DocumentSnapshot> doc = docs.documents;
+    Product product = Product.fromMap(doc[0].data);
+    return product;
   }
 }

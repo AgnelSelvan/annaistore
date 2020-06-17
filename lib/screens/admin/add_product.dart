@@ -15,7 +15,8 @@ import 'package:flutter_icons/flutter_icons.dart';
 AdminMethods _adminMethods = AdminMethods();
 
 class AddProduct extends StatefulWidget {
-  AddProduct({Key key}) : super(key: key);
+  final String qrCode;
+  AddProduct({this.qrCode});
 
   @override
   _AddProductState createState() => _AddProductState();
@@ -26,16 +27,21 @@ class _AddProductState extends State<AddProduct> {
   TextEditingController _nameFieldController = TextEditingController();
   TextEditingController _purchasePriceController = TextEditingController();
   TextEditingController _sellingPriceFieldController = TextEditingController();
+  TextEditingController _unitQtyFieldController = TextEditingController();
 
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   final _formKey = GlobalKey<FormState>();
-  bool viewVisible = false;
+  bool viewVisible = true;
+  bool isLoading = false;
   String currenthsnCode;
   String currentUnit;
 
   @override
   void initState() {
     super.initState();
+    if (widget.qrCode != null) {
+      _codeFieldController = TextEditingController(text: widget.qrCode);
+    }
   }
 
   @override
@@ -64,7 +70,12 @@ class _AddProductState extends State<AddProduct> {
               Container(
                 padding: EdgeInsets.only(left: 5),
                 color: Colors.white,
-                child: buildSymbolCard(),
+                child: Stack(
+                  children: [
+                    isLoading ? CustomCircularLoading() : Container(),
+                    buildSymbolCard(),
+                  ],
+                ),
               ),
             ],
           ),
@@ -87,35 +98,50 @@ class _AddProductState extends State<AddProduct> {
   }
 
   addProductToDb() {
-    _adminMethods.isProductExists(_nameFieldController.text).then((value) {
+    setState(() {
+      isLoading = true;
+    });
+    _adminMethods.isProductExists(_codeFieldController.text).then((value) {
+      print(value);
       if (!value) {
-        var purchasePrice = int.parse(_purchasePriceController.text);
-        var sellingPrice = int.parse(_sellingPriceFieldController.text);
-        _adminMethods.addProductToDb(
-            _codeFieldController.text,
-            _nameFieldController.text,
-            purchasePrice,
-            sellingPrice,
-            currenthsnCode,
-            currentUnit);
+        try {
+          var purchasePrice = int.parse(_purchasePriceController.text);
+          var sellingPrice = int.parse(_sellingPriceFieldController.text);
+          int unitQty = _unitQtyFieldController.text == ''
+              ? 0
+              : int.parse(_unitQtyFieldController.text);
+          print(unitQty);
+          _adminMethods.addProductToDb(
+              _codeFieldController.text,
+              _nameFieldController.text,
+              purchasePrice,
+              sellingPrice,
+              currenthsnCode,
+              currentUnit,
+              unitQty);
 
-        SnackBar snackbar =
-            customSnackBar("Added Successfully", Variables.blackColor);
-        _scaffoldKey.currentState.showSnackBar(snackbar);
-
-        setState(() {
-          _nameFieldController.clear();
-          _codeFieldController.clear();
-          _purchasePriceController.clear();
-          _sellingPriceFieldController.clear();
-          currenthsnCode = null;
-          currentUnit = null;
-        });
+          SnackBar snackbar =
+              customSnackBar("Added Successfully", Variables.blackColor);
+          _scaffoldKey.currentState.showSnackBar(snackbar);
+          setState(() {
+            _nameFieldController.clear();
+            _codeFieldController.clear();
+            _purchasePriceController.clear();
+            _sellingPriceFieldController.clear();
+            currenthsnCode = null;
+            currentUnit = null;
+          });
+        } catch (e) {
+          print(e);
+        }
       } else {
         SnackBar snackbar = customSnackBar(
-            "${_nameFieldController.text} Already Exists", Colors.red);
+            "${_codeFieldController.text} Already Exists", Colors.red);
         _scaffoldKey.currentState.showSnackBar(snackbar);
       }
+    });
+    setState(() {
+      isLoading = false;
     });
   }
 
@@ -360,6 +386,20 @@ class _AddProductState extends State<AddProduct> {
             SizedBox(
               height: 20,
             ),
+            currentUnit == 'roll' ||
+                    currentUnit == 'box' ||
+                    currentUnit == 'Bundle' ||
+                    currentUnit == 'Litre'
+                ? buildUnitQtyDropDown()
+                : Container(),
+            currentUnit == 'roll' ||
+                    currentUnit == 'box' ||
+                    currentUnit == 'Bundle' ||
+                    currentUnit == 'Litre'
+                ? SizedBox(
+                    height: 20,
+                  )
+                : Container(),
             buildPurchasePriceField(),
             SizedBox(
               height: 20,
@@ -370,6 +410,43 @@ class _AddProductState extends State<AddProduct> {
             ),
           ],
         )));
+  }
+
+  Widget buildUnitQtyDropDown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          currentUnit == 'roll'
+              ? 'meter'
+              : currentUnit == 'box'
+                  ? 'Threads'
+                  : currentUnit == 'Bundle'
+                      ? 'Bundle Qty'
+                      : currentUnit == 'Litre' ? 'Litre' : 'Qty',
+          style: Variables.inputLabelTextStyle,
+        ),
+        Container(
+          height: 48,
+          padding: EdgeInsets.symmetric(horizontal: 15),
+          decoration: BoxDecoration(
+              color: Colors.yellow[100],
+              borderRadius: BorderRadius.circular(8)),
+          child: TextFormField(
+            cursorColor: Variables.primaryColor,
+            validator: (value) {
+              if (value.isEmpty) return "You cannot have an empty unit Qty!";
+            },
+            maxLines: 1,
+            keyboardType: TextInputType.number,
+            style: Variables.inputTextStyle,
+            decoration:
+                InputDecoration(border: InputBorder.none, hintText: '26'),
+            controller: _unitQtyFieldController,
+          ),
+        ),
+      ],
+    );
   }
 
   Column buildUnitDropDown() {
@@ -602,6 +679,7 @@ class _AddProductState extends State<AddProduct> {
               color: Colors.yellow[100],
               borderRadius: BorderRadius.circular(8)),
           child: TextFormField(
+            enabled: widget.qrCode == null ? true : false,
             cursorColor: Variables.primaryColor,
             validator: (value) {
               if (value.isEmpty) return "You cannot have an Code!";

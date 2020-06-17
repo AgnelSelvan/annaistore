@@ -1,3 +1,4 @@
+import 'package:annaistore/models/product.dart';
 import 'package:annaistore/utils/universal_variables.dart';
 import 'package:flutter/material.dart';
 
@@ -41,8 +42,8 @@ class Dialogs {
   }
 
   static Future<DialogAction> textFieldDialog(BuildContext context,
-      String title, GestureTapCallback yesOnTap, String currentProduct) async {
-    TextEditingController qtyController = TextEditingController();
+      String title, GestureTapCallback yesOnTap, Product currentProduct) async {
+    TextEditingController bulkQtyController = TextEditingController();
 
     final action = await showDialog(
         context: context,
@@ -70,7 +71,7 @@ class Dialogs {
                     cursorColor: Variables.primaryColor,
                     validator: (value) {
                       if (value.isEmpty)
-                        return "You cannot have an empty Purchase Price!";
+                        return "You cannot have an empty Quantity!";
                       if (value.length != 6) return "Enter valid pincode!";
                     },
                     maxLines: 1,
@@ -78,7 +79,7 @@ class Dialogs {
                     style: Variables.inputTextStyle,
                     decoration: InputDecoration(
                         border: InputBorder.none, hintText: 'Quantity'),
-                    controller: qtyController,
+                    controller: bulkQtyController,
                   ),
                 ),
               ],
@@ -108,8 +109,8 @@ class Dialogs {
     return (action != null) ? action : DialogAction.Abort;
   }
 
-  static Future<DialogAction> okDialog(BuildContext context, String title,
-      String body, Color titleColor) async {
+  static Future<DialogAction> okDialog(
+      BuildContext context, String title, String body, Color titleColor) async {
     final action = await showDialog(
         context: context,
         barrierDismissible: false,

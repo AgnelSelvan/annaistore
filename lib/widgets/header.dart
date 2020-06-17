@@ -10,7 +10,11 @@ class BuildHeader extends StatelessWidget {
     return Text(
       text,
       style: TextStyle(
-          fontSize: 28, color: Variables.blackColor, fontWeight: FontWeight.bold,),
+        fontSize: 24,
+        letterSpacing: 3,
+        color: Variables.blackColor,
+        fontWeight: FontWeight.w400,
+      ),
     );
   }
 }

@@ -3,15 +3,14 @@ import 'package:annaistore/models/user.dart';
 import 'package:annaistore/resources/auth_methods.dart';
 import 'package:annaistore/screens/admin/add_category.dart';
 import 'package:annaistore/screens/admin/add_product.dart';
-import 'package:annaistore/screens/admin/add_regular_customer.dart';
 import 'package:annaistore/screens/admin/add_sub_category.dart';
 import 'package:annaistore/screens/admin/add_unit.dart';
 import 'package:annaistore/screens/admin/borrow.dart';
 import 'package:annaistore/screens/admin/stock_screen.dart';
 import 'package:annaistore/screens/auth_screen.dart';
+import 'package:annaistore/screens/billing_screen.dart';
 import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/screens/edit_profile_screen.dart';
-import 'package:annaistore/screens/root_screen.dart';
 import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
@@ -22,8 +21,6 @@ import 'package:expandable/expandable.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
-
-AuthMethods _authMethods = AuthMethods();
 
 class ProfileScreen extends StatefulWidget {
   ProfileScreen({Key key}) : super(key: key);
@@ -52,7 +49,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         currentUser = user;
       });
     });
-    print("currentUser: $currentUser");
+    print("currentUser: ${currentUser}");
   }
 
   signOut() async {
@@ -165,91 +162,135 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: ListView(
                       physics: BouncingScrollPhysics(),
                       children: <Widget>[
-                        ExpandableTheme(
-                            data: const ExpandableThemeData(
-                              iconColor: Colors.yellow,
-                              useInkWell: true,
-                            ),
-                            child: ExpandableNotifier(
-                                child: ScrollOnExpand(
-                                    scrollOnExpand: true,
-                                    scrollOnCollapse: false,
-                                    child: ExpandablePanel(
-                                      theme: const ExpandableThemeData(
-                                        headerAlignment:
-                                            ExpandablePanelHeaderAlignment
-                                                .center,
-                                        tapBodyToCollapse: true,
+                        FutureBuilder(
+                          future:
+                              _authMethods.getUserDetailsById(currentUserId),
+                          builder: (context, AsyncSnapshot<User> snapshot) {
+                            if (snapshot.hasData) {
+                              User currentUser = snapshot.data;
+                              print(currentUser.role);
+                              return currentUser.role == 'admin'
+                                  ? ExpandableTheme(
+                                      data: const ExpandableThemeData(
+                                        iconColor: Colors.yellow,
+                                        useInkWell: true,
                                       ),
-                                      header: Padding(
-                                        padding: EdgeInsets.all(10),
-                                        child: CustomTile(
-                                          text: "Add",
-                                          icon: Icons.add,
-                                          onTap: () {},
-                                        ),
-                                      ),
-                                      expanded: Column(
-                                        children: <Widget>[
-                                          CustomTile(
-                                            text: "Add Stock",
-                                            icon: FontAwesome.stack_overflow,
-                                            onTap: () {
-                                              Navigator.push(
-                                                  context,
-                                                  BouncyPageRoute(
-                                                      widget: StockScreen()));
-                                            },
-                                          ),
-                                          CustomTile(
-                                            text: "Add Category",
-                                            icon: FontAwesome.list_alt,
-                                            onTap: () {
-                                              Navigator.push(
-                                                  context,
-                                                  BouncyPageRoute(
-                                                      widget: AddCategory()));
-                                            },
-                                          ),
-                                          CustomTile(
-                                            text: "Add Sub-Category",
-                                            icon: FontAwesome.list_alt,
-                                            onTap: () {
-                                              Navigator.push(
-                                                  context,
-                                                  BouncyPageRoute(
-                                                      widget:
-                                                          AddSubCategory()));
-                                            },
-                                          ),
-                                          CustomTile(
-                                            text: "Add Product",
-                                            icon: FontAwesome.product_hunt,
-                                            onTap: () {
-                                              Navigator.push(
-                                                  context,
-                                                  BouncyPageRoute(
-                                                      widget: AddProduct()));
-                                            },
-                                          ),
-                                          CustomTile(
-                                            text: "Add Unit",
-                                            icon: Icons.ac_unit,
-                                            onTap: () {
-                                              Navigator.push(
-                                                  context,
-                                                  BouncyPageRoute(
-                                                      widget: AddUnit()));
-                                            },
-                                          ),
-                                          CustomTile(
-                                            text: "Add Regular Customer",
-                                            icon: Icons.report,
-                                            onTap: () {},
-                                          )
-                                        ],
-                                      ),
-                                    )))),
+                                      child: ExpandableNotifier(
+                                          child: ScrollOnExpand(
+                                              scrollOnExpand: true,
+                                              scrollOnCollapse: false,
+                                              child: ExpandablePanel(
+                                                theme:
+                                                    const ExpandableThemeData(
+                                                  headerAlignment:
+                                                      ExpandablePanelHeaderAlignment
+                                                          .center,
+                                                  tapBodyToCollapse: true,
+                                                ),
+                                                header: Padding(
+                                                  padding: EdgeInsets.all(10),
+                                                  child: ListTile(
+                                                    leading: Icon(
+                                                      Icons.add,
+                                                      size: 16,
+                                                      color: Variables
+                                                          .primaryColor,
+                                                    ),
+                                                    title: Text(
+                                                      'Add',
+                                                      style: TextStyle(
+                                                          color: Variables
+                                                              .blackColor,
+                                                          fontSize: 16,
+                                                          letterSpacing: 0.3,
+                                                          fontWeight:
+                                                              FontWeight.w400),
+                                                    ),
+                                                  ),
+                                                ),
+                                                expanded: Column(
+                                                  children: <Widget>[
+                                                    CustomTile(
+                                                      text: "Add Stock",
+                                                      icon: FontAwesome
+                                                          .stack_overflow,
+                                                      onTap: () {
+                                                        Navigator.push(
+                                                            context,
+                                                            BouncyPageRoute(
+                                                                widget:
+                                                                    StockScreen()));
+                                                      },
+                                                    ),
+                                                    CustomTile(
+                                                      text: "Add Category",
+                                                      icon:
+                                                          FontAwesome.list_alt,
+                                                      onTap: () {
+                                                        Navigator.push(
+                                                            context,
+                                                            BouncyPageRoute(
+                                                                widget:
+                                                                    AddCategory()));
+                                                      },
+                                                    ),
+                                                    CustomTile(
+                                                      text: "Add Sub-Category",
+                                                      icon:
+                                                          FontAwesome.list_alt,
+                                                      onTap: () {
+                                                        Navigator.push(
+                                                            context,
+                                                            BouncyPageRoute(
+                                                                widget:
+                                                                    AddSubCategory()));
+                                                      },
+                                                    ),
+                                                    CustomTile(
+                                                      text: "Add Product",
+                                                      icon: FontAwesome
+                                                          .product_hunt,
+                                                      onTap: () {
+                                                        Navigator.push(
+                                                            context,
+                                                            BouncyPageRoute(
+                                                                widget:
+                                                                    AddProduct()));
+                                                      },
+                                                    ),
+                                                    CustomTile(
+                                                      text: "Add Unit",
+                                                      icon: Icons.ac_unit,
+                                                      onTap: () {
+                                                        Navigator.push(
+                                                            context,
+                                                            BouncyPageRoute(
+                                                                widget:
+                                                                    AddUnit()));
+                                                      },
+                                                    ),
+                                                    CustomTile(
+                                                      text:
+                                                          "Add Regular Customer",
+                                                      icon: Icons.report,
+                                                      onTap: () {},
+                                                    )
+                                                  ],
+                                                ),
+                                              ))))
+                                  : Container();
+                            }
+                            return CustomCircularLoading();
+                          },
+                        ),
+                        CustomTile(
+                          text: "Billing",
+                          icon: FontAwesome.money,
+                          onTap: () {
+                            Navigator.push(context,
+                                BouncyPageRoute(widget: BillingScreen()));
+                          },
+                        ),
                         CustomTile(
                           text: "Edit Account",
                           icon: Icons.edit,
@@ -302,7 +343,7 @@ class CustomTile extends StatelessWidget {
         text,
         style: TextStyle(
             color: Variables.blackColor,
-            fontSize: 18,
+            fontSize: 16,
             letterSpacing: 0.3,
             fontWeight: FontWeight.w400),
       ),

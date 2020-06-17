@@ -1,15 +1,19 @@
 import 'package:annaistore/models/borrow.dart';
 import 'package:annaistore/models/category.dart';
+import 'package:annaistore/models/product.dart';
 import 'package:annaistore/models/user.dart';
 import 'package:annaistore/resources/admin_methods.dart';
+import 'package:annaistore/screens/admin/add_product.dart';
 import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/utils/utilities.dart';
+import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
 import 'package:annaistore/widgets/dialogs.dart';
 import 'package:annaistore/widgets/header.dart';
 import 'package:annaistore/widgets/widgets.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:flutter/services.dart';
@@ -186,6 +190,35 @@ class _BorrowScreenState extends State<BorrowScreen> {
         });
   }
 
+  scanQr() async {
+    String barcodeScanRes;
+
+    try {
+      barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+          '#ff6666', 'Cancel', true, ScanMode.QR);
+      print(barcodeScanRes);
+    } on PlatformException {
+      barcodeScanRes = 'Failed to get platform version.';
+    }
+
+    if (!mounted) return;
+
+    final bool isExists = await _adminMethods.isQrExists(barcodeScanRes);
+    if (isExists) {
+      Product product =
+          await _adminMethods.getProductDetailsByQrCode(barcodeScanRes);
+
+      createAlertDialog(context, product.name);
+    } else {
+      Navigator.push(
+          context,
+          BouncyPageRoute(
+              widget: AddProduct(
+            qrCode: barcodeScanRes,
+          )));
+    }
+  }
+
   createAllreadyExistsDialog(BuildContext context) {
     return showDialog(
         context: context,
@@ -315,6 +348,18 @@ class _BorrowScreenState extends State<BorrowScreen> {
           height: 20,
         ),
       ],
+    );
+  }
+
+  Widget buildQrCodeButton() {
+    return FlatButton(
+      color: Variables.lightGreyColor,
+      onPressed: () => scanQr(),
+      child: Text('Qr Code',
+          style: TextStyle(
+            color: Variables.primaryColor,
+            letterSpacing: 0.5,
+          )),
     );
   }
 
@@ -563,69 +608,76 @@ class _BorrowScreenState extends State<BorrowScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         productList.isEmpty ? Container() : buildProductList(),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.only(left: 10.0),
-              child: Text(
-                "Product",
-                style: Variables.inputLabelTextStyle,
-              ),
-            ),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 15),
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: Colors.yellow[100]),
-              child: StreamBuilder<QuerySnapshot>(
-                  stream: _adminMethods.fetchAllProduct(),
-                  builder: (BuildContext context,
-                      AsyncSnapshot<QuerySnapshot> snapshot) {
-                    if (snapshot.hasError) {
-                      print(snapshot.error);
-                    } else {
-                      if (!snapshot.hasData) {
-                        return CustomCircularLoading();
-                      }
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(left: 10.0),
+                  child: Text(
+                    "Product",
+                    style: Variables.inputLabelTextStyle,
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 15),
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.yellow[100]),
+                  child: StreamBuilder<QuerySnapshot>(
+                      stream: _adminMethods.fetchAllProduct(),
+                      builder: (BuildContext context,
+                          AsyncSnapshot<QuerySnapshot> snapshot) {
+                        if (snapshot.hasError) {
+                          print(snapshot.error);
+                        } else {
+                          if (!snapshot.hasData) {
+                            return CustomCircularLoading();
+                          }
 
-                      return new DropdownButton<DocumentSnapshot>(
-                        dropdownColor: Colors.yellow[100],
-                        underline: SizedBox(),
-                        onChanged: (DocumentSnapshot newValue) async {
-                          setState(() async {
-                            currentProduct = newValue.data['name'];
-                            if (productList.contains(currentProduct)) {
-                              createAllreadyExistsDialog(context);
-                            } else {
-                              createAlertDialog(context, currentProduct);
-                              Category category = await _adminMethods
-                                  .getTaxFromHsn(newValue.data['hsn_code']);
-                              if (!productList.contains(currentProduct)) {
-                                taxList.add(category.tax);
-                                sellingRateList
-                                    .add(newValue.data['selling_rate']);
-                              }
-                            }
-                          });
-                          // print(currentProduct);
-                        },
-                        hint: currentProduct == null
-                            ? Text('Select Product')
-                            : Text(currentProduct),
-                        items: snapshot.data.documents
-                            .map((DocumentSnapshot document) {
-                          return new DropdownMenuItem<DocumentSnapshot>(
-                              value: document,
-                              child: new Text(
-                                document.data['name'],
-                              ));
-                        }).toList(),
-                      );
-                    }
-                    return CustomCircularLoading();
-                  }),
+                          return new DropdownButton<DocumentSnapshot>(
+                            dropdownColor: Colors.yellow[100],
+                            underline: SizedBox(),
+                            onChanged: (DocumentSnapshot newValue) async {
+                              setState(() async {
+                                currentProduct = newValue.data['name'];
+                                if (productList.contains(currentProduct)) {
+                                  createAllreadyExistsDialog(context);
+                                } else {
+                                  createAlertDialog(context, currentProduct);
+                                  Category category = await _adminMethods
+                                      .getTaxFromHsn(newValue.data['hsn_code']);
+                                  if (!productList.contains(currentProduct)) {
+                                    taxList.add(category.tax);
+                                    sellingRateList
+                                        .add(newValue.data['selling_rate']);
+                                  }
+                                }
+                              });
+                              // print(currentProduct);
+                            },
+                            hint: currentProduct == null
+                                ? Text('Select Product')
+                                : Text(currentProduct),
+                            items: snapshot.data.documents
+                                .map((DocumentSnapshot document) {
+                              return new DropdownMenuItem<DocumentSnapshot>(
+                                  value: document,
+                                  child: new Text(
+                                    document.data['name'],
+                                  ));
+                            }).toList(),
+                          );
+                        }
+                        return CustomCircularLoading();
+                      }),
+                ),
+              ],
             ),
+            buildQrCodeButton()
           ],
         ),
       ],

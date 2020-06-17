@@ -99,7 +99,7 @@ class _StockItemsState extends State<StockItems> {
                                                           MainAxisAlignment
                                                               .spaceAround,
                                                       children: <Widget>[
-                                                        Text(stock.unitId),
+                                                        // Text(stock.unitId),
                                                         Text(stock.qty == 0
                                                             ? "(No Items in stock)"
                                                             : stock.qty
@@ -163,7 +163,7 @@ class _StockItemsState extends State<StockItems> {
                                 children: <Widget>[
                                   Row(
                                     children: <Widget>[
-                                      Text(stock.unitId),
+                                      // Text(stock.unitId),
                                       Text(stock.qty.toString())
                                     ],
                                   ),

@@ -1,4 +1,4 @@
-import 'package:annaistore/models/borrow.dart';
+import 'package:annaistore/flutter_barcode_scanner.dart';
 import 'package:annaistore/models/product.dart';
 import 'package:annaistore/models/stock.dart';
 import 'package:annaistore/models/unit.dart';
@@ -8,6 +8,8 @@ import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/widgets/dialogs.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_icons/flutter_icons.dart';
 
 AdminMethods _adminMethods = AdminMethods();
 
@@ -22,6 +24,7 @@ class _AddStockState extends State<AddStock> {
   TextEditingController _qtyController = TextEditingController();
   Unit selectedUnit;
   Product selectedProduct;
+  bool isBulkStock = false;
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +32,8 @@ class _AddStockState extends State<AddStock> {
       physics: BouncingScrollPhysics(),
       padding: EdgeInsets.all(10),
       children: <Widget>[
+        SizedBox(height: 20),
+        // buildQrCodeField(),
         SizedBox(height: 20),
         buildProductDropdown(),
         SizedBox(height: 20),
@@ -39,6 +44,221 @@ class _AddStockState extends State<AddStock> {
         buildSubmitButton()
       ],
     );
+  }
+
+  Widget buildQrCodeField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [buildForSingleQr(), SizedBox(height: 20), buildForBulkQr()],
+    );
+  }
+
+  Future<void> handleAddStock() async {
+    String barcodeScanRes;
+
+    try {
+      barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+          '#ff6666', 'Cancel', true, ScanMode.QR);
+      print(barcodeScanRes);
+    } on PlatformException {
+      barcodeScanRes = 'Failed to get platform version.';
+    }
+
+    if (!mounted) return;
+    final bool isQrExists = await _adminMethods.isQrExists(barcodeScanRes);
+    if (isQrExists) {
+      Product product =
+          await _adminMethods.getProductDetailsByQrCode(barcodeScanRes);
+      if (!isBulkStock) {
+        bool isStockExists = await _adminMethods.isStockExists(product.id);
+        if (isStockExists) {
+          Stock stock = await _adminMethods.getStockDetails(product.id);
+          _adminMethods.updateStockById(stock.stockId, 1 + stock.qty);
+        } else {
+          _adminMethods.addStockToDb(product.id, product.code, 1);
+        }
+      } else {
+        createAlertDialog(context, product);
+      }
+    } else {
+      print('Not Exists');
+    }
+  }
+
+  buildForSingleQr() {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          isBulkStock = false;
+        });
+        handleAddStock();
+      },
+      child: Container(
+        width: MediaQuery.of(context).size.width / 2,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Text(
+              "Single Product",
+              style: TextStyle(
+                color: Variables.blackColor,
+                fontSize: 18,
+              ),
+            ),
+            Icon(
+              FontAwesome.barcode,
+              color: Colors.grey,
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Variables.lightPrimaryColor,
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  buildForBulkQr() {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          isBulkStock = true;
+        });
+        handleAddStock();
+      },
+      child: Container(
+        width: MediaQuery.of(context).size.width / 2,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Text(
+              "Bulk Product",
+              style: TextStyle(
+                color: Variables.blackColor,
+                fontSize: 18,
+              ),
+            ),
+            Icon(
+              FontAwesome.barcode,
+              color: Colors.grey,
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Variables.lightPrimaryColor,
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  createAlertDialog(BuildContext context, Product product) {
+    TextEditingController bulkQtyController = TextEditingController();
+
+    return showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            title: Text("Enter Quantity"),
+            content: Container(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text("Code:"),
+                      Text(
+                        product.code,
+                        style: Variables.inputTextStyle,
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Text("Name:"),
+                      Text(
+                        product.name,
+                        style: Variables.inputTextStyle,
+                      )
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Text("Unit:"),
+                      Text(
+                        product.unit,
+                        style: Variables.inputTextStyle,
+                      )
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 15),
+                    decoration: BoxDecoration(
+                        color: Colors.yellow[100],
+                        borderRadius: BorderRadius.circular(8)),
+                    child: TextFormField(
+                      autofocus: true,
+                      cursorColor: Variables.primaryColor,
+                      validator: (value) {
+                        if (value.isEmpty)
+                          return "You cannot have an empty Purchase Price!";
+                        if (value.length != 6) return "Enter valid pincode!";
+                      },
+                      maxLines: 1,
+                      keyboardType: TextInputType.number,
+                      style: Variables.inputTextStyle,
+                      decoration: InputDecoration(
+                          border: InputBorder.none, hintText: 'Quantity'),
+                      controller: bulkQtyController,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              FlatButton(
+                onPressed: () {
+                  Navigator.of(context).pop(DialogAction.Abort);
+                },
+                child: Text(
+                  "No",
+                  style: TextStyle(color: Variables.primaryColor),
+                ),
+              ),
+              RaisedButton(
+                elevation: 0,
+                color: Variables.primaryColor,
+                onPressed: () async {
+                  bool isStockExists =
+                      await _adminMethods.isStockExists(product.id);
+                  if (isStockExists) {
+                    Stock stock =
+                        await _adminMethods.getStockDetails(product.id);
+                    _adminMethods.updateStockById(stock.stockId,
+                        int.parse(bulkQtyController.text) + stock.qty);
+                  } else {
+                    _adminMethods.addStockToDb(product.id, product.code,
+                        int.parse(bulkQtyController.text));
+                  }
+                  Navigator.of(context).pop(DialogAction.Abort);
+                },
+                child: Text(
+                  "Yes",
+                  style: TextStyle(color: Variables.lightGreyColor),
+                ),
+              )
+            ],
+          );
+        });
   }
 
   buildSubmitButton() {
@@ -56,19 +276,13 @@ class _AddStockState extends State<AddStock> {
   }
 
   handleSubmitStock() async {
-    bool isExists = await _adminMethods.isStockExists(
-        selectedProduct.id, selectedUnit.unitId);
+    bool isExists = await _adminMethods.isStockExists(selectedProduct.id);
     if (!isExists) {
-      _adminMethods.addStockToDb(
-          selectedProduct.id,
-          selectedProduct.name,
-          selectedUnit.unitId,
-          selectedUnit.unit,
+      _adminMethods.addStockToDb(selectedProduct.id, selectedProduct.code,
           int.parse(_qtyController.text));
     } else {
       Stock stock;
-      stock = await _adminMethods.getStockDetails(
-          selectedProduct.id, selectedUnit.unitId);
+      stock = await _adminMethods.getStockDetails(selectedProduct.id);
       int updatedQty = stock.qty + int.parse(_qtyController.text);
       _adminMethods.updateStockById(stock.stockId, updatedQty);
     }
