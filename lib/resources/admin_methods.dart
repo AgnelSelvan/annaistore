@@ -251,6 +251,10 @@ class AdminMethods {
     return _productCollection.where('hsn_code', isEqualTo: hsnCode).snapshots();
   }
 
+  Stream<QuerySnapshot> getCategoryFromHsn(String hsnCode) {
+    return _productCollection.where('hsn_code', isEqualTo: hsnCode).snapshots();
+  }
+
   Future<bool> isQrExists(String qrCode) async {
     QuerySnapshot docs = await _productCollection
         .where('code', isEqualTo: qrCode)

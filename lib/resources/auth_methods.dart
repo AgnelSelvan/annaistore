@@ -125,4 +125,26 @@ class AuthMethods {
       return false;
     }
   }
+
+  Stream<QuerySnapshot> getAllUserWithUserRole() {
+    return _userCollection.where('role', isEqualTo: 'user').snapshots();
+  }
+
+  Future<bool> makeAdmin(String userId) async {
+    try {
+      await _userCollection.document(userId).updateData({'role': 'admin'});
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> demoteAdminToUser(String userId) async {
+    try {
+      await _userCollection.document(userId).updateData({'role': 'user'});
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 }

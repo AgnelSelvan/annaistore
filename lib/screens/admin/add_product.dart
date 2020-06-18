@@ -1,8 +1,10 @@
 import 'package:annaistore/models/product.dart';
 import 'package:annaistore/models/unit.dart';
 import 'package:annaistore/resources/admin_methods.dart';
+import 'package:annaistore/screens/admin/product_details.dart';
 import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/utils/universal_variables.dart';
+import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
 import 'package:annaistore/widgets/custom_divider.dart';
 import 'package:annaistore/widgets/header.dart';
@@ -10,6 +12,8 @@ import 'package:annaistore/widgets/widgets.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 
 AdminMethods _adminMethods = AdminMethods();
@@ -50,7 +54,14 @@ class _AddProductState extends State<AddProduct> {
         key: _scaffoldKey,
         appBar: CustomAppBar(
             title: Text("Annai Store", style: Variables.appBarTextStyle),
-            actions: null,
+            actions: [
+              IconButton(
+                  icon: Icon(
+                    FontAwesome.barcode,
+                    color: Variables.primaryColor,
+                  ),
+                  onPressed: () => scanQR())
+            ],
             leading: IconButton(
                 icon: Icon(
                   Icons.arrow_back_ios,
@@ -80,6 +91,33 @@ class _AddProductState extends State<AddProduct> {
             ],
           ),
         ));
+  }
+
+  Future<void> scanQR() async {
+    String barcodeScanRes;
+    // Platform messages may fail, so we use a try/catch PlatformException.
+    try {
+      barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+          "#ff6666", "Cancel", true, ScanMode.QR);
+      print(barcodeScanRes);
+    } on PlatformException {
+      barcodeScanRes = 'Failed to get platform version.';
+    }
+
+    if (!mounted) return;
+    final bool isQrExists = await _adminMethods.isQrExists(barcodeScanRes);
+    if (isQrExists) {
+      Navigator.push(
+          context,
+          BouncyPageRoute(
+              widget: ProductDetails(
+            qrCode: barcodeScanRes,
+          )));
+    } else if (!isQrExists) {
+      setState(() {
+        _codeFieldController = TextEditingController(text: barcodeScanRes);
+      });
+    }
   }
 
   handleDeleteUnit(String unitId) {
@@ -389,13 +427,15 @@ class _AddProductState extends State<AddProduct> {
             currentUnit == 'roll' ||
                     currentUnit == 'box' ||
                     currentUnit == 'Bundle' ||
-                    currentUnit == 'Litre'
+                    currentUnit == 'Litre' ||
+                    currentUnit == 'pieces'
                 ? buildUnitQtyDropDown()
                 : Container(),
             currentUnit == 'roll' ||
                     currentUnit == 'box' ||
                     currentUnit == 'Bundle' ||
-                    currentUnit == 'Litre'
+                    currentUnit == 'Litre' ||
+                    currentUnit == 'pieces'
                 ? SizedBox(
                     height: 20,
                   )

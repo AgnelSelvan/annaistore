@@ -41,6 +41,8 @@ dependencies:
   url_launcher:
   flutter_plugin_android_lifecycle: ^1.0.7
   flutter_barcode_scanner:
+  contacts_service: ^0.4.6
+  permission_handler:
   # flutter_sms: ^2.0.1+2
 
 dev_dependencies:

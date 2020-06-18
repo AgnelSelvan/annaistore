@@ -5,10 +5,11 @@ import 'package:annaistore/screens/admin/add_category.dart';
 import 'package:annaistore/screens/admin/add_product.dart';
 import 'package:annaistore/screens/admin/add_sub_category.dart';
 import 'package:annaistore/screens/admin/add_unit.dart';
+import 'package:annaistore/screens/admin/admin_page.dart';
 import 'package:annaistore/screens/admin/borrow.dart';
 import 'package:annaistore/screens/admin/stock_screen.dart';
 import 'package:annaistore/screens/auth_screen.dart';
-import 'package:annaistore/screens/billing_screen.dart';
+import 'package:annaistore/screens/bill_screen.dart';
 import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/screens/edit_profile_screen.dart';
 import 'package:annaistore/utils/universal_variables.dart';
@@ -34,22 +35,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   User currentUser;
   String currentUserId;
+  bool isAdmin = false;
 
   @override
   void initState() {
     super.initState();
-    _authMethods.getCurrentUser().then((FirebaseUser user) {
-      setState(() {
-        currentUserId = user.uid;
-      });
-      print("Haha:$currentUserId");
+    getUserDetails();
+  }
+
+  getUserDetails() async {
+    FirebaseUser firebaseUser = await _authMethods.getCurrentUser();
+    setState(() {
+      currentUserId = firebaseUser.uid;
     });
-    _authMethods.getUserDetailsById(currentUserId).then((User user) {
-      setState(() {
-        currentUser = user;
-      });
+    User user = await _authMethods.getUserDetailsById(firebaseUser.uid);
+    print("currentUser:${user.role}");
+    setState(() {
+      currentUser = user;
     });
-    print("currentUser: ${currentUser}");
+    if (user.role == 'admin') {
+      setState(() {
+        isAdmin = true;
+      });
+    }
   }
 
   signOut() async {
@@ -283,14 +291,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             return CustomCircularLoading();
                           },
                         ),
-                        CustomTile(
-                          text: "Billing",
-                          icon: FontAwesome.money,
-                          onTap: () {
-                            Navigator.push(context,
-                                BouncyPageRoute(widget: BillingScreen()));
-                          },
-                        ),
+                        isAdmin
+                            ? CustomTile(
+                                text: "Make Admin",
+                                icon: FontAwesome.user_circle_o,
+                                onTap: () {
+                                  Navigator.push(context,
+                                      BouncyPageRoute(widget: AdminScreen()));
+                                },
+                              )
+                            : Container(),
+                        isAdmin
+                            ? CustomTile(
+                                text: "Billing",
+                                icon: FontAwesome.money,
+                                onTap: () {
+                                  Navigator.push(context,
+                                      BouncyPageRoute(widget: BillScreen()));
+                                },
+                              )
+                            : Container(),
                         CustomTile(
                           text: "Edit Account",
                           icon: Icons.edit,
@@ -299,14 +319,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 context, BouncyPageRoute(widget: EditScreen()));
                           },
                         ),
-                        CustomTile(
-                          text: "Borrow",
-                          icon: FontAwesome.tasks,
-                          onTap: () {
-                            Navigator.push(context,
-                                BouncyPageRoute(widget: BorrowScreen()));
-                          },
-                        ),
+                        // CustomTile(
+                        //   text: "Borrow",
+                        //   icon: FontAwesome.tasks,
+                        //   onTap: () {
+                        //     Navigator.push(context,
+                        //         BouncyPageRoute(widget: BorrowScreen()));
+                        //   },
+                        // ),
                         CustomTile(text: "Reports", icon: Icons.report),
                         CustomTile(
                             text: "Give your suggestion", icon: Icons.chat),
@@ -350,42 +370,3 @@ class CustomTile extends StatelessWidget {
     );
   }
 }
-// FutureBuilder(
-//                     future: _authMethods.getUserDetailsById(_currentUserId),
-//                     builder: (context, snapshot) {
-//                       User currentUser = snapshot.data;
-//                       if (snapshot.hasData) {
-//                         return Column(
-//                           children: <Widget>[
-//                             ClipRRect(
-//                               borderRadius: BorderRadius.circular(20),
-//                               child: CachedNetworkImage(
-//                                   imageUrl: currentUser.profilePhoto),
-//                             ),
-//                             SizedBox(height: 10),
-//                             Text(
-//                               currentUser.name,
-//                               style: TextStyle(
-//                                 color: Variables.blackColor,
-//                                 fontWeight: FontWeight.w400,
-//                                 fontSize: 18,
-//                                 letterSpacing: 0.7,
-//                               ),
-//                             ),
-//                             SizedBox(height: 10),
-//                             Container(
-//                               padding: EdgeInsets.symmetric(
-//                                   vertical: 7, horizontal: 15),
-//                               decoration: BoxDecoration(
-//                                   borderRadius: BorderRadius.circular(50),
-//                                   color: Colors.white),
-//                               child: Text(
-//                                 "agnelselvan007",
-//                                 style: TextStyle(color: Variables.primaryColor),
-//                               ),
-//                             ),
-//                           ],
-//                         );
-//                       }
-//                       return CustomCircularLoading();
-//                     }),

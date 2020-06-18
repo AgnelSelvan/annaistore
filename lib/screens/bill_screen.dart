@@ -1,12 +1,26 @@
 import 'dart:math';
 
+import 'package:annaistore/models/category.dart';
+import 'package:annaistore/models/product.dart';
+import 'package:annaistore/resources/admin_methods.dart';
+import 'package:annaistore/screens/admin/add_product.dart';
+import 'package:annaistore/screens/admin/borrow.dart';
+import 'package:annaistore/screens/contact_list.dart';
+import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/utils/universal_variables.dart';
+import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
 import 'package:annaistore/widgets/custom_divider.dart';
+import 'package:annaistore/widgets/dialogs.dart';
 import 'package:annaistore/widgets/header.dart';
 import 'package:annaistore/widgets/widgets.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_icons/flutter_icons.dart';
+
+AdminMethods _adminMethods = AdminMethods();
 
 class BillScreen extends StatefulWidget {
   BillScreen({Key key}) : super(key: key);
@@ -26,9 +40,14 @@ class _BillScreenState extends State<BillScreen> {
   TextEditingController _totalPriceController;
   String selectedCategory, selectedOption;
   bool viewVisible = false;
-  List<String> category = [];
-  List<String> qty = [];
-  List<String> item = [];
+  Product currentProduct;
+  Category currentCategory;
+  List<String> productList = [];
+  List<int> qtyList = [];
+  List<int> sellingRateList = [];
+  List<int> taxList = [];
+  int totalPrice;
+  int tax;
 
   @override
   void initState() {
@@ -92,198 +111,7 @@ class _BillScreenState extends State<BillScreen> {
                       SizedBox(
                         height: 15,
                       ),
-                      category.isEmpty
-                          ? Container()
-                          : Column(
-                              children: <Widget>[
-                                Row(
-                                  children: <Widget>[
-                                    Container(
-                                      width: 20,
-                                      child: Column(
-                                        children: <Widget>[
-                                          Text(
-                                            "Sr no.",
-                                            style: TextStyle(
-                                                fontSize: 16,
-                                                color: Variables.blackColor),
-                                          ),
-                                          CustomDivider(
-                                              leftSpacing: 0, rightSpacing: 0)
-                                        ],
-                                      ),
-                                    ),
-                                    Spacer(),
-                                    Container(
-                                      width: 60,
-                                      child: Column(
-                                        children: <Widget>[
-                                          Text(
-                                            "Category",
-                                            style: TextStyle(
-                                                fontSize: 16,
-                                                color: Variables.blackColor),
-                                          ),
-                                          CustomDivider(
-                                              leftSpacing: 0, rightSpacing: 0)
-                                        ],
-                                      ),
-                                    ),
-                                    Spacer(),
-                                    Container(
-                                      width: 30,
-                                      child: Column(
-                                        children: <Widget>[
-                                          Text(
-                                            "Qty",
-                                            style: TextStyle(
-                                                fontSize: 16,
-                                                color: Variables.blackColor),
-                                          ),
-                                          CustomDivider(
-                                              leftSpacing: 0, rightSpacing: 0)
-                                        ],
-                                      ),
-                                    ),
-                                    Spacer(),
-                                    Container(
-                                      width: 60,
-                                      child: Column(
-                                        children: <Widget>[
-                                          Text(
-                                            "Items",
-                                            style: TextStyle(
-                                                fontSize: 16,
-                                                color: Variables.blackColor),
-                                          ),
-                                          CustomDivider(
-                                              leftSpacing: 0, rightSpacing: 0)
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  children: <Widget>[
-                                    Container(
-                                      width: 20,
-                                      height: 100,
-                                      child: ListView.builder(
-                                          itemCount: category.length,
-                                          itemBuilder: (BuildContext context,
-                                              int index) {
-                                            return Text((index + 1).toString(),
-                                                style: TextStyle(
-                                                    fontSize: 16,
-                                                    color:
-                                                        Variables.blackColor));
-                                          }),
-                                    ),
-                                    Spacer(),
-                                    Container(
-                                      width: 50,
-                                      height: 100,
-                                      child: StreamBuilder<List<String>>(
-                                          stream:
-                                              Stream<List<String>>.fromIterable(
-                                            [
-                                              // category.ge
-                                            ],
-                                          ),
-                                          builder: (context, snapshot) {
-                                            return ListView.builder(
-                                                itemCount: category.length,
-                                                itemBuilder:
-                                                    (BuildContext context,
-                                                        int index) {
-                                                  return Text(category[index],
-                                                      style: TextStyle(
-                                                          fontSize: 16,
-                                                          color: Variables
-                                                              .blackColor));
-                                                });
-                                          }),
-                                    ),
-                                    Spacer(),
-                                    Container(
-                                      width: 30,
-                                      height: 100,
-                                      child: ListView.builder(
-                                          itemCount: qty.length,
-                                          itemBuilder: (BuildContext context,
-                                              int index) {
-                                            return Text(qty[index],
-                                                style: TextStyle(
-                                                    fontSize: 16,
-                                                    color:
-                                                        Variables.blackColor));
-                                          }),
-                                    ),
-                                    Spacer(),
-                                    Container(
-                                      width: 70,
-                                      height: 100,
-                                      child: ListView.builder(
-                                          itemCount: item.length,
-                                          itemBuilder: (BuildContext context,
-                                              int index) {
-                                            return Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: <Widget>[
-                                                Text(item[index],
-                                                    style: TextStyle(
-                                                        fontSize: 16,
-                                                        color: Variables
-                                                            .blackColor)),
-                                                GestureDetector(
-                                                  onTap: () {
-                                                    category.remove(
-                                                        category[index]);
-                                                    item.remove(item[index]);
-                                                    qty.remove(qty[index]);
-                                                    print(category);
-                                                    print(item);
-                                                    print(qty);
-                                                  },
-                                                  child: Icon(
-                                                    FontAwesome.times_circle,
-                                                    size: 20,
-                                                    color: Colors.red[500],
-                                                  ),
-                                                )
-                                              ],
-                                            );
-                                          }),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                      SizedBox(
-                        height: 15,
-                      ),
-                      viewVisible
-                          ? Visibility(
-                              maintainSize: true,
-                              maintainAnimation: true,
-                              maintainState: true,
-                              visible: viewVisible,
-                              child: Container(
-                                  child: Column(
-                                children: <Widget>[
-                                  buildCategoryField(),
-                                  SizedBox(
-                                    height: 15,
-                                  ),
-                                  buildCategoryQtyField(),
-                                  SizedBox(
-                                    height: 15,
-                                  ),
-                                ],
-                              )))
-                          : Container(),
+                      viewVisible ? buildVisibility() : Container(),
                       Row(
                         mainAxisAlignment: viewVisible
                             ? MainAxisAlignment.spaceAround
@@ -327,131 +155,20 @@ class _BillScreenState extends State<BillScreen> {
                               ),
                             ),
                           ),
-                          if (viewVisible)
-                            GestureDetector(
-                              onTap: () {
-                                category.add(selectedCategory);
-                                qty.add(_qtyController.text);
-                                item.add(selectedOption);
-                                print(category);
-                                print(qty);
-                                print(item);
-                                setState(() {
-                                  viewVisible = false;
-                                });
-                              },
-                              child: Icon(
-                                Icons.check_circle,
-                                size: 30,
-                                color: Colors.green[200],
-                              ),
-                            )
-                          else
-                            Container(),
                         ],
                       ),
                       SizedBox(height: 15),
-                      category.isEmpty
-                          ? Container()
-                          : Container(
-                              child: Row(
-                                children: <Widget>[
-                                  Text(
-                                    "Price:         ",
-                                    style:
-                                        TextStyle(color: Variables.blackColor),
-                                  ),
-                                  Expanded(
-                                    child: Container(
-                                      height: 48,
-                                      padding:
-                                          EdgeInsets.symmetric(horizontal: 15),
-                                      decoration: BoxDecoration(
-                                          color: Colors.yellow[100],
-                                          borderRadius:
-                                              BorderRadius.circular(8)),
-                                      child: TextField(
-                                        maxLines: 1,
-                                        style: Variables.inputTextStyle,
-                                        keyboardType: TextInputType.number,
-                                        decoration: InputDecoration(
-                                            border: InputBorder.none,
-                                            hintText: 'Price'),
-                                        controller: _priceController,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                      productList.isEmpty ? Container() : buildPriceField(),
                       SizedBox(height: 15),
-                      category.isEmpty
-                          ? Container()
-                          : Container(
-                              child: Row(
-                                children: <Widget>[
-                                  Text(
-                                    "Tax:          ",
-                                    style:
-                                        TextStyle(color: Variables.blackColor),
-                                  ),
-                                  Expanded(
-                                    child: Container(
-                                      height: 48,
-                                      padding:
-                                          EdgeInsets.symmetric(horizontal: 15),
-                                      decoration: BoxDecoration(
-                                          color: Colors.yellow[100],
-                                          borderRadius:
-                                              BorderRadius.circular(8)),
-                                      child: TextField(
-                                        maxLines: 1,
-                                        style: Variables.inputTextStyle,
-                                        keyboardType: TextInputType.number,
-                                        decoration: InputDecoration(
-                                            border: InputBorder.none,
-                                            hintText: 'Tax'),
-                                        controller: _taxController,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                      productList.isEmpty ? Container() : buildTaxField(),
                       SizedBox(height: 15),
-                      category.isEmpty
+                      productList.isEmpty
                           ? Container()
-                          : Container(
-                              child: Row(
-                                children: <Widget>[
-                                  Text(
-                                    "Total Price:",
-                                    style:
-                                        TextStyle(color: Variables.blackColor),
-                                  ),
-                                  Expanded(
-                                    child: Container(
-                                      height: 48,
-                                      padding:
-                                          EdgeInsets.symmetric(horizontal: 15),
-                                      decoration: BoxDecoration(
-                                          color: Colors.yellow[100],
-                                          borderRadius:
-                                              BorderRadius.circular(8)),
-                                      child: TextField(
-                                        maxLines: 1,
-                                        style: Variables.inputTextStyle,
-                                        keyboardType: TextInputType.number,
-                                        decoration: InputDecoration(
-                                            border: InputBorder.none,
-                                            hintText: 'Total Price'),
-                                        controller: _totalPriceController,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                          : buildTotalPriceField(),
+                      SizedBox(height: 15),
+                      productList.isEmpty
+                          ? Container()
+                          : buildBottomContainer(),
                       SizedBox(height: 15),
                     ],
                   ),
@@ -462,134 +179,395 @@ class _BillScreenState extends State<BillScreen> {
         ));
   }
 
-  Row buildCategoryQtyField() {
+  buildBottomContainer() {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        buildRaisedButton('Borrow', Colors.red[300], Colors.white, () {
+          // Navigator.push(
+          //     context,
+          //     BouncyPageRoute(
+          //         widget: BorrowScreen(
+          //       qtyList: qtyList,
+          //       productList: productList,
+          //       sellingRateList: sellingRateList,
+          //       totalPrice: totalPrice,
+          //       billNo: _billNumberController.text,
+          //       taxList: taxList,
+          //     )));
+          Navigator.push(context, BouncyPageRoute(widget: MyHomePage()));
+        }),
+        buildRaisedButton('Paid', Colors.green[300], Colors.white, () {})
+      ],
+    );
+  }
+
+  Visibility buildVisibility() {
+    return Visibility(
+        maintainSize: true,
+        maintainAnimation: true,
+        maintainState: true,
+        visible: viewVisible,
+        child: Container(
+            child: Column(
+          children: <Widget>[
+            buildProductDropdown(),
+            SizedBox(
+              height: 20,
+            ),
+          ],
+        )));
+  }
+
+  Widget buildPriceField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          "Qty:         ",
-          style: TextStyle(color: Variables.blackColor),
+          "Price",
+          style: Variables.inputLabelTextStyle,
         ),
         Container(
+          height: 48,
           padding: EdgeInsets.symmetric(horizontal: 15),
           decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.yellow[100]),
-          child: Container(
-            width: 50,
-            height: 48,
-            padding: EdgeInsets.symmetric(horizontal: 10),
-            decoration: BoxDecoration(
-                color: Colors.yellow[100],
-                borderRadius: BorderRadius.circular(8)),
-            child: TextField(
+              color: Colors.yellow[100],
+              borderRadius: BorderRadius.circular(8)),
+          child: TextFormField(
+            cursorColor: Variables.primaryColor,
+            maxLines: 1,
+            style: Variables.inputTextStyle,
+            decoration:
+                InputDecoration(border: InputBorder.none, hintText: '1234'),
+            controller: _priceController,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildTaxField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          "Tax",
+          style: Variables.inputLabelTextStyle,
+        ),
+        Container(
+          height: 48,
+          padding: EdgeInsets.symmetric(horizontal: 15),
+          decoration: BoxDecoration(
+              color: Colors.yellow[100],
+              borderRadius: BorderRadius.circular(8)),
+          child: TextFormField(
+            cursorColor: Variables.primaryColor,
+            maxLines: 1,
+            style: Variables.inputTextStyle,
+            decoration:
+                InputDecoration(border: InputBorder.none, hintText: '1234'),
+            controller: _taxController,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildTotalPriceField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          "Total Price",
+          style: Variables.inputLabelTextStyle,
+        ),
+        Container(
+          height: 48,
+          padding: EdgeInsets.symmetric(horizontal: 15),
+          decoration: BoxDecoration(
+              color: Colors.yellow[100],
+              borderRadius: BorderRadius.circular(8)),
+          child: TextFormField(
+            cursorColor: Variables.primaryColor,
+            maxLines: 1,
+            style: Variables.inputTextStyle,
+            decoration:
+                InputDecoration(border: InputBorder.none, hintText: '1234'),
+            controller: _totalPriceController,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildProductList() {
+    return Container(
+      height: 200,
+      padding: EdgeInsets.all(10),
+      child: ListView.builder(
+          physics: BouncingScrollPhysics(),
+          itemBuilder: (context, index) {
+            return Container(
+              margin: EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                  color: Variables.greyColor,
+                  borderRadius: BorderRadius.circular(10)),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  children: <Widget>[
+                    Text(productList[index]),
+                    Spacer(),
+                    Text('(${qtyList[index]})'),
+                    IconButton(
+                        icon: Icon(
+                          FontAwesome.times_circle,
+                          color: Colors.red[200],
+                        ),
+                        onPressed: () {
+                          print(productList[index]);
+                          int productIndex =
+                              productList.indexOf(productList[index]);
+                          print(productIndex);
+                          setState(() {
+                            productList.removeAt(productIndex);
+                            qtyList.removeAt(productIndex);
+                            taxList.removeAt(productIndex);
+                            sellingRateList.removeAt(productIndex);
+                          });
+                          var sum = 0;
+                          tax = 0;
+                          totalPrice = 0;
+                          for (var i = 0; i < sellingRateList.length; i++) {
+                            sum += sellingRateList[i] * qtyList[i];
+                            tax += taxList[i];
+                          }
+                          totalPrice = (sum / (tax / 100)).round();
+                          setState(() {
+                            _totalPriceController = TextEditingController(
+                                text: totalPrice.toString());
+                            _priceController =
+                                TextEditingController(text: sum.toString());
+                            _taxController =
+                                TextEditingController(text: tax.toString());
+                          });
+                          print(productList);
+                          print(totalPrice);
+                          print(qtyList);
+                          print(taxList);
+                          print(sellingRateList);
+                        })
+                  ],
+                ),
+              ),
+            );
+          },
+          itemCount: productList.length),
+    );
+  }
+
+  createAlertDialog(BuildContext context, Product currentProduct) {
+    TextEditingController qtyController = TextEditingController();
+
+    return showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            title: Text("Enter Quantity"),
+            content: Container(
+              padding: EdgeInsets.symmetric(horizontal: 15),
+              decoration: BoxDecoration(
+                  color: Colors.yellow[100],
+                  borderRadius: BorderRadius.circular(8)),
+              child: TextFormField(
+                cursorColor: Variables.primaryColor,
+                validator: (value) {
+                  if (value.isEmpty)
+                    return "You cannot have an empty Purchase Price!";
+                  if (value.length != 6) return "Enter valid pincode!";
+                },
                 maxLines: 1,
-                style: Variables.inputTextStyle,
                 keyboardType: TextInputType.number,
-                decoration:
-                    InputDecoration(border: InputBorder.none, hintText: 'Qty'),
-                controller: _qtyController),
-          ),
-        ),
-        SizedBox(width: 10),
-        Text(
-          "/",
-          style: TextStyle(fontSize: 30, fontWeight: FontWeight.w100),
-        ),
-        SizedBox(width: 10),
-        Container(
-            padding: EdgeInsets.symmetric(horizontal: 5),
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: Colors.yellow[100]),
-            child: buildBoxOrThreadDropdownButton(<String>['Boxes', 'Thread'])),
-      ],
-    );
+                style: Variables.inputTextStyle,
+                decoration: InputDecoration(
+                    border: InputBorder.none, hintText: 'Quantity'),
+                controller: qtyController,
+              ),
+            ),
+            actions: <Widget>[
+              FlatButton(
+                onPressed: () {
+                  Navigator.of(context).pop(DialogAction.Abort);
+                },
+                child: Text(
+                  "No",
+                  style: TextStyle(color: Variables.primaryColor),
+                ),
+              ),
+              RaisedButton(
+                elevation: 0,
+                color: Variables.primaryColor,
+                onPressed: () async {
+                  Navigator.of(context).pop(DialogAction.Abort);
+
+                  Category category =
+                      await _adminMethods.getTaxFromHsn(currentProduct.hsnCode);
+                  print('category.hsnCode:${category.tax}');
+
+                  if (productList.contains(currentProduct.name)) {
+                    int productIndex = productList.indexOf(currentProduct.name);
+                    qtyList[productIndex] =
+                        qtyList[productIndex] + int.parse(qtyController.text);
+                  }
+                  if (!productList.contains(currentProduct.name)) {
+                    qtyList.add(int.parse(qtyController.text));
+                    productList.add(currentProduct.name);
+                    taxList.add(category.tax);
+                    sellingRateList.add(currentProduct.sellingRate);
+                  }
+
+                  var sum = 0;
+                  tax = 0;
+                  totalPrice = 0;
+                  for (var i = 0; i < sellingRateList.length; i++) {
+                    sum += sellingRateList[i] * qtyList[i];
+                    tax += taxList[i];
+                  }
+                  totalPrice = (sum / (tax / 100)).round();
+                  setState(() {
+                    _priceController =
+                        TextEditingController(text: sum.toString());
+                    _taxController =
+                        TextEditingController(text: tax.toString());
+                    _totalPriceController =
+                        TextEditingController(text: totalPrice.toString());
+                  });
+
+                  print(productList);
+                  print(qtyList);
+                  print(taxList);
+                  print(sellingRateList);
+                },
+                child: Text(
+                  "Yes",
+                  style: TextStyle(color: Variables.lightGreyColor),
+                ),
+              )
+            ],
+          );
+        });
   }
 
-  Row buildCategoryField() {
-    return Row(
+  Widget buildProductDropdown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(
-          "Category: ",
-          style: TextStyle(color: Variables.blackColor),
+        productList.isEmpty ? Container() : buildProductList(),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(left: 10.0),
+                  child: Text(
+                    "Product",
+                    style: Variables.inputLabelTextStyle,
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 15),
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.yellow[100]),
+                  child: StreamBuilder<QuerySnapshot>(
+                      stream: _adminMethods.fetchAllProduct(),
+                      builder: (BuildContext context,
+                          AsyncSnapshot<QuerySnapshot> snapshot) {
+                        if (snapshot.hasError) {
+                          print(snapshot.error);
+                        } else {
+                          if (!snapshot.hasData) {
+                            return CustomCircularLoading();
+                          }
+
+                          return new DropdownButton<DocumentSnapshot>(
+                            dropdownColor: Colors.yellow[100],
+                            underline: SizedBox(),
+                            onChanged: (DocumentSnapshot newValue) async {
+                              setState(() async {
+                                currentProduct = Product.fromMap(newValue.data);
+                                createAlertDialog(context, currentProduct);
+                              });
+                            },
+                            hint: currentProduct == null
+                                ? Text('Select Product')
+                                : Text(currentProduct.name),
+                            items: snapshot.data.documents
+                                .map((DocumentSnapshot document) {
+                              return new DropdownMenuItem<DocumentSnapshot>(
+                                  value: document,
+                                  child: new Text(
+                                    document.data['name'],
+                                  ));
+                            }).toList(),
+                          );
+                        }
+                        return CustomCircularLoading();
+                      }),
+                ),
+              ],
+            ),
+            buildQrCodeButton()
+          ],
         ),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 15),
-          decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.yellow[100]),
-          child: buildDropdownButton(
-              <String>['Threads', 'Canvas', 'Rolls', 'Laice']),
-        )
       ],
     );
   }
 
-  DropdownButton<String> buildBoxOrThreadDropdownButton(
-      List<String> dropDownList) {
-    return DropdownButton(
-      icon: Icon(
-        Icons.arrow_drop_down,
-        size: 20,
-      ),
-      dropdownColor: Colors.yellow[100],
-      underline: SizedBox(),
-      items: dropDownList.map((String value) {
-        return new DropdownMenuItem<String>(
-          value: value,
-          child: new Text(
-            value,
-            style: TextStyle(fontSize: 12),
-          ),
-        );
-      }).toList(),
-      onChanged: (String value) {
-        setState(() {
-          selectedOption = value;
-        });
+  scanQr() async {
+    String barcodeScanRes;
 
-        final snackBar = customSnackBar('Selected product value is $value', Variables.blackColor);
+    try {
+      barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+          '#ff6666', 'Cancel', true, ScanMode.QR);
+      print(barcodeScanRes);
+    } on PlatformException {
+      barcodeScanRes = 'Failed to get platform version.';
+    }
 
-        _scaffoldKey.currentState.showSnackBar(snackBar);
-      },
-      value: selectedOption,
-      isExpanded: false,
-      hint: Text(
-        "Select an option",
-        style: TextStyle(fontSize: 12),
-      ),
-    );
+    if (!mounted) return;
+
+    final bool isExists = await _adminMethods.isQrExists(barcodeScanRes);
+    if (isExists) {
+      Product product =
+          await _adminMethods.getProductDetailsByQrCode(barcodeScanRes);
+
+      createAlertDialog(context, product);
+    } else {
+      Navigator.push(
+          context,
+          BouncyPageRoute(
+              widget: AddProduct(
+            qrCode: barcodeScanRes,
+          )));
+    }
   }
 
-  DropdownButton<String> buildDropdownButton(List<String> dropDownList) {
-    return DropdownButton(
-      dropdownColor: Colors.yellow[100],
-      underline: SizedBox(),
-      items: dropDownList.map((String value) {
-        return new DropdownMenuItem<String>(
-          value: value,
-          child: new Text(value),
-        );
-      }).toList(),
-      onChanged: (String value) {
-        setState(() {
-          selectedCategory = value;
-        });
-
-        final snackBar = SnackBar(
-          content: Text(
-            'Selected Category value is $value',
-            style: TextStyle(color: Variables.blackColor),
-          ),
-          duration: Duration(seconds: 1),
-          backgroundColor: Colors.yellow[100],
-        );
-
-        _scaffoldKey.currentState.showSnackBar(snackBar);
-      },
-      value: selectedCategory,
-      isExpanded: false,
-      hint: Text("Select an option"),
+  Widget buildQrCodeButton() {
+    return FlatButton(
+      color: Variables.lightGreyColor,
+      onPressed: () => scanQr(),
+      child: Text('Qr Code',
+          style: TextStyle(
+            color: Variables.primaryColor,
+            letterSpacing: 0.5,
+          )),
     );
   }
 
