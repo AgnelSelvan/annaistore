@@ -5,12 +5,10 @@ import 'package:annaistore/models/product.dart';
 import 'package:annaistore/resources/admin_methods.dart';
 import 'package:annaistore/screens/admin/add_product.dart';
 import 'package:annaistore/screens/admin/borrow.dart';
-import 'package:annaistore/screens/contact_list.dart';
 import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
-import 'package:annaistore/widgets/custom_divider.dart';
 import 'package:annaistore/widgets/dialogs.dart';
 import 'package:annaistore/widgets/header.dart';
 import 'package:annaistore/widgets/widgets.dart';
@@ -184,18 +182,17 @@ class _BillScreenState extends State<BillScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         buildRaisedButton('Borrow', Colors.red[300], Colors.white, () {
-          // Navigator.push(
-          //     context,
-          //     BouncyPageRoute(
-          //         widget: BorrowScreen(
-          //       qtyList: qtyList,
-          //       productList: productList,
-          //       sellingRateList: sellingRateList,
-          //       totalPrice: totalPrice,
-          //       billNo: _billNumberController.text,
-          //       taxList: taxList,
-          //     )));
-          Navigator.push(context, BouncyPageRoute(widget: MyHomePage()));
+          Navigator.push(
+              context,
+              BouncyPageRoute(
+                  widget: BorrowScreen(
+                qtyList: qtyList,
+                productList: productList,
+                sellingRateList: sellingRateList,
+                totalPrice: totalPrice,
+                billNo: _billNumberController.text,
+                taxList: taxList,
+              )));
         }),
         buildRaisedButton('Paid', Colors.green[300], Colors.white, () {})
       ],

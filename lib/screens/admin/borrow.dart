@@ -4,6 +4,7 @@ import 'package:annaistore/widgets/dialogs.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class BorrowScreen extends StatefulWidget {
   final List<String> productList;
@@ -26,18 +27,62 @@ class BorrowScreen extends StatefulWidget {
 }
 
 class _BorrowScreenState extends State<BorrowScreen> {
-  TextEditingController customerGivenMoney = TextEditingController();
   List<Contact> contacts = [];
+  List<Contact> contactFiltered = [];
+  TextEditingController customerGivenMoney = TextEditingController();
+  TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     // createAlertDialog(context);
     getAllContacts();
+    searchController.addListener(() {
+      filterContacts();
+    });
+  }
+
+  String flattenPhoneNumbers(String phoneStr) {
+    return phoneStr.replaceAll(RegExp(r'^(\+)|\D'), '');
+  }
+
+  void filterContacts() {
+    List<Contact> _contacts = [];
+    _contacts.addAll(contacts);
+    print(contacts.length);
+    if (searchController.text.isNotEmpty) {
+      _contacts.retainWhere((contact) {
+        String searchTerm = searchController.text.toLowerCase();
+        String searchTermFlatten = flattenPhoneNumbers(searchTerm);
+        String contactName = contact.displayName == null
+            ? 'Unknown'
+            : contact.displayName.toLowerCase();
+        bool nameMatches = contactName.contains(searchTerm);
+        if (nameMatches == true) {
+          return true;
+        }
+
+        if (searchTermFlatten.isEmpty) {
+          return false;
+        }
+
+        var phone = contact.phones.firstWhere((phn) {
+          String phnFlattened = flattenPhoneNumbers(phn.value);
+          return phnFlattened.contains(searchTermFlatten);
+        }, orElse: () => null);
+
+        return phone != null;
+      });
+
+      setState(() {
+        contactFiltered = _contacts;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    bool isSearching = searchController.text.isNotEmpty;
     return Scaffold(
       appBar: CustomAppBar(
           bgColor: Colors.white,
@@ -53,30 +98,85 @@ class _BorrowScreenState extends State<BorrowScreen> {
             ),
           ),
           centerTitle: null),
-      body: Column(
-        children: [
-          Text("Select a Contact"),
-          ListView.builder(
-            itemCount: contacts.length,
-            itemBuilder: (context, index) {
-              Contact contact = contacts[index];
-              return ListTile(
-                title: Text(contact.displayName),
-                subtitle: Text(contact.phones.elementAt(0).value),
-              );
-            },
-          )
-        ],
+      body: SingleChildScrollView(
+        physics: BouncingScrollPhysics(),
+        child: Container(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    "Search Contact",
+                    style: Variables.inputLabelTextStyle,
+                  ),
+                  Container(
+                    height: 55,
+                    alignment: Alignment.center,
+                    padding: EdgeInsets.symmetric(horizontal: 15),
+                    decoration: BoxDecoration(
+                        color: Colors.yellow[100],
+                        borderRadius: BorderRadius.circular(8)),
+                    child: TextFormField(
+                      cursorColor: Variables.primaryColor,
+                      maxLines: 1,
+                      style: Variables.inputTextStyle,
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        hintText: '123456789',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                      controller: searchController,
+                    ),
+                  ),
+                ],
+              ),
+              ListView.builder(
+                shrinkWrap: true,
+                itemCount: isSearching == true
+                    ? contactFiltered.length
+                    : contacts.length,
+                itemBuilder: (context, index) {
+                  Contact contact = isSearching == true
+                      ? contactFiltered[index]
+                      : contacts[index];
+                  return ListTile(
+                    title: Text(contact.displayName == null
+                        ? 'Unknown'
+                        : contact.displayName),
+                    subtitle: Text(contact.phones.length == 0
+                        ? "No Number"
+                        : contact.phones.elementAt(0).value),
+                    leading:
+                        (contact.avatar != null && contact.avatar.length > 0)
+                            ? CircleAvatar(
+                                backgroundImage: MemoryImage(contact.avatar),
+                              )
+                            : CircleAvatar(
+                                backgroundColor: Variables.lightPrimaryColor,
+                                child: Text(
+                                  contact.initials(),
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                  );
+                },
+              )
+            ],
+          ),
+        ),
       ),
     );
   }
 
   getAllContacts() async {
-    List<Contact> _contacts =
-        (await ContactsService.getContacts(withThumbnails: false)).toList();
-    setState(() {
-      contacts = _contacts;
-    });
+    if (await Permission.contacts.request().isGranted) {
+      List<Contact> _contacts = (await ContactsService.getContacts()).toList();
+      setState(() {
+        contacts = _contacts;
+      });
+    }
   }
 
   createAlertDialog(BuildContext context) {
@@ -1203,3 +1303,4 @@ class _BorrowScreenState extends State<BorrowScreen> {
 //     );
 //   }
 // }
+//
