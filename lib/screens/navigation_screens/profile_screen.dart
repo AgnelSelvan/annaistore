@@ -6,10 +6,10 @@ import 'package:annaistore/screens/admin/add_product.dart';
 import 'package:annaistore/screens/admin/add_sub_category.dart';
 import 'package:annaistore/screens/admin/add_unit.dart';
 import 'package:annaistore/screens/admin/admin_page.dart';
-import 'package:annaistore/screens/admin/borrow.dart';
+import 'package:annaistore/screens/admin/borrow/bill_screen.dart';
+import 'package:annaistore/screens/admin/borrow/borrow_list.dart';
 import 'package:annaistore/screens/admin/stock_screen.dart';
 import 'package:annaistore/screens/auth_screen.dart';
-import 'package:annaistore/screens/bill_screen.dart';
 import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/screens/edit_profile_screen.dart';
 import 'package:annaistore/utils/universal_variables.dart';
@@ -311,6 +311,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 },
                               )
                             : Container(),
+                        CustomTile(
+                          text: "Borrow",
+                          icon: Icons.edit,
+                          onTap: () {
+                            Navigator.push(
+                                context, BouncyPageRoute(widget: BorrowList()));
+                          },
+                        ),
                         CustomTile(
                           text: "Edit Account",
                           icon: Icons.edit,

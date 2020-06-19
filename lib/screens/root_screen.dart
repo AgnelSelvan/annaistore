@@ -1,17 +1,8 @@
-import 'package:annaistore/models/user.dart';
-import 'package:annaistore/resources/auth_methods.dart';
-import 'package:annaistore/screens/bill_screen.dart';
 import 'package:annaistore/screens/navigation_screens/home_screen.dart';
 import 'package:annaistore/screens/navigation_screens/profile_screen.dart';
 import 'package:annaistore/utils/universal_variables.dart';
-import 'package:annaistore/widgets/bouncy_page_route.dart';
-import 'package:annaistore/widgets/custom_appbar.dart';
-import 'package:annaistore/widgets/custom_divider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_icons/flutter_icons.dart';
 
 class RootScreen extends StatefulWidget {
   @override
@@ -79,5 +70,4 @@ class _RootScreenState extends State<RootScreen> {
           ]),
     );
   }
-
 }

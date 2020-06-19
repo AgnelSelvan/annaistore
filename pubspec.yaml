@@ -43,6 +43,10 @@ dependencies:
   flutter_barcode_scanner:
   contacts_service: ^0.4.6
   permission_handler:
+  sticky_headers:
+  syncfusion_flutter_pdf:
+  open_file:
+  path_provider:
   # flutter_sms: ^2.0.1+2
 
 dev_dependencies:

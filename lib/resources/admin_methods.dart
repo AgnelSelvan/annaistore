@@ -6,6 +6,7 @@ import 'package:annaistore/models/stock.dart';
 import 'package:annaistore/models/sub-category.dart';
 import 'package:annaistore/models/unit.dart';
 import 'package:annaistore/models/user.dart';
+import 'package:annaistore/models/yougave.dart';
 import 'package:annaistore/utils/utilities.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
@@ -197,10 +198,10 @@ class AdminMethods {
     return category;
   }
 
-  Future<void> addBorrowToDb(Borrow borrow) async {
-    String docId = _borrowsCollection.document().documentID;
-    await _borrowsCollection.document(docId).setData(borrow.toMap(borrow));
-  }
+  // Future<void> addBorrowToDb(Borrow borrow) async {
+  //   String docId = _borrowsCollection.document().documentID;
+  //   await _borrowsCollection.document(docId).setData(borrow.toMap(borrow));
+  // }
 
   Future<void> addStockToDb(
       String productId, String productCode, int qty) async {
@@ -270,5 +271,26 @@ class AdminMethods {
     List<DocumentSnapshot> doc = docs.documents;
     Product product = Product.fromMap(doc[0].data);
     return product;
+  }
+
+  Future<void> addBorrowToDb(BorrowModel borrowModel) {
+    _borrowsCollection
+        .document(borrowModel.borrowId)
+        .setData(borrowModel.toMap(borrowModel));
+  }
+
+  Stream<QuerySnapshot> getAllBorrowList() {
+    return _borrowsCollection.snapshots();
+  }
+
+  Future<int> totalAmountYouWillGet() async {
+    QuerySnapshot docs = await _borrowsCollection.getDocuments();
+    List<DocumentSnapshot> docList = docs.documents.toList();
+    int sum = 0;
+    for (var i = 0; i < docList.length; i++) {
+      BorrowModel borrow = BorrowModel.fromMap(docList[i].data);
+      sum = sum + (borrow.price - borrow.givenAmount);
+    }
+    return sum;
   }
 }

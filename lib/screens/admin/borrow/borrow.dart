@@ -1,10 +1,24 @@
+import 'dart:io';
+
+import 'package:annaistore/models/yougave.dart';
+import 'package:annaistore/resources/admin_methods.dart';
+import 'package:annaistore/screens/root_screen.dart';
 import 'package:annaistore/utils/universal_variables.dart';
+import 'package:annaistore/utils/utilities.dart';
+import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
-import 'package:annaistore/widgets/dialogs.dart';
+import 'package:annaistore/widgets/widgets.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_icons/flutter_icons.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:sticky_headers/sticky_headers/widget.dart';
+import 'package:syncfusion_flutter_pdf/pdf.dart';
+
+AdminMethods _adminMethods = AdminMethods();
 
 class BorrowScreen extends StatefulWidget {
   final List<String> productList;
@@ -31,6 +45,12 @@ class _BorrowScreenState extends State<BorrowScreen> {
   List<Contact> contactFiltered = [];
   TextEditingController customerGivenMoney = TextEditingController();
   TextEditingController searchController = TextEditingController();
+  TextEditingController mobileNumberController = TextEditingController();
+  TextEditingController priceController = TextEditingController();
+  TextEditingController totalPriceController = TextEditingController();
+  Contact selectedContact;
+
+  FocusNode myFocusNode;
 
   @override
   void initState() {
@@ -39,6 +59,25 @@ class _BorrowScreenState extends State<BorrowScreen> {
     getAllContacts();
     searchController.addListener(() {
       filterContacts();
+    });
+    customerGivenMoney.addListener(() {
+      updateTotalAmount();
+    });
+    priceController = TextEditingController(text: widget.totalPrice.toString());
+    myFocusNode = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    myFocusNode.dispose();
+    super.dispose();
+  }
+
+  void updateTotalAmount() {
+    print(customerGivenMoney.text);
+    setState(() {
+      int totalPrice = widget.totalPrice - int.parse(customerGivenMoney.text);
+      totalPriceController = TextEditingController(text: totalPrice.toString());
     });
   }
 
@@ -49,7 +88,6 @@ class _BorrowScreenState extends State<BorrowScreen> {
   void filterContacts() {
     List<Contact> _contacts = [];
     _contacts.addAll(contacts);
-    print(contacts.length);
     if (searchController.text.isNotEmpty) {
       _contacts.retainWhere((contact) {
         String searchTerm = searchController.text.toLowerCase();
@@ -104,68 +142,354 @@ class _BorrowScreenState extends State<BorrowScreen> {
           padding: EdgeInsets.all(20),
           child: Column(
             children: [
-              Column(
+              StickyHeader(
+                header: buildStickHeader(),
+                content: selectedContact == null
+                    ? buildContactListView(isSearching)
+                    : buildProductDetailsListView(context),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  ListView buildProductDetailsListView(BuildContext context) {
+    return ListView(
+      shrinkWrap: true,
+      physics: BouncingScrollPhysics(),
+      children: [
+        SizedBox(height: 20),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Bill No",
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 5),
+            ListView.builder(
+              shrinkWrap: true,
+              itemCount: widget.productList.length,
+              itemBuilder: (context, index) {
+                return Container(
+                  child: Text(
+                    "${widget.billNo}",
+                    style: Variables.inputLabelTextStyle,
+                  ),
+                );
+              },
+            )
+          ],
+        ),
+        SizedBox(height: 20),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Mobile Number",
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 5),
+            ListView.builder(
+              shrinkWrap: true,
+              itemCount: widget.productList.length,
+              itemBuilder: (context, index) {
+                return Container(
+                  child: Text(
+                    "${selectedContact.phones.elementAt(0).value}",
+                    style: Variables.inputLabelTextStyle,
+                  ),
+                );
+              },
+            )
+          ],
+        ),
+        SizedBox(height: 20),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Customer Name",
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 5),
+            ListView.builder(
+              shrinkWrap: true,
+              itemCount: widget.productList.length,
+              itemBuilder: (context, index) {
+                return Container(
+                  child: Text(
+                    "${selectedContact.displayName}",
+                    style: Variables.inputLabelTextStyle,
+                  ),
+                );
+              },
+            )
+          ],
+        ),
+        SizedBox(height: 20),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Product",
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 5),
+            ListView.builder(
+              shrinkWrap: true,
+              itemCount: widget.productList.length,
+              itemBuilder: (context, index) {
+                return Container(
+                  child: Text(
+                    "${widget.productList[index]} (${widget.qtyList[index]})",
+                    style: Variables.inputLabelTextStyle,
+                  ),
+                );
+              },
+            )
+          ],
+        ),
+        SizedBox(height: 20),
+        Row(
+          children: [
+            Container(
+              width: MediaQuery.of(context).size.width / 3,
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    "Search Contact",
+                    "Price",
                     style: Variables.inputLabelTextStyle,
                   ),
                   Container(
                     height: 55,
                     alignment: Alignment.center,
-                    padding: EdgeInsets.symmetric(horizontal: 15),
+                    padding: EdgeInsets.symmetric(horizontal: 5),
                     decoration: BoxDecoration(
                         color: Colors.yellow[100],
                         borderRadius: BorderRadius.circular(8)),
                     child: TextFormField(
+                      enabled: false,
                       cursorColor: Variables.primaryColor,
                       maxLines: 1,
                       style: Variables.inputTextStyle,
                       decoration: InputDecoration(
                         border: InputBorder.none,
-                        hintText: '123456789',
-                        prefixIcon: Icon(Icons.search),
+                        hintText: '123',
+                        prefixIcon: Icon(
+                          FontAwesome.rupee,
+                          size: 12,
+                          color: Colors.yellow[900],
+                        ),
                       ),
-                      controller: searchController,
+                      controller: priceController,
                     ),
                   ),
                 ],
               ),
-              ListView.builder(
-                shrinkWrap: true,
-                itemCount: isSearching == true
-                    ? contactFiltered.length
-                    : contacts.length,
-                itemBuilder: (context, index) {
-                  Contact contact = isSearching == true
-                      ? contactFiltered[index]
-                      : contacts[index];
-                  return ListTile(
-                    title: Text(contact.displayName == null
-                        ? 'Unknown'
-                        : contact.displayName),
-                    subtitle: Text(contact.phones.length == 0
-                        ? "No Number"
-                        : contact.phones.elementAt(0).value),
-                    leading:
-                        (contact.avatar != null && contact.avatar.length > 0)
-                            ? CircleAvatar(
-                                backgroundImage: MemoryImage(contact.avatar),
-                              )
-                            : CircleAvatar(
-                                backgroundColor: Variables.lightPrimaryColor,
-                                child: Text(
-                                  contact.initials(),
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ),
-                  );
-                },
-              )
-            ],
-          ),
+            ),
+            Spacer(),
+            Text('-'),
+            Spacer(),
+            Container(
+              width: MediaQuery.of(context).size.width / 2.5,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    "given amount",
+                    style: Variables.inputLabelTextStyle,
+                  ),
+                  Container(
+                    height: 55,
+                    alignment: Alignment.center,
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    decoration: BoxDecoration(
+                        color: Colors.yellow[100],
+                        borderRadius: BorderRadius.circular(8)),
+                    child: TextFormField(
+                      enabled: true,
+                      focusNode: myFocusNode,
+                      cursorColor: Variables.primaryColor,
+                      maxLines: 1,
+                      style: Variables.inputTextStyle,
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        hintText: '123',
+                        prefixIcon: Icon(
+                          FontAwesome.rupee,
+                          size: 12,
+                          color: Colors.yellow[900],
+                        ),
+                      ),
+                      controller: customerGivenMoney,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
+        SizedBox(height: 20),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              "Total Price",
+              style: Variables.inputLabelTextStyle,
+            ),
+            Container(
+              height: 55,
+              alignment: Alignment.center,
+              padding: EdgeInsets.symmetric(horizontal: 15),
+              decoration: BoxDecoration(
+                  color: Colors.yellow[100],
+                  borderRadius: BorderRadius.circular(8)),
+              child: TextFormField(
+                enabled: false,
+                cursorColor: Variables.primaryColor,
+                maxLines: 1,
+                style: Variables.inputTextStyle,
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  hintText: '123',
+                  prefixIcon: Icon(
+                    Icons.dialpad,
+                    size: 12,
+                    color: Colors.yellow[900],
+                  ),
+                ),
+                controller: totalPriceController,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 30),
+        Container(
+            width: MediaQuery.of(context).size.width / 2,
+            child:
+                buildRaisedButton('Save', Colors.green[200], Colors.white, () {
+              BorrowModel borrowModel = BorrowModel(
+                  borrowId: Utils.getDocId(),
+                  billNo: widget.billNo,
+                  customerName: selectedContact.displayName,
+                  givenAmount: int.parse(customerGivenMoney.text),
+                  mobileNo: selectedContact.phones.elementAt(0).value,
+                  price: int.parse(priceController.text),
+                  productList: widget.productList,
+                  qtyList: widget.qtyList,
+                  sellingRateList: widget.sellingRateList,
+                  taxList: widget.taxList);
+              _adminMethods.addBorrowToDb(borrowModel);
+              Navigator.push(context, BouncyPageRoute(widget: RootScreen()));
+            }))
+      ],
+    );
+  }
+
+  Future<void> _createPDF() async {
+    //Create a PDF document.
+    var document = PdfDocument();
+    //Add page and draw text to the page.
+    document.pages.add().graphics.drawString(
+        'Hello World!', PdfStandardFont(PdfFontFamily.helvetica, 18),
+        brush: PdfSolidBrush(PdfColor(0, 0, 0)),
+        bounds: Rect.fromLTWH(0, 0, 500, 30));
+    //Save the document
+    var bytes = document.save();
+    // Dispose the document
+    document.dispose();
+    //Get external storage directory
+    Directory directory = await getExternalStorageDirectory();
+//Get directory path
+    String path = directory.path;
+//Create an empty file to write PDF data
+    File file = File('$path/Output.pdf');
+//Write PDF data
+    await file.writeAsBytes(bytes, flush: true);
+//Open the PDF document in mobile
+    OpenFile.open('$path/Output.pdf');
+  }
+
+  ListView buildContactListView(bool isSearching) {
+    return ListView.builder(
+      physics: BouncingScrollPhysics(),
+      shrinkWrap: true,
+      itemCount: isSearching == true ? contactFiltered.length : contacts.length,
+      itemBuilder: (context, index) {
+        Contact contact =
+            isSearching == true ? contactFiltered[index] : contacts[index];
+        return GestureDetector(
+          onTap: () {
+            SystemChannels.textInput.invokeMethod('TextInput.hide');
+            setState(() {
+              mobileNumberController = TextEditingController(
+                  text: contact.phones.elementAt(0).value);
+              selectedContact = contact;
+            });
+          },
+          child: ListTile(
+            title: Text(
+                contact.displayName == null ? 'Unknown' : contact.displayName),
+            subtitle: Text(contact.phones.length == 0
+                ? "No Number"
+                : contact.phones.elementAt(0).value),
+            leading: (contact.avatar != null && contact.avatar.length > 0)
+                ? CircleAvatar(
+                    backgroundImage: MemoryImage(contact.avatar),
+                  )
+                : CircleAvatar(
+                    backgroundColor: Variables.lightPrimaryColor,
+                    child: Text(
+                      contact.initials(),
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+          ),
+        );
+      },
+    );
+  }
+
+  Container buildStickHeader() {
+    return Container(
+      decoration: BoxDecoration(color: Variables.lightGreyColor),
+      padding: EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            "Search Contact",
+            style: Variables.inputLabelTextStyle,
+          ),
+          Container(
+            height: 55,
+            alignment: Alignment.center,
+            padding: EdgeInsets.symmetric(horizontal: 15),
+            decoration: BoxDecoration(
+                color: Colors.yellow[100],
+                borderRadius: BorderRadius.circular(8)),
+            child: TextFormField(
+              autofocus: true,
+              cursorColor: Variables.primaryColor,
+              maxLines: 1,
+              style: Variables.inputTextStyle,
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                hintText: '123456789',
+                prefixIcon: Icon(
+                  Icons.search,
+                  size: 12,
+                  color: Colors.yellow[900],
+                ),
+              ),
+              controller: searchController,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -177,59 +501,6 @@ class _BorrowScreenState extends State<BorrowScreen> {
         contacts = _contacts;
       });
     }
-  }
-
-  createAlertDialog(BuildContext context) {
-    return showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            title: Text("Customer Given Amount"),
-            content: Container(
-              padding: EdgeInsets.symmetric(horizontal: 15),
-              decoration: BoxDecoration(
-                  color: Colors.yellow[100],
-                  borderRadius: BorderRadius.circular(8)),
-              child: TextFormField(
-                cursorColor: Variables.primaryColor,
-                validator: (value) {
-                  if (value.isEmpty) return "You cannot have an empty Amount!";
-                },
-                maxLines: 1,
-                keyboardType: TextInputType.number,
-                style: Variables.inputTextStyle,
-                decoration: InputDecoration(
-                    border: InputBorder.none, hintText: 'Amount'),
-                controller: customerGivenMoney,
-              ),
-            ),
-            actions: <Widget>[
-              FlatButton(
-                onPressed: () {
-                  Navigator.of(context).pop(DialogAction.Abort);
-                },
-                child: Text(
-                  "No",
-                  style: TextStyle(color: Variables.primaryColor),
-                ),
-              ),
-              RaisedButton(
-                elevation: 0,
-                color: Variables.primaryColor,
-                onPressed: () async {
-                  Navigator.of(context).pop(DialogAction.Abort);
-                },
-                child: Text(
-                  "Yes",
-                  style: TextStyle(color: Variables.lightGreyColor),
-                ),
-              )
-            ],
-          );
-        });
   }
 }
 
