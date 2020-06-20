@@ -2,6 +2,7 @@ import 'package:annaistore/constants/strings.dart';
 import 'package:annaistore/models/user.dart';
 import 'package:annaistore/utils/utilities.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -146,5 +147,25 @@ class AuthMethods {
     } catch (e) {
       return false;
     }
+  }
+
+  Future<DataConnectionStatus> checkInternet() async {
+    var listener = DataConnectionChecker().onStatusChange.listen((status) {
+      switch (status) {
+        case DataConnectionStatus.connected:
+          print("Contection is available");
+          break;
+        case DataConnectionStatus.disconnected:
+          print("Contection is not available");
+          break;
+      }
+    });
+
+    print(await DataConnectionChecker().hasConnection);
+    print(await DataConnectionChecker().connectionStatus);
+
+    await Future.delayed(Duration(seconds: 10));
+    await listener.cancel();
+    return DataConnectionChecker().connectionStatus;
   }
 }

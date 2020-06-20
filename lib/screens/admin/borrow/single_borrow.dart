@@ -10,6 +10,7 @@ import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
 import 'package:annaistore/widgets/dialogs.dart';
 import 'package:annaistore/widgets/widgets.dart';
+import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -18,11 +19,13 @@ import 'package:flutter_icons/flutter_icons.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:save_in_gallery/save_in_gallery.dart';
 import 'package:sticky_headers/sticky_headers.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:pdf/pdf.dart';
 import 'dart:ui' as ui;
 import 'package:image/image.dart' as I;
+import 'package:esys_flutter_share/esys_flutter_share.dart';
 
 AdminMethods _adminMethods = AdminMethods();
 AuthMethods _authMethods = AuthMethods();
@@ -39,6 +42,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   GlobalKey _containerKey = GlobalKey();
   User currentUser;
+  final _imageSaver = ImageSaver();
   // VoidCallback
   BorrowModel borrowModel;
   bool isLoading = false;
@@ -53,12 +57,12 @@ class _SingleBorrowState extends State<SingleBorrow> {
     setState(() {
       borrowModel = _borrowModel;
     });
-    setState(() {
-      isLoading = false;
-    });
   }
 
   getCurrentUser() async {
+    setState(() {
+      isLoading = true;
+    });
     FirebaseUser user = await _authMethods.getCurrentUser();
     User nowUser = await _authMethods.getUserDetailsById(user.uid);
     setState(() {
@@ -67,14 +71,28 @@ class _SingleBorrowState extends State<SingleBorrow> {
   }
 
   convertWidgetToImage() async {
+    setState(() {
+      isLoading = true;
+    });
     RenderRepaintBoundary renderRepaintBoundary =
         _containerKey.currentContext.findRenderObject();
     ui.Image boxImage = await renderRepaintBoundary.toImage(pixelRatio: 1);
     ByteData byteData =
         await boxImage.toByteData(format: ui.ImageByteFormat.png);
-    var png = byteData.buffer.asUint8List();
+    final Uint8List png = byteData.buffer.asUint8List();
+    List<Uint8List> pngList = [];
+    final dir = await getExternalStorageDirectory();
+    pngList.add(png);
+    final res = await _imageSaver.saveImages(
+        imageBytes: pngList, directoryName: '${dir.path}/image.jpg');
+    print(res.toString());
 
-    I.Image _img = I.decodeImage(png);
+    print(dir.path);
+
+    // final file = await new File('${dir.path}/sample.png').create();
+    // file.writeAsBytesSync(png);
+    // print(file);
+
     // String base64 = base64Encode(png);
     // String BASE64_IMAGE = "data:image/png;base64, ...";
     // AdvancedShare.whatsapp(msg: "Hii", url: BASE64_IMAGE).then((response) {
@@ -89,13 +107,37 @@ class _SingleBorrowState extends State<SingleBorrow> {
     //   Dialogs.okDialog(
     //       context, 'Error', 'Error launching whatsapp', Colors.red[200]);
     // }
+    setState(() {
+      isLoading = false;
+    });
   }
 
   @override
   void initState() {
     super.initState();
-    getBorrowById();
-    getCurrentUser();
+    checkInternetConnection();
+  }
+
+  checkInternetConnection() async {
+    setState(() {
+      isLoading = true;
+    });
+    var status = await _authMethods.checkInternet();
+    if (status == DataConnectionStatus.connected) {
+      getBorrowById();
+      getCurrentUser();
+    } else {
+      Navigator.pop(context);
+      showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+                title: Text("No internet"),
+                content: Text("Check your internet connection"),
+              ));
+    }
+    setState(() {
+      isLoading = false;
+    });
   }
 
   @override
@@ -161,7 +203,9 @@ class _SingleBorrowState extends State<SingleBorrow> {
               ),
               SizedBox(height: 15),
               Text(
-                borrowModel.billNo,
+                borrowModel.billNo == null
+                    ? 'Error Loading...'
+                    : borrowModel.billNo,
                 style: TextStyle(
                     color: Variables.blackColor,
                     fontWeight: FontWeight.w300,
