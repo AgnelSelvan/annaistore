@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:annaistore/resources/auth_methods.dart';
 import 'package:annaistore/screens/auth_screen.dart';
+import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/screens/root_screen.dart';
 import 'package:annaistore/theme/theme_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';

@@ -2,21 +2,21 @@ import 'dart:io';
 
 import 'package:annaistore/models/yougave.dart';
 import 'package:annaistore/resources/admin_methods.dart';
+import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/screens/root_screen.dart';
 import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/utils/utilities.dart';
 import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
 import 'package:annaistore/widgets/widgets.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_icons/flutter_icons.dart';
-import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sticky_headers/sticky_headers/widget.dart';
-import 'package:syncfusion_flutter_pdf/pdf.dart';
 
 AdminMethods _adminMethods = AdminMethods();
 
@@ -49,13 +49,12 @@ class _BorrowScreenState extends State<BorrowScreen> {
   TextEditingController priceController = TextEditingController();
   TextEditingController totalPriceController = TextEditingController();
   Contact selectedContact;
-
+  bool isLoading = false;
   FocusNode myFocusNode;
 
   @override
   void initState() {
     super.initState();
-    // createAlertDialog(context);
     getAllContacts();
     searchController.addListener(() {
       filterContacts();
@@ -122,37 +121,38 @@ class _BorrowScreenState extends State<BorrowScreen> {
   Widget build(BuildContext context) {
     bool isSearching = searchController.text.isNotEmpty;
     return Scaffold(
-      appBar: CustomAppBar(
-          bgColor: Colors.white,
-          title: Text("Annai Store", style: Variables.appBarTextStyle),
-          actions: null,
-          leading: GestureDetector(
-            onTap: () {
-              Navigator.pop(context);
-            },
-            child: Icon(
-              Ionicons.ios_arrow_back,
-              color: Variables.primaryColor,
-            ),
-          ),
-          centerTitle: null),
-      body: SingleChildScrollView(
-        physics: BouncingScrollPhysics(),
-        child: Container(
-          padding: EdgeInsets.all(20),
-          child: Column(
-            children: [
-              StickyHeader(
-                header: buildStickHeader(),
-                content: selectedContact == null
-                    ? buildContactListView(isSearching)
-                    : buildProductDetailsListView(context),
+        appBar: CustomAppBar(
+            bgColor: Colors.white,
+            title: Text("Annai Store", style: Variables.appBarTextStyle),
+            actions: null,
+            leading: GestureDetector(
+              onTap: () {
+                Navigator.pop(context);
+              },
+              child: Icon(
+                Ionicons.ios_arrow_back,
+                color: Variables.primaryColor,
               ),
-            ],
-          ),
-        ),
-      ),
-    );
+            ),
+            centerTitle: null),
+        body: isLoading
+            ? CustomCircularLoading()
+            : SingleChildScrollView(
+                physics: BouncingScrollPhysics(),
+                child: Container(
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      StickyHeader(
+                        header: buildStickHeader(),
+                        content: selectedContact == null
+                            ? buildContactListView(isSearching)
+                            : buildProductDetailsListView(context),
+                      ),
+                    ],
+                  ),
+                ),
+              ));
   }
 
   ListView buildProductDetailsListView(BuildContext context) {
@@ -374,6 +374,7 @@ class _BorrowScreenState extends State<BorrowScreen> {
                 buildRaisedButton('Save', Colors.green[200], Colors.white, () {
               BorrowModel borrowModel = BorrowModel(
                   borrowId: Utils.getDocId(),
+                  timestamp: Timestamp.now(),
                   billNo: widget.billNo,
                   customerName: selectedContact.displayName,
                   givenAmount: int.parse(customerGivenMoney.text),
@@ -388,30 +389,6 @@ class _BorrowScreenState extends State<BorrowScreen> {
             }))
       ],
     );
-  }
-
-  Future<void> _createPDF() async {
-    //Create a PDF document.
-    var document = PdfDocument();
-    //Add page and draw text to the page.
-    document.pages.add().graphics.drawString(
-        'Hello World!', PdfStandardFont(PdfFontFamily.helvetica, 18),
-        brush: PdfSolidBrush(PdfColor(0, 0, 0)),
-        bounds: Rect.fromLTWH(0, 0, 500, 30));
-    //Save the document
-    var bytes = document.save();
-    // Dispose the document
-    document.dispose();
-    //Get external storage directory
-    Directory directory = await getExternalStorageDirectory();
-//Get directory path
-    String path = directory.path;
-//Create an empty file to write PDF data
-    File file = File('$path/Output.pdf');
-//Write PDF data
-    await file.writeAsBytes(bytes, flush: true);
-//Open the PDF document in mobile
-    OpenFile.open('$path/Output.pdf');
   }
 
   ListView buildContactListView(bool isSearching) {
@@ -495,12 +472,18 @@ class _BorrowScreenState extends State<BorrowScreen> {
   }
 
   getAllContacts() async {
+    setState(() {
+      isLoading = true;
+    });
     if (await Permission.contacts.request().isGranted) {
       List<Contact> _contacts = (await ContactsService.getContacts()).toList();
       setState(() {
         contacts = _contacts;
       });
     }
+    setState(() {
+      isLoading = false;
+    });
   }
 }
 

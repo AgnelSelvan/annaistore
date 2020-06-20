@@ -1,7 +1,9 @@
 import 'package:annaistore/models/yougave.dart';
 import 'package:annaistore/resources/admin_methods.dart';
+import 'package:annaistore/screens/admin/borrow/single_borrow.dart';
 import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/utils/universal_variables.dart';
+import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
 import 'package:annaistore/widgets/custom_divider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -67,8 +69,18 @@ class _BorrowListState extends State<BorrowList> {
                     CustomDivider(leftSpacing: 20, rightSpacing: 20),
                 itemBuilder: (context, index) {
                   BorrowModel borrow = BorrowModel.fromMap(docs[index].data);
+                  if (docs.length == 0) {
+                    return ListTile(
+                      title: Text("No borrows yet!"),
+                    );
+                  }
                   return ListTile(
-                    onTap: null,
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          BouncyPageRoute(
+                              widget: SingleBorrow(borrowId: borrow.borrowId)));
+                    },
                     title: Text(borrow.customerName),
                     subtitle: Text(borrow.mobileNo),
                     leading: CircleAvatar(

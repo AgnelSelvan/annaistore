@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class BorrowModel {
   String borrowId;
   List<dynamic> productList;
@@ -8,6 +10,7 @@ class BorrowModel {
   int givenAmount;
   String billNo;
   String mobileNo;
+  Timestamp timestamp;
   String customerName;
 
   BorrowModel(
@@ -18,6 +21,7 @@ class BorrowModel {
       this.mobileNo,
       this.price,
       this.productList,
+      this.timestamp,
       this.qtyList,
       this.sellingRateList,
       this.taxList});
@@ -29,6 +33,7 @@ class BorrowModel {
     data['given_amount'] = youGave.givenAmount;
     data['mobile_no'] = youGave.mobileNo;
     data['price'] = youGave.price;
+    data['timestamp'] = youGave.timestamp;
     data['product_list'] = youGave.productList;
     data['quantity_list'] = youGave.qtyList;
     data['selling_rate_list'] = youGave.sellingRateList;
@@ -47,5 +52,6 @@ class BorrowModel {
     this.qtyList = mapData['quantity_list'];
     this.sellingRateList = mapData['selling_rate_list'];
     this.taxList = mapData['tax_list'];
+    this.timestamp = mapData['timestamp'];
   }
 }

@@ -44,11 +44,12 @@ dependencies:
   contacts_service: ^0.4.6
   permission_handler:
   sticky_headers:
-  syncfusion_flutter_pdf:
-  open_file:
+  intl:
+  pdf: ^1.3.10
   path_provider:
-  # flutter_sms: ^2.0.1+2
-
+  flutter_full_pdf_viewer:
+  # advanced_share:
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter

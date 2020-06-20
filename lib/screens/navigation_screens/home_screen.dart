@@ -2,7 +2,7 @@ import 'package:annaistore/flutter_barcode_scanner.dart';
 import 'package:annaistore/models/user.dart';
 import 'package:annaistore/resources/admin_methods.dart';
 import 'package:annaistore/resources/auth_methods.dart';
-import 'package:annaistore/screens/admin/add_product.dart';
+import 'package:annaistore/screens/admin/add/add_product.dart';
 import 'package:annaistore/screens/admin/product_details.dart';
 import 'package:annaistore/screens/canvas_screen.dart';
 import 'package:annaistore/screens/map_screen.dart';

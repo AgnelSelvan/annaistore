@@ -1,5 +1,4 @@
 import 'package:annaistore/constants/strings.dart';
-import 'package:annaistore/models/borrow.dart';
 import 'package:annaistore/models/category.dart';
 import 'package:annaistore/models/product.dart';
 import 'package:annaistore/models/stock.dart';
@@ -9,7 +8,6 @@ import 'package:annaistore/models/user.dart';
 import 'package:annaistore/models/yougave.dart';
 import 'package:annaistore/utils/utilities.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/cupertino.dart';
 
 class AdminMethods {
   static final _firestore = Firestore.instance;
@@ -292,5 +290,11 @@ class AdminMethods {
       sum = sum + (borrow.price - borrow.givenAmount);
     }
     return sum;
+  }
+
+  Future<BorrowModel> getBorrowById(String borrowId) async {
+    DocumentSnapshot doc = await _borrowsCollection.document(borrowId).get();
+    BorrowModel borrowModel = BorrowModel.fromMap(doc.data);
+    return borrowModel;
   }
 }

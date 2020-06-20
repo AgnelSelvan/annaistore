@@ -401,6 +401,10 @@ class AuthScreenState extends State<AuthScreen> {
     });
 
     _authMethods.googleSignIn().then((FirebaseUser user) {
+      if (user == null) {
+        Dialogs.okDialog(
+            context, 'Error', 'Error Signing In!', Colors.red[200]);
+      }
       if (user != null) {
         authenticateUser(user);
       } else {

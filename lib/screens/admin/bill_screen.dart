@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:annaistore/models/category.dart';
 import 'package:annaistore/models/product.dart';
 import 'package:annaistore/resources/admin_methods.dart';
-import 'package:annaistore/screens/admin/add_product.dart';
+import 'package:annaistore/screens/admin/add/add_product.dart';
 import 'package:annaistore/screens/admin/borrow/borrow.dart';
 import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/utils/universal_variables.dart';
