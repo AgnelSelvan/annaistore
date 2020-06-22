@@ -10,7 +10,7 @@ class User {
   String state;
   String gstin;
   int pincode;
-  int mobileNo;
+  String mobileNo;
 
   User(
       {this.uid,

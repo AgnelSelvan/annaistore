@@ -1,12 +1,14 @@
 import 'package:annaistore/resources/auth_methods.dart';
-import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/screens/root_screen.dart';
 import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/widgets/dialogs.dart';
+import 'package:annaistore/widgets/widgets.dart';
+import 'package:country_code_picker/country_code_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_icons/flutter_icons.dart';
+
+final FirebaseAuth _auth = FirebaseAuth.instance;
 
 class AuthScreen extends StatefulWidget {
   @override
@@ -19,14 +21,117 @@ class AuthScreenState extends State<AuthScreen> {
   String _email;
   String _username;
   bool isNew = false;
+  String countryCode = '+91';
 
   TextEditingController userNameController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   TextEditingController emailController = TextEditingController();
+  TextEditingController phoneNumberController = TextEditingController();
+  TextEditingController codeController = TextEditingController();
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  bool isLoginPressed = false;
+  bool isLoading = false;
+  bool viewPhoneVisible = true;
+  bool viewGoogleVisible = false;
+  bool viewEmailVisible = false;
+
+  void mobileLogin() {
+    _auth.verifyPhoneNumber(
+        phoneNumber: '$countryCode${phoneNumberController.text}'.trim(),
+        timeout: Duration(seconds: 60),
+        verificationCompleted: (AuthCredential credential) async {
+          Navigator.pop(context);
+          AuthResult authResult = await _auth.signInWithCredential(credential);
+          FirebaseUser user = authResult.user;
+          if (user != null) {
+            authenticateUserByPhoneLogin(user);
+            print(user.phoneNumber);
+            print("Login In");
+          }
+        },
+        verificationFailed: (AuthException authException) {
+          Dialogs.okDialog(
+              context, 'Error', authException.message, Colors.red[200]);
+          print(authException.message);
+        },
+        codeSent: (String verificationId, [int forceResendingCode]) {
+          showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  title: Text("Enter Code"),
+                  content: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 15),
+                    decoration: BoxDecoration(
+                        color: Colors.yellow[100],
+                        borderRadius: BorderRadius.circular(8)),
+                    child: TextFormField(
+                      cursorColor: Variables.primaryColor,
+                      validator: (value) {
+                        if (value.isEmpty)
+                          return "You cannot have an empty code!";
+                      },
+                      maxLines: 1,
+                      keyboardType: TextInputType.number,
+                      style: Variables.inputTextStyle,
+                      decoration: InputDecoration(
+                          border: InputBorder.none, hintText: '*****'),
+                      controller: codeController,
+                    ),
+                  ),
+                  actions: <Widget>[
+                    buildRaisedButton('Confirm'.toUpperCase(), Colors.white,
+                        Variables.primaryColor, () async {
+                      final code = codeController.text.trim();
+                      AuthCredential credential =
+                          PhoneAuthProvider.getCredential(
+                              verificationId: verificationId, smsCode: code);
+
+                      AuthResult result =
+                          await _auth.signInWithCredential(credential);
+
+                      FirebaseUser user = result.user;
+                      if (user != null) {
+                        authenticateUserByPhoneLogin(user);
+                        print("Login In");
+                      } else {
+                        print("Erro");
+                      }
+                      Navigator.pop(context);
+                      codeController.clear();
+                    })
+                  ],
+                );
+              });
+        },
+        codeAutoRetrievalTimeout: null);
+  }
+
+  authenticateUserByPhoneLogin(FirebaseUser user) {
+    _authMethods.authenticateUserByPhone(user).then((isNewUser) {
+      setState(() {
+        isLoading = false;
+      });
+
+      if (isNewUser) {
+        _authMethods.addPhoneDataToDb(user).then((value) {
+          Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (context) {
+            return RootScreen();
+          }));
+        });
+      } else {
+        Navigator.pushReplacement(context,
+            MaterialPageRoute(builder: (context) {
+          return RootScreen();
+        }));
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -35,17 +140,192 @@ class AuthScreenState extends State<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          Center(
-            child: isNew ? signUp() : login(),
-          ),
-          isLoginPressed
-              ? Center(
-                  child: CustomCircularLoading(),
+    return MaterialApp(
+      home: Scaffold(
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            viewPhoneVisible ? buildPhoneUI() : Container(),
+            viewEmailVisible ? isNew ? signUp() : login() : Container(),
+            Column(
+              children: [
+                SizedBox(height: 15),
+                Text(
+                  "OR",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 15),
+                Container(
+                  width: MediaQuery.of(context).size.width / 2,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: Colors.blue,
+                        child: IconButton(
+                            icon: Icon(
+                              Icons.phone,
+                              color: Colors.white,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                viewEmailVisible = false;
+                                viewPhoneVisible = true;
+                              });
+                            }),
+                      ),
+                      CircleAvatar(
+                        backgroundColor: Colors.white,
+                        child: IconButton(
+                            icon: Icon(
+                              FontAwesome.google,
+                              color: Colors.orange,
+                            ),
+                            onPressed: () {
+                              performGoogleLogin();
+                            }),
+                      ),
+                      CircleAvatar(
+                        backgroundColor: Colors.grey,
+                        child: IconButton(
+                            icon: Icon(
+                              Icons.mail,
+                              color: Colors.white,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                viewEmailVisible = true;
+                                viewPhoneVisible = false;
+                              });
+                            }),
+                      ),
+                    ],
+                  ),
                 )
-              : Container()
+              ],
+            )
+          ],
+        ),
+      ),
+    );
+    // return Scaffold(
+    //   body: Stack(
+    //     children: [
+    //       Center(
+    //         child: isNew ? signUp() : login(),
+    //       ),
+    //       isLoading
+    //           ? Center(
+    //               child: CustomCircularLoading(),
+    //             )
+    //           : Container()
+    //     ],
+    //   ),
+    // );
+  }
+
+  buildPhoneUI() {
+    return Visibility(
+      maintainSize: true,
+      maintainAnimation: true,
+      maintainState: true,
+      visible: viewPhoneVisible,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 25),
+        child: Container(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Container(
+                  alignment: Alignment.topLeft,
+                  child: Text(
+                    "Phone",
+                    style: TextStyle(
+                        fontSize: 28,
+                        color: Variables.primaryColor,
+                        fontWeight: FontWeight.bold),
+                  )),
+              SizedBox(height: 20),
+              Form(
+                  key: _formKey,
+                  child: Column(
+                    children: <Widget>[
+                      Row(
+                        children: [
+                          Container(
+                            child: CountryCodePicker(
+                              onChanged: (CountryCode value) {
+                                setState(() {
+                                  countryCode = value.dialCode;
+                                });
+                              },
+                              initialSelection: '+91',
+                              favorite: ['+91', 'IND'],
+                              showCountryOnly: false,
+                              // optional. Shows only country name and flag when popup is closed.
+                              showOnlyCountryWhenClosed: false,
+                              onInit: (code) => print(
+                                  "on init ${code.name} ${code.dialCode} ${code.name}"),
+                              alignLeft: false,
+                            ),
+                          ),
+                          buildPhoneNumberField(),
+                        ],
+                      ),
+                      SizedBox(height: 20),
+                      buildRaisedButton('Login'.toUpperCase(),
+                          Variables.primaryColor, Colors.white, () {
+                        if (_formKey.currentState.validate()) {
+                          print(countryCode);
+                          mobileLogin();
+                        }
+                      }),
+                    ],
+                  )),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  buildPhoneNumberField() {
+    return Container(
+      width: MediaQuery.of(context).size.width / 1.7,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            "Mobile Number",
+            style: Variables.inputLabelTextStyle,
+          ),
+          SizedBox(height: 4),
+          Container(
+            height: 48,
+            padding: EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(8)),
+            child: TextFormField(
+              controller: phoneNumberController,
+              maxLines: 1,
+              keyboardType: TextInputType.number,
+              style: Variables.inputTextStyle,
+              decoration: InputDecoration(
+                  border: InputBorder.none, hintText: '123456789'),
+              validator: (String value) {
+                if (value.isEmpty) {
+                  return 'Mobile number is Required';
+                }
+                if (value.length != 10) {
+                  return 'Invalid Mobile number!';
+                }
+
+                return null;
+              },
+            ),
+          ),
         ],
       ),
     );
@@ -163,125 +443,105 @@ class AuthScreenState extends State<AuthScreen> {
   }
 
   Widget login() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25),
-      child: Container(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Container(
-                alignment: Alignment.topLeft,
-                child: Text(
-                  "LOGIN",
-                  style: TextStyle(
-                      fontSize: 28,
-                      color: Variables.primaryColor,
-                      fontWeight: FontWeight.bold),
-                )),
-            SizedBox(height: 20),
-            Form(
-                key: _formKey,
-                child: Column(
-                  children: <Widget>[
-                    _buildEmail(),
-                    _buildPassword(),
-                    SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        RaisedButton(
-                          color: Variables.primaryColor,
-                          textColor: Colors.white,
-                          onPressed: () {
-                            _authMethods
-                                .signIn(emailController.text,
-                                    passwordController.text)
-                                .then((bool isSignedIn) {
-                              if (isSignedIn) {
-                                Navigator.pushReplacement(context,
-                                    MaterialPageRoute(builder: (context) {
-                                  return RootScreen();
-                                }));
-                              } else {
-                                Dialogs.okDialog(context, "Error",
-                                    "Error Signing In", Colors.red[200]);
-                              }
-                            });
-                          },
-                          child: Text(
-                            "LOGIN",
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: GestureDetector(
-                              onTap: () {},
-                              child: Text(
-                                "Forget Password ?",
-                                style:
-                                    TextStyle(color: Colors.grey, fontSize: 18),
-                              )),
-                        )
-                      ],
-                    ),
-                    SizedBox(height: 5),
-                    Text("OR"),
-                    SizedBox(height: 5),
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.8,
-                      child: RaisedButton(
-                          color: Color(0xffE3E3E3),
-                          elevation: 0,
-                          onPressed: () {
-                            performGoogleLogin();
-                          },
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              Text(
-                                "LOGIN USING ",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black),
-                              ),
-                              Image.asset(
-                                'assets/images/google.png',
-                                width: 13,
-                              )
-                            ],
-                          )),
-                    )
-                  ],
-                )),
-            SizedBox(height: 15),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Text(
-                  "Not have an account ? ",
-                  style: TextStyle(
-                      color: Colors.grey,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16),
-                ),
-                SizedBox(width: 10),
-                GestureDetector(
-                    onTap: () async {
-                      setState(() {
-                        isNew = true;
-                      });
-                    },
-                    child: Text("Sign Up",
-                        style: TextStyle(
+    return Visibility(
+      maintainSize: true,
+      maintainAnimation: true,
+      maintainState: true,
+      visible: viewEmailVisible,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 25),
+        child: Container(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Container(
+                  alignment: Alignment.topLeft,
+                  child: Text(
+                    "LOGIN",
+                    style: TextStyle(
+                        fontSize: 28,
+                        color: Variables.primaryColor,
+                        fontWeight: FontWeight.bold),
+                  )),
+              SizedBox(height: 20),
+              Form(
+                  key: _formKey,
+                  child: Column(
+                    children: <Widget>[
+                      _buildEmail(),
+                      _buildPassword(),
+                      SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          RaisedButton(
                             color: Variables.primaryColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16)))
-              ],
-            )
-          ],
+                            textColor: Colors.white,
+                            onPressed: () {
+                              _authMethods
+                                  .signIn(emailController.text,
+                                      passwordController.text)
+                                  .then((bool isSignedIn) {
+                                if (isSignedIn) {
+                                  Navigator.pushReplacement(context,
+                                      MaterialPageRoute(builder: (context) {
+                                    return RootScreen();
+                                  }));
+                                } else {
+                                  Dialogs.okDialog(context, "Error",
+                                      "Error Signing In", Colors.red[200]);
+                                }
+                              });
+                            },
+                            child: Text(
+                              "LOGIN",
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: GestureDetector(
+                                onTap: () {},
+                                child: Text(
+                                  "Forget Password ?",
+                                  style: TextStyle(
+                                      color: Colors.grey, fontSize: 18),
+                                )),
+                          )
+                        ],
+                      ),
+                      SizedBox(height: 5),
+                    ],
+                  )),
+              SizedBox(height: 15),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Text(
+                    "Not have an account ? ",
+                    style: TextStyle(
+                        color: Colors.grey,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16),
+                  ),
+                  SizedBox(width: 10),
+                  GestureDetector(
+                      onTap: () async {
+                        setState(() {
+                          isNew = true;
+                        });
+                      },
+                      child: Text("Sign Up",
+                          style: TextStyle(
+                              color: Variables.primaryColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16)))
+                ],
+              )
+            ],
+          ),
         ),
       ),
     );
@@ -321,7 +581,9 @@ class AuthScreenState extends State<AuthScreen> {
                             .signUp(
                                 emailController.text, passwordController.text)
                             .then((FirebaseUser user) {
-                          _authMethods.authenticateUser(user).then((isNewUser) {
+                          _authMethods
+                              .authenticateUserByEmailId(user)
+                              .then((isNewUser) {
                             if (isNewUser) {
                               _authMethods
                                   .addUserDataToDb(
@@ -397,7 +659,7 @@ class AuthScreenState extends State<AuthScreen> {
     print("tring to perform login");
 
     setState(() {
-      isLoginPressed = true;
+      isLoading = true;
     });
 
     _authMethods.googleSignIn().then((FirebaseUser user) {
@@ -406,31 +668,82 @@ class AuthScreenState extends State<AuthScreen> {
             context, 'Error', 'Error Signing In!', Colors.red[200]);
       }
       if (user != null) {
-        authenticateUser(user);
+        print('user.phoneNumber: ${user.phoneNumber}');
+        authenticateUserByGoogleLogin(user);
       } else {
         print("There was an error");
       }
     });
+    setState(() {
+      isLoading = false;
+    });
   }
 
-  void authenticateUser(FirebaseUser user) {
-    _authMethods.authenticateUser(user).then((isNewUser) {
+  void authenticateUserByGoogleLogin(FirebaseUser user) {
+    _authMethods.authenticateUserByEmailId(user).then((isNewUser) {
       setState(() {
-        isLoginPressed = false;
+        isLoading = false;
       });
 
       if (isNewUser) {
         _authMethods.addGoogleDataToDb(user).then((value) {
+          updateMobileNumber(user);
           Navigator.pushReplacement(context,
               MaterialPageRoute(builder: (context) {
             return RootScreen();
           }));
         });
       } else {
+        updateMobileNumber(user);
         Navigator.pushReplacement(context,
             MaterialPageRoute(builder: (context) {
           return RootScreen();
         }));
+      }
+    });
+  }
+
+  updateMobileNumber(FirebaseUser user) {
+    _authMethods.isPhoneNoExists(user).then((bool isPhoneExists) {
+      if (!isPhoneExists) {
+        showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                title: Text("Enter Code"),
+                content: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 15),
+                  decoration: BoxDecoration(
+                      color: Colors.yellow[100],
+                      borderRadius: BorderRadius.circular(8)),
+                  child: TextFormField(
+                    cursorColor: Variables.primaryColor,
+                    validator: (value) {
+                      if (value.isEmpty)
+                        return "You cannot have an Mobile number!";
+                    },
+                    maxLines: 1,
+                    keyboardType: TextInputType.number,
+                    style: Variables.inputTextStyle,
+                    decoration: InputDecoration(
+                        border: InputBorder.none, hintText: '1234567890'),
+                    controller: phoneNumberController,
+                  ),
+                ),
+                actions: <Widget>[
+                  buildRaisedButton('Confirm'.toUpperCase(), Colors.white,
+                      Variables.primaryColor, () async {
+                    _authMethods.updateMobileNumber(
+                        phoneNumberController.text, user);
+                    Navigator.pop(context);
+                    phoneNumberController.clear();
+                  })
+                ],
+              );
+            });
       }
     });
   }

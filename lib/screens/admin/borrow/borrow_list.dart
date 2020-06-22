@@ -1,5 +1,7 @@
+import 'package:annaistore/models/user.dart';
 import 'package:annaistore/models/yougave.dart';
 import 'package:annaistore/resources/admin_methods.dart';
+import 'package:annaistore/resources/auth_methods.dart';
 import 'package:annaistore/screens/admin/borrow/single_borrow.dart';
 import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/utils/universal_variables.dart';
@@ -7,11 +9,13 @@ import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
 import 'package:annaistore/widgets/custom_divider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:sticky_headers/sticky_headers/widget.dart';
 
 AdminMethods _adminMethods = AdminMethods();
+AuthMethods _authMethods = AuthMethods();
 
 class BorrowList extends StatefulWidget {
   BorrowList({Key key}) : super(key: key);
@@ -21,6 +25,28 @@ class BorrowList extends StatefulWidget {
 }
 
 class _BorrowListState extends State<BorrowList> {
+  User currentUser;
+  bool isLoading = false;
+
+  getCurrentUser() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    FirebaseUser firebaseUser = await _authMethods.getCurrentUser();
+    User user = await _authMethods.getUserDetailsById(firebaseUser.uid);
+    setState(() {
+      currentUser = user;
+      isLoading = false;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getCurrentUser();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,24 +64,31 @@ class _BorrowListState extends State<BorrowList> {
             ),
           ),
           centerTitle: null),
-      body: SingleChildScrollView(
-        physics: BouncingScrollPhysics(),
-        child: Container(
-          padding: EdgeInsets.all(0),
-          child: Column(
-            children: [
-              StickyHeader(
-                header: buildStickyHeaderListView(context),
-                content: buildStickyBodyListView(),
+      body: isLoading
+          ? CustomCircularLoading()
+          : SingleChildScrollView(
+              physics: BouncingScrollPhysics(),
+              child: Container(
+                padding: EdgeInsets.all(0),
+                child: Column(
+                  children: [
+                    currentUser.role == 'admin'
+                        ? StickyHeader(
+                            header: buildStickyHeaderListView(context),
+                            content: buildAdminStickyBodyListView())
+                        : buildUserStickyBodyListView(),
+                  ],
+                ),
               ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 
-  StreamBuilder buildStickyBodyListView() {
+  buildUserStickyBodyListView() {
+    return Text("Hii");
+  }
+
+  StreamBuilder buildAdminStickyBodyListView() {
     return StreamBuilder(
         stream: _adminMethods.getAllBorrowList(),
         builder: (context, snapshot) {

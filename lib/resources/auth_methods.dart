@@ -52,24 +52,62 @@ class AuthMethods {
     }
   }
 
-  Future<FirebaseUser> googleSignIn() async {
-    GoogleSignInAccount _signInAccount = await _googleSignIn.signIn();
-    GoogleSignInAuthentication _signInAuthentication =
-        await _signInAccount.authentication;
-
-    final AuthCredential credential = GoogleAuthProvider.getCredential(
-        idToken: _signInAuthentication.idToken,
-        accessToken: _signInAuthentication.accessToken);
-    AuthResult result = await _auth.signInWithCredential(credential);
-    FirebaseUser user = result.user;
-
-    return user;
+  Future<bool> isPhoneNoExists(FirebaseUser firebaseUser) async {
+    DocumentSnapshot doc =
+        await _userCollection.document(firebaseUser.uid).get();
+    User user = User.fromMap(doc.data);
+    return user.mobileNo == '' || user.mobileNo == null ? false : true;
   }
 
-  Future<bool> authenticateUser(FirebaseUser user) async {
+  Future<bool> updateMobileNumber(
+      String mobileNumber, FirebaseUser user) async {
+    try {
+      _userCollection
+          .document(user.uid)
+          .updateData({MOBILE_NO_FIELD: mobileNumber});
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<FirebaseUser> googleSignIn() async {
+    try {
+      GoogleSignInAccount _signInAccount = await _googleSignIn.signIn();
+      if (await _googleSignIn.isSignedIn()) {
+        GoogleSignInAuthentication _signInAuthentication =
+            await _signInAccount.authentication;
+
+        final AuthCredential credential = GoogleAuthProvider.getCredential(
+            idToken: _signInAuthentication.idToken,
+            accessToken: _signInAuthentication.accessToken);
+        AuthResult result = await _auth.signInWithCredential(credential);
+        FirebaseUser user = result.user;
+
+        return user;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print(e);
+      return null;
+    }
+  }
+
+  Future<bool> authenticateUserByEmailId(FirebaseUser user) async {
     QuerySnapshot result = await _firestore
         .collection(USERS_COLLECTION)
         .where(EMAIL_FIELD, isEqualTo: user.email)
+        .getDocuments();
+
+    final List<DocumentSnapshot> docs = result.documents;
+
+    return docs.length == 0 ? true : false;
+  }
+
+  Future<bool> authenticateUserByPhone(FirebaseUser user) async {
+    QuerySnapshot result = await _userCollection
+        .where(MOBILE_NO_FIELD, isEqualTo: user.phoneNumber)
         .getDocuments();
 
     final List<DocumentSnapshot> docs = result.documents;
@@ -86,6 +124,23 @@ class AuthMethods {
         name: currentUser.displayName,
         profilePhoto: currentUser.photoUrl,
         username: username,
+        role: USER_STRING);
+
+    _firestore
+        .collection(USERS_COLLECTION)
+        .document(currentUser.uid)
+        .setData(user.toMap(user));
+  }
+
+  Future<void> addPhoneDataToDb(FirebaseUser currentUser) async {
+    String displayName = Utils.getPhoneDisplayName();
+
+    User user = User(
+        uid: currentUser.uid,
+        name: displayName,
+        profilePhoto: currentUser.photoUrl,
+        mobileNo: currentUser.phoneNumber,
+        username: displayName.toLowerCase(),
         role: USER_STRING);
 
     _firestore
@@ -174,5 +229,19 @@ class AuthMethods {
     await Future.delayed(Duration(seconds: 10));
     await listener.cancel();
     return DataConnectionChecker().connectionStatus;
+  }
+
+  Future<void> phoneLogin(String mobileNo) async {
+    _auth.verifyPhoneNumber(
+        phoneNumber: mobileNo,
+        timeout: Duration(seconds: 60),
+        verificationCompleted: (AuthCredential credential) async {
+          AuthResult authResult = await _auth.signInWithCredential(credential);
+          FirebaseUser user = authResult.user;
+          if (user != null) {}
+        },
+        verificationFailed: null,
+        codeSent: null,
+        codeAutoRetrievalTimeout: null);
   }
 }

@@ -161,7 +161,7 @@ class AdminMethods {
         address: address,
         state: state,
         pincode: pincode,
-        mobileNo: mobileNo,
+        mobileNo: mobileNo.toString(),
         gstin: gstin);
     _customerCollection.document(docId).setData(user.toMap(user));
   }

@@ -12,6 +12,7 @@ import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
 import 'package:annaistore/widgets/custom_drawer.dart';
 import 'package:annaistore/widgets/map.dart';
+import 'package:annaistore/widgets/widgets.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -29,11 +30,56 @@ class _HomeScreenState extends State<HomeScreen>
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   TabController _tabController;
   final AuthMethods _authMethods = AuthMethods();
+  TextEditingController phoneNumberController = TextEditingController();
   String currentUserId;
   User currentUser;
 
   getCurrentUserDetails() async {
     FirebaseUser user = await _authMethods.getCurrentUser();
+    _authMethods.isPhoneNoExists(user).then((bool isPhoneExists) {
+      print('isPhoneExists:$isPhoneExists');
+      if (!isPhoneExists) {
+        showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                title: Text("Enter Mobile number"),
+                content: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 15),
+                  decoration: BoxDecoration(
+                      color: Colors.yellow[100],
+                      borderRadius: BorderRadius.circular(8)),
+                  child: TextFormField(
+                    cursorColor: Variables.primaryColor,
+                    validator: (value) {
+                      if (value.isEmpty)
+                        return "You cannot have an Mobile number!";
+                    },
+                    maxLines: 1,
+                    keyboardType: TextInputType.number,
+                    style: Variables.inputTextStyle,
+                    decoration: InputDecoration(
+                        border: InputBorder.none, hintText: '1234567890'),
+                    controller: phoneNumberController,
+                  ),
+                ),
+                actions: <Widget>[
+                  buildRaisedButton('Confirm'.toUpperCase(), Colors.white,
+                      Variables.primaryColor, () async {
+                    _authMethods.updateMobileNumber(
+                        phoneNumberController.text, user);
+                    Navigator.pop(context);
+                    phoneNumberController.clear();
+                  })
+                ],
+              );
+            });
+      }
+    });
+
     currentUserId = user.uid;
     currentUser = await _authMethods.getUserDetailsById(currentUserId);
     print('user:${currentUser.role}');
