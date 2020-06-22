@@ -386,7 +386,7 @@ class _BorrowScreenState extends State<BorrowScreen> {
                   billNo: widget.billNo,
                   customerName: selectedContact.displayName,
                   givenAmount: int.parse(customerGivenMoney.text),
-                  mobileNo: selectedContact.phones.elementAt(0).value,
+                  mobileNo: selectedContact.phones.elementAt(0).value.trim(),
                   price: int.parse(priceController.text),
                   productList: widget.productList,
                   productListId: widget.productListId,

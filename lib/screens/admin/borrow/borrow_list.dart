@@ -27,6 +27,8 @@ class BorrowList extends StatefulWidget {
 class _BorrowListState extends State<BorrowList> {
   User currentUser;
   bool isLoading = false;
+  List<DocumentSnapshot> myBorrowList;
+  int myAmount;
 
   getCurrentUser() async {
     setState(() {
@@ -39,6 +41,23 @@ class _BorrowListState extends State<BorrowList> {
       currentUser = user;
       isLoading = false;
     });
+    if (user.role == 'user') {
+      getBorrowListOfMe();
+    }
+  }
+
+  getBorrowListOfMe() async {
+    print("CurrentUser: ${currentUser.mobileNo}");
+    List<DocumentSnapshot> docs =
+        await _adminMethods.getBorrowListOfMe(currentUser);
+    print(docs.map((e) => e));
+    setState(() {
+      myBorrowList = docs;
+    });
+    for (var borrow in myBorrowList) {
+      myAmount = borrow['price'] - borrow['given_amount'];
+    }
+    print('myAmount:$myAmount');
   }
 
   @override
@@ -76,7 +95,9 @@ class _BorrowListState extends State<BorrowList> {
                         ? StickyHeader(
                             header: buildStickyHeaderListView(context),
                             content: buildAdminStickyBodyListView())
-                        : buildUserStickyBodyListView(),
+                        : StickyHeader(
+                            header: buildUserStickyHeaderListView(context),
+                            content: buildUserStickyBodyListView()),
                   ],
                 ),
               ),
@@ -84,8 +105,84 @@ class _BorrowListState extends State<BorrowList> {
     );
   }
 
+  buildUserStickyHeaderListView(context) {
+    return Container(
+      padding: EdgeInsets.all(8),
+      height: MediaQuery.of(context).size.height / 4,
+      width: MediaQuery.of(context).size.width,
+      decoration: BoxDecoration(
+        color: Colors.white,
+      ),
+      child: Container(
+        height: double.infinity,
+        width: MediaQuery.of(context).size.width / 2,
+        padding: EdgeInsets.all(10),
+        decoration: BoxDecoration(
+            color: Variables.lightPrimaryColor,
+            borderRadius: BorderRadius.circular(10)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              "₹ ${myAmount.toString()}",
+              style: TextStyle(
+                  color: Variables.lightGreyColor,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 18,
+                  letterSpacing: 1),
+            ),
+            SizedBox(height: 10),
+            Text(
+              "You have to give",
+              style: TextStyle(
+                  color: Variables.lightGreyColor,
+                  fontWeight: FontWeight.w400,
+                  fontSize: 16,
+                  letterSpacing: 1),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   buildUserStickyBodyListView() {
-    return Text("Hii");
+    return ListView.separated(
+        physics: BouncingScrollPhysics(),
+        shrinkWrap: true,
+        itemCount: myBorrowList.length,
+        separatorBuilder: (_, __) =>
+            CustomDivider(leftSpacing: 20, rightSpacing: 20),
+        itemBuilder: (context, index) {
+          BorrowModel borrow = BorrowModel.fromMap(myBorrowList[index].data);
+          if (myBorrowList.length == 0) {
+            return ListTile(
+              title: Text("No borrows yet!"),
+            );
+          }
+          return ListTile(
+            onTap: () {
+              Navigator.push(
+                  context,
+                  BouncyPageRoute(
+                      widget: SingleBorrow(borrowId: borrow.borrowId)));
+            },
+            title: Text("Annai Store"),
+            subtitle: Text(borrow.mobileNo),
+            leading: CircleAvatar(
+              backgroundColor: Variables.primaryColor,
+              child: Text(
+                borrow.customerName[0],
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            trailing: Text(
+              "₹ ${(borrow.price - borrow.givenAmount).toString()}",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          );
+        });
   }
 
   StreamBuilder buildAdminStickyBodyListView() {

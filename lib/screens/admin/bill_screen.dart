@@ -47,6 +47,7 @@ class _BillScreenState extends State<BillScreen> {
   List<int> taxList = [];
   double totalPrice;
   int tax;
+  bool _isTaxCheckBox = false;
 
   @override
   void initState() {
@@ -100,8 +101,31 @@ class _BillScreenState extends State<BillScreen> {
                       const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
                   child: Column(
                     children: <Widget>[
-                      BuildHeader(
-                        text: "BILL",
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          BuildHeader(
+                            text: "BILL",
+                          ),
+                          Row(
+                            children: [
+                              Checkbox(
+                                  activeColor: Variables.primaryColor,
+                                  focusColor: Variables.primaryColor,
+                                  value: _isTaxCheckBox,
+                                  onChanged: (bool value) {
+                                    print(value);
+                                    setState(() {
+                                      _isTaxCheckBox = value;
+                                    });
+                                  }),
+                              Text(
+                                "include tax",
+                                style: TextStyle(fontSize: 16),
+                              )
+                            ],
+                          ),
+                        ],
                       ),
                       SizedBox(
                         height: 25,
@@ -159,7 +183,9 @@ class _BillScreenState extends State<BillScreen> {
                       SizedBox(height: 15),
                       productList.isEmpty ? Container() : buildPriceField(),
                       SizedBox(height: 15),
-                      productList.isEmpty ? Container() : buildTaxField(),
+                      _isTaxCheckBox
+                          ? productList.isEmpty ? Container() : buildTaxField()
+                          : Container(),
                       SizedBox(height: 15),
                       productList.isEmpty
                           ? Container()

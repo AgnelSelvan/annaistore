@@ -161,7 +161,7 @@ class AdminMethods {
         address: address,
         state: state,
         pincode: pincode,
-        mobileNo: mobileNo.toString(),
+        mobileNo: mobileNo.toString().trim(),
         gstin: gstin);
     _customerCollection.document(docId).setData(user.toMap(user));
   }
@@ -271,8 +271,8 @@ class AdminMethods {
     return product;
   }
 
-  Future<void> addBorrowToDb(BorrowModel borrowModel) {
-    _borrowsCollection
+  Future<void> addBorrowToDb(BorrowModel borrowModel) async {
+    await _borrowsCollection
         .document(borrowModel.borrowId)
         .setData(borrowModel.toMap(borrowModel));
   }
@@ -303,5 +303,13 @@ class AdminMethods {
 
     Product product = Product.fromMap(doc.data);
     return product;
+  }
+
+  Future<List<DocumentSnapshot>> getBorrowListOfMe(User currentUser) async {
+    QuerySnapshot docs = await _borrowsCollection
+        .where('mobile_no', isEqualTo: currentUser.mobileNo.trim())
+        .getDocuments();
+
+    return docs.documents.toList();
   }
 }

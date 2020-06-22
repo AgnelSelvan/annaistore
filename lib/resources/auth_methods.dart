@@ -64,7 +64,7 @@ class AuthMethods {
     try {
       _userCollection
           .document(user.uid)
-          .updateData({MOBILE_NO_FIELD: mobileNumber});
+          .updateData({MOBILE_NO_FIELD: mobileNumber.trim()});
       return true;
     } catch (e) {
       return false;
@@ -107,7 +107,7 @@ class AuthMethods {
 
   Future<bool> authenticateUserByPhone(FirebaseUser user) async {
     QuerySnapshot result = await _userCollection
-        .where(MOBILE_NO_FIELD, isEqualTo: user.phoneNumber)
+        .where(MOBILE_NO_FIELD, isEqualTo: user.phoneNumber.trim())
         .getDocuments();
 
     final List<DocumentSnapshot> docs = result.documents;
@@ -139,7 +139,7 @@ class AuthMethods {
         uid: currentUser.uid,
         name: displayName,
         profilePhoto: currentUser.photoUrl,
-        mobileNo: currentUser.phoneNumber,
+        mobileNo: currentUser.phoneNumber.trim(),
         username: displayName.toLowerCase(),
         role: USER_STRING);
 
@@ -229,19 +229,5 @@ class AuthMethods {
     await Future.delayed(Duration(seconds: 10));
     await listener.cancel();
     return DataConnectionChecker().connectionStatus;
-  }
-
-  Future<void> phoneLogin(String mobileNo) async {
-    _auth.verifyPhoneNumber(
-        phoneNumber: mobileNo,
-        timeout: Duration(seconds: 60),
-        verificationCompleted: (AuthCredential credential) async {
-          AuthResult authResult = await _auth.signInWithCredential(credential);
-          FirebaseUser user = authResult.user;
-          if (user != null) {}
-        },
-        verificationFailed: null,
-        codeSent: null,
-        codeAutoRetrievalTimeout: null);
   }
 }
