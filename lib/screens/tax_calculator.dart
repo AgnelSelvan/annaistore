@@ -181,7 +181,7 @@ class _TaxCalculatorState extends State<TaxCalculator> {
   }
 
   calcuateAmount() {
-    if (selectedTax == 'Tax Inclusive') {
+    if (selectedTax == 'Tax Exclusive') {
       double amount = double.parse(_grossAmountController.text) +
           (double.parse(_grossAmountController.text) *
               (double.parse(_taxController.text) / 100));
@@ -189,7 +189,7 @@ class _TaxCalculatorState extends State<TaxCalculator> {
         _calculatedAmountController =
             TextEditingController(text: amount.toString());
       });
-    } else if (selectedTax == 'Tax Exclusive') {
+    } else if (selectedTax == 'Tax Inclusive') {
       double amount = double.parse(_grossAmountController.text) /
           (1 + (double.parse(_taxController.text) / 100));
       print(amount);

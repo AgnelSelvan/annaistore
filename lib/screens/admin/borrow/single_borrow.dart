@@ -136,24 +136,31 @@ class _SingleBorrowState extends State<SingleBorrow> {
 
     print(dir.path);
 
-    // final file = await new File('${dir.path}/sample.png').create();
-    // file.writeAsBytesSync(png);
-    // print(file);
+    final file = await new File('${dir.path}/sample.png').create();
+    file.writeAsBytesSync(png);
+    print(file);
 
-    // String base64 = base64Encode(png);
-    // String BASE64_IMAGE = "data:image/png;base64, ...";
-    // AdvancedShare.whatsapp(msg: "Hii", url: BASE64_IMAGE).then((response) {
-    //   print(response);
-    // });
-
-    var uri =
-        "https://wa.me/${borrowModel.mobileNo}?text=Dear sir/madam, your payment of ₹ ${(borrowModel.price - borrowModel.givenAmount).toString()} is still pending. Make payment as soon as possible";
-    if (await canLaunch(uri)) {
-      await launch(uri);
-    } else {
+    String text =
+        'Dear sir/madam, your payment of ₹ ${(borrowModel.price - borrowModel.givenAmount).toString()} is still pending. Make payment as soon as possible';
+    try {
+      await Share.file('esys image', 'sample.png', png, 'image/png',
+          text: text);
+    } catch (e) {
       Dialogs.okDialog(
           context, 'Error', 'Error launching whatsapp', Colors.red[200]);
     }
+
+    // String text =
+    //     'Dear sir/madam, your payment of ₹ ${(borrowModel.price - borrowModel.givenAmount).toString()} is still pending. Make payment as soon as possible';
+    // print("Hii");
+    // var uri =
+    //     "whatsapp://send?phone=${borrowModel.mobileNo}&text=$text&img=${file.path}";
+    // if (await canLaunch(uri)) {
+    //   await launch(uri);
+    // } else {
+    //   Dialogs.okDialog(
+    //       context, 'Error', 'Error launching whatsapp', Colors.red[200]);
+    // }
     setState(() {
       isLoading = false;
     });
@@ -832,7 +839,8 @@ class _SingleBorrowState extends State<SingleBorrow> {
                                 fontSize: 16,
                                 fontWeight: FontWeight.w300,
                                 letterSpacing: 0.5)),
-                        Text("Sent by ${currentUser.name}",
+                        Text(
+                            "Sent by ${currentUser.name == '' ? '' : currentUser.name}",
                             style: TextStyle(
                                 color: Variables.blackColor,
                                 fontSize: 18,
