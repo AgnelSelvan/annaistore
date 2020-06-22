@@ -53,6 +53,7 @@ dependencies:
   http:
   save_in_gallery:
   number_to_words_spelling: ^0.0.5
+  share_extend: ^1.1.7
   # syncfusion_flutter_pdf: ^18.1.36-beta
     # advanced_share:
 

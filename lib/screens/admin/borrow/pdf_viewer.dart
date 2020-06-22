@@ -4,6 +4,7 @@ import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_full_pdf_viewer/flutter_full_pdf_viewer.dart';
+import 'package:share_extend/share_extend.dart';
 
 class PdfPreviewwScreen extends StatelessWidget {
   final String path;
@@ -24,7 +25,9 @@ class PdfPreviewwScreen extends StatelessWidget {
                     size: 18,
                     color: Colors.blue[200],
                   ),
-                  onPressed: null)
+                  onPressed: () {
+                    ShareExtend.share(path, "file");
+                  })
             ],
             leading: IconButton(
                 icon: Icon(

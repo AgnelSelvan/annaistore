@@ -534,26 +534,95 @@ class _SingleBorrowState extends State<SingleBorrow> {
                                   mainAxisAlignment:
                                       pw.MainAxisAlignment.spaceBetween,
                                   children: [
-                                    pw.Text('Rupees: $amounten Only',
-                                        textAlign: pw.TextAlign.left),
-                                    pw.Column(children: [
-                                      pw.Text('Gross Amount: $grossAmount',
-                                          textAlign: pw.TextAlign.left),
-                                      pw.Text('Add SGST: $totalSGST',
-                                          textAlign: pw.TextAlign.left),
-                                      pw.Text('Add CGST: $totalCGST',
-                                          textAlign: pw.TextAlign.left),
-                                    ])
+                                    pw.Row(
+                                        mainAxisAlignment:
+                                            pw.MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          pw.Text(
+                                            "Rupees:",
+                                            style: pw.TextStyle(
+                                                fontWeight: pw.FontWeight.bold),
+                                          ),
+                                          pw.Text(
+                                            amounten.toString(),
+                                          )
+                                        ]),
+                                    pw.Column(
+                                        mainAxisAlignment:
+                                            pw.MainAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            pw.CrossAxisAlignment.start,
+                                        children: [
+                                          pw.Row(
+                                              mainAxisAlignment: pw
+                                                  .MainAxisAlignment
+                                                  .spaceBetween,
+                                              children: [
+                                                pw.Text(
+                                                  "Gross Amount:",
+                                                  style: pw.TextStyle(
+                                                      fontWeight:
+                                                          pw.FontWeight.bold),
+                                                ),
+                                                pw.Text(
+                                                  grossAmount.toString(),
+                                                )
+                                              ]),
+                                          pw.Row(
+                                              mainAxisAlignment: pw
+                                                  .MainAxisAlignment
+                                                  .spaceBetween,
+                                              children: [
+                                                pw.Text(
+                                                  "Add SGST:",
+                                                  style: pw.TextStyle(
+                                                      fontWeight:
+                                                          pw.FontWeight.bold),
+                                                ),
+                                                pw.Text(
+                                                  totalSGST.toString(),
+                                                )
+                                              ]),
+                                          pw.Row(
+                                              mainAxisAlignment: pw
+                                                  .MainAxisAlignment
+                                                  .spaceBetween,
+                                              children: [
+                                                pw.Text(
+                                                  "Add CGST:",
+                                                  style: pw.TextStyle(
+                                                      fontWeight:
+                                                          pw.FontWeight.bold),
+                                                ),
+                                                pw.Text(
+                                                  totalCGST.toString(),
+                                                )
+                                              ]),
+                                        ])
                                   ]),
                               pw.Row(
                                   mainAxisAlignment:
                                       pw.MainAxisAlignment.spaceBetween,
                                   children: [
                                     pw.Text('Note',
+                                        style: pw.TextStyle(
+                                            fontWeight: pw.FontWeight.bold),
                                         textAlign: pw.TextAlign.left),
                                     pw.Column(children: [
-                                      pw.Text('Total Amount: $amount',
-                                          textAlign: pw.TextAlign.left),
+                                      pw.Row(
+                                          mainAxisAlignment:
+                                              pw.MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            pw.Text(
+                                              "Total Amount:",
+                                              style: pw.TextStyle(
+                                                  fontWeight:
+                                                      pw.FontWeight.bold),
+                                            ),
+                                            pw.Text(
+                                              amount.toString(),
+                                            )
+                                          ]),
                                     ])
                                   ]),
                               pw.SizedBox(height: 20),
