@@ -323,7 +323,7 @@ packages:
       name: intl
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.16.1"
+    version: "0.15.8"
   js:
     dependency: transitive
     description:
@@ -352,6 +352,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.0.4"
+  number_to_words_spelling:
+    dependency: "direct main"
+    description:
+      name: number_to_words_spelling
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.5"
   path:
     dependency: transitive
     description:
