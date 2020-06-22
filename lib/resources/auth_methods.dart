@@ -1,9 +1,11 @@
 import 'package:annaistore/constants/strings.dart';
 import 'package:annaistore/models/user.dart';
 import 'package:annaistore/utils/utilities.dart';
+import 'package:annaistore/widgets/dialogs.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthMethods {
@@ -15,9 +17,14 @@ class AuthMethods {
   GoogleSignIn _googleSignIn = GoogleSignIn();
 
   Future<FirebaseUser> getCurrentUser() async {
-    FirebaseUser currentUser;
-    currentUser = await _auth.currentUser();
-    return currentUser;
+    DataConnectionStatus connectionStatus = await checkInternet();
+    if (connectionStatus == DataConnectionStatus.connected) {
+      FirebaseUser currentUser;
+      currentUser = await _auth.currentUser();
+      return currentUser;
+    } else {
+      return null;
+    }
   }
 
   Future<User> getUserDetails() async {

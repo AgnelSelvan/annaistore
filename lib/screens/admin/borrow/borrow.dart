@@ -1,7 +1,9 @@
 import 'dart:io';
 
+import 'package:annaistore/models/product.dart';
 import 'package:annaistore/models/yougave.dart';
 import 'package:annaistore/resources/admin_methods.dart';
+import 'package:annaistore/screens/admin/borrow/borrow_list.dart';
 import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/screens/root_screen.dart';
 import 'package:annaistore/utils/universal_variables.dart';
@@ -22,14 +24,16 @@ AdminMethods _adminMethods = AdminMethods();
 
 class BorrowScreen extends StatefulWidget {
   final List<String> productList;
+  final List<String> productListId;
   final List<int> qtyList;
   final List<int> taxList;
   final List<int> sellingRateList;
-  final int totalPrice;
+  final double totalPrice;
   final String billNo;
 
   BorrowScreen(
       {@required this.billNo,
+      @required this.productListId,
       @required this.productList,
       @required this.qtyList,
       @required this.sellingRateList,
@@ -62,7 +66,8 @@ class _BorrowScreenState extends State<BorrowScreen> {
     customerGivenMoney.addListener(() {
       updateTotalAmount();
     });
-    priceController = TextEditingController(text: widget.totalPrice.toString());
+    priceController =
+        TextEditingController(text: widget.totalPrice.toInt().toString());
     myFocusNode = FocusNode();
   }
 
@@ -75,7 +80,8 @@ class _BorrowScreenState extends State<BorrowScreen> {
   void updateTotalAmount() {
     print(customerGivenMoney.text);
     setState(() {
-      int totalPrice = widget.totalPrice - int.parse(customerGivenMoney.text);
+      double totalPrice =
+          widget.totalPrice - int.parse(customerGivenMoney.text);
       totalPriceController = TextEditingController(text: totalPrice.toString());
     });
   }
@@ -275,6 +281,7 @@ class _BorrowScreenState extends State<BorrowScreen> {
                       enabled: false,
                       cursorColor: Variables.primaryColor,
                       maxLines: 1,
+                      keyboardType: TextInputType.number,
                       style: Variables.inputTextStyle,
                       decoration: InputDecoration(
                         border: InputBorder.none,
@@ -315,6 +322,7 @@ class _BorrowScreenState extends State<BorrowScreen> {
                       focusNode: myFocusNode,
                       cursorColor: Variables.primaryColor,
                       maxLines: 1,
+                      keyboardType: TextInputType.number,
                       style: Variables.inputTextStyle,
                       decoration: InputDecoration(
                         border: InputBorder.none,
@@ -381,11 +389,12 @@ class _BorrowScreenState extends State<BorrowScreen> {
                   mobileNo: selectedContact.phones.elementAt(0).value,
                   price: int.parse(priceController.text),
                   productList: widget.productList,
+                  productListId: widget.productListId,
                   qtyList: widget.qtyList,
                   sellingRateList: widget.sellingRateList,
                   taxList: widget.taxList);
               _adminMethods.addBorrowToDb(borrowModel);
-              Navigator.push(context, BouncyPageRoute(widget: RootScreen()));
+              Navigator.push(context, BouncyPageRoute(widget: BorrowList()));
             }))
       ],
     );

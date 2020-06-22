@@ -40,11 +40,12 @@ class _BillScreenState extends State<BillScreen> {
   bool viewVisible = false;
   Product currentProduct;
   Category currentCategory;
+  List<String> productListId = [];
   List<String> productList = [];
   List<int> qtyList = [];
   List<int> sellingRateList = [];
   List<int> taxList = [];
-  int totalPrice;
+  double totalPrice;
   int tax;
 
   @override
@@ -186,6 +187,7 @@ class _BillScreenState extends State<BillScreen> {
               context,
               BouncyPageRoute(
                   widget: BorrowScreen(
+                productListId: productListId,
                 qtyList: qtyList,
                 productList: productList,
                 sellingRateList: sellingRateList,
@@ -231,6 +233,7 @@ class _BillScreenState extends State<BillScreen> {
               color: Colors.yellow[100],
               borderRadius: BorderRadius.circular(8)),
           child: TextFormField(
+            enabled: false,
             cursorColor: Variables.primaryColor,
             maxLines: 1,
             style: Variables.inputTextStyle,
@@ -258,6 +261,7 @@ class _BillScreenState extends State<BillScreen> {
               color: Colors.yellow[100],
               borderRadius: BorderRadius.circular(8)),
           child: TextFormField(
+            enabled: false,
             cursorColor: Variables.primaryColor,
             maxLines: 1,
             style: Variables.inputTextStyle,
@@ -285,6 +289,7 @@ class _BillScreenState extends State<BillScreen> {
               color: Colors.yellow[100],
               borderRadius: BorderRadius.circular(8)),
           child: TextFormField(
+            enabled: false,
             cursorColor: Variables.primaryColor,
             maxLines: 1,
             style: Variables.inputTextStyle,
@@ -328,6 +333,7 @@ class _BillScreenState extends State<BillScreen> {
                           print(productIndex);
                           setState(() {
                             productList.removeAt(productIndex);
+                            productListId.removeAt(productIndex);
                             qtyList.removeAt(productIndex);
                             taxList.removeAt(productIndex);
                             sellingRateList.removeAt(productIndex);
@@ -339,7 +345,7 @@ class _BillScreenState extends State<BillScreen> {
                             sum += sellingRateList[i] * qtyList[i];
                             tax += taxList[i];
                           }
-                          totalPrice = (sum / (tax / 100)).round();
+                          totalPrice = (sum + (sum * (tax / 100)));
                           setState(() {
                             _totalPriceController = TextEditingController(
                                 text: totalPrice.toString());
@@ -348,6 +354,7 @@ class _BillScreenState extends State<BillScreen> {
                             _taxController =
                                 TextEditingController(text: tax.toString());
                           });
+                          print(productListId);
                           print(productList);
                           print(totalPrice);
                           print(qtyList);
@@ -384,7 +391,6 @@ class _BillScreenState extends State<BillScreen> {
                 validator: (value) {
                   if (value.isEmpty)
                     return "You cannot have an empty Purchase Price!";
-                  if (value.length != 6) return "Enter valid pincode!";
                 },
                 maxLines: 1,
                 keyboardType: TextInputType.number,
@@ -421,6 +427,7 @@ class _BillScreenState extends State<BillScreen> {
                   }
                   if (!productList.contains(currentProduct.name)) {
                     qtyList.add(int.parse(qtyController.text));
+                    productListId.add(currentProduct.id);
                     productList.add(currentProduct.name);
                     taxList.add(category.tax);
                     sellingRateList.add(currentProduct.sellingRate);
@@ -433,7 +440,7 @@ class _BillScreenState extends State<BillScreen> {
                     sum += sellingRateList[i] * qtyList[i];
                     tax += taxList[i];
                   }
-                  totalPrice = (sum / (tax / 100)).round();
+                  totalPrice = (sum + (sum * (tax / 100)));
                   setState(() {
                     _priceController =
                         TextEditingController(text: sum.toString());
@@ -447,6 +454,7 @@ class _BillScreenState extends State<BillScreen> {
                   print(qtyList);
                   print(taxList);
                   print(sellingRateList);
+                  print(productListId);
                 },
                 child: Text(
                   "Yes",
@@ -584,6 +592,7 @@ class _BillScreenState extends State<BillScreen> {
                 color: Colors.yellow[100],
                 borderRadius: BorderRadius.circular(8)),
             child: TextField(
+              enabled: false,
               maxLines: 1,
               style: Variables.inputTextStyle,
               keyboardType: TextInputType.number,

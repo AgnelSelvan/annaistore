@@ -12,6 +12,7 @@ import 'package:annaistore/screens/admin/stock/stock_screen.dart';
 import 'package:annaistore/screens/auth_screen.dart';
 import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/screens/edit_profile_screen.dart';
+import 'package:annaistore/screens/tax_calculator.dart';
 import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
@@ -296,8 +297,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 text: "Make Admin",
                                 icon: FontAwesome.user_circle_o,
                                 onTap: () {
-                                  Navigator.push(context,
-                                      BouncyPageRoute(widget: AdminScreen()));
+                                  Navigator.push(
+                                      context,
+                                      BouncyPageRoute(
+                                          widget: MakeAdminScreen()));
                                 },
                               )
                             : Container(),
@@ -317,6 +320,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           onTap: () {
                             Navigator.push(
                                 context, BouncyPageRoute(widget: BorrowList()));
+                          },
+                        ),
+                        CustomTile(
+                          text: "Tax Calculator",
+                          icon: FontAwesome.calculator,
+                          onTap: () {
+                            Navigator.push(context,
+                                BouncyPageRoute(widget: TaxCalculator()));
                           },
                         ),
                         CustomTile(

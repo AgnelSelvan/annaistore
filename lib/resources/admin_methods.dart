@@ -297,4 +297,11 @@ class AdminMethods {
     BorrowModel borrowModel = BorrowModel.fromMap(doc.data);
     return borrowModel;
   }
+
+  Future<Product> getProductDetailsFromProductId(String productId) async {
+    DocumentSnapshot doc = await _productCollection.document(productId).get();
+
+    Product product = Product.fromMap(doc.data);
+    return product;
+  }
 }

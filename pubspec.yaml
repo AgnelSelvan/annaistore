@@ -52,6 +52,7 @@ dependencies:
   esys_flutter_share:
   http:
   save_in_gallery:
+  # syncfusion_flutter_pdf: ^18.1.36-beta
     # advanced_share:
 
   

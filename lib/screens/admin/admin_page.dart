@@ -12,12 +12,12 @@ import 'package:flutter_icons/flutter_icons.dart';
 
 AuthMethods _authMethods = AuthMethods();
 
-class AdminScreen extends StatefulWidget {
+class MakeAdminScreen extends StatefulWidget {
   @override
-  _AdminScreenState createState() => _AdminScreenState();
+  _MakeAdminScreenState createState() => _MakeAdminScreenState();
 }
 
-class _AdminScreenState extends State<AdminScreen> {
+class _MakeAdminScreenState extends State<MakeAdminScreen> {
   User currentSelectedUser;
   TextEditingController emailController = TextEditingController();
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();

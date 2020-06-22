@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:annaistore/models/product.dart';
 import 'package:annaistore/models/user.dart';
 import 'package:annaistore/models/yougave.dart';
 import 'package:annaistore/resources/admin_methods.dart';
@@ -8,9 +9,10 @@ import 'package:annaistore/screens/admin/borrow/pdf_viewer.dart';
 import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
+import 'package:annaistore/widgets/custom_divider.dart';
 import 'package:annaistore/widgets/dialogs.dart';
 import 'package:annaistore/widgets/widgets.dart';
-import 'package:data_connection_checker/data_connection_checker.dart';
+import 'package:contacts_service/contacts_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -19,6 +21,7 @@ import 'package:flutter_icons/flutter_icons.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:permission_handler/permission_handler.dart';
 import 'package:save_in_gallery/save_in_gallery.dart';
 import 'package:sticky_headers/sticky_headers.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -39,6 +42,7 @@ class SingleBorrow extends StatefulWidget {
 }
 
 class _SingleBorrowState extends State<SingleBorrow> {
+  TextEditingController _buyerInfoController = TextEditingController();
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   GlobalKey _containerKey = GlobalKey();
   User currentUser;
@@ -56,6 +60,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
         await _adminMethods.getBorrowById(widget.borrowId);
     setState(() {
       borrowModel = _borrowModel;
+      isLoading = false;
     });
   }
 
@@ -64,10 +69,16 @@ class _SingleBorrowState extends State<SingleBorrow> {
       isLoading = true;
     });
     FirebaseUser user = await _authMethods.getCurrentUser();
-    User nowUser = await _authMethods.getUserDetailsById(user.uid);
-    setState(() {
-      currentUser = nowUser;
-    });
+    if (user == null) {
+      // Dialogs.okDialog(
+      //     context, 'Error', 'Check your internet connection', Colors.red[200]);
+    } else {
+      User nowUser = await _authMethods.getUserDetailsById(user.uid);
+      setState(() {
+        currentUser = nowUser;
+        isLoading = false;
+      });
+    }
   }
 
   convertWidgetToImage() async {
@@ -99,14 +110,14 @@ class _SingleBorrowState extends State<SingleBorrow> {
     //   print(response);
     // });
 
-    // var uri =
-    //     "https://wa.me/${borrowModel.mobileNo}?text=Dear sir/madam, your payment of ₹ ${(borrowModel.price - borrowModel.givenAmount).toString()} is still pending. Make payment as soon as possible";
-    // if (await canLaunch(uri)) {
-    //   await launch(uri);
-    // } else {
-    //   Dialogs.okDialog(
-    //       context, 'Error', 'Error launching whatsapp', Colors.red[200]);
-    // }
+    var uri =
+        "https://wa.me/${borrowModel.mobileNo}?text=Dear sir/madam, your payment of ₹ ${(borrowModel.price - borrowModel.givenAmount).toString()} is still pending. Make payment as soon as possible";
+    if (await canLaunch(uri)) {
+      await launch(uri);
+    } else {
+      Dialogs.okDialog(
+          context, 'Error', 'Error launching whatsapp', Colors.red[200]);
+    }
     setState(() {
       isLoading = false;
     });
@@ -115,29 +126,8 @@ class _SingleBorrowState extends State<SingleBorrow> {
   @override
   void initState() {
     super.initState();
-    checkInternetConnection();
-  }
-
-  checkInternetConnection() async {
-    setState(() {
-      isLoading = true;
-    });
-    var status = await _authMethods.checkInternet();
-    if (status == DataConnectionStatus.connected) {
-      getBorrowById();
-      getCurrentUser();
-    } else {
-      Navigator.pop(context);
-      showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-                title: Text("No internet"),
-                content: Text("Check your internet connection"),
-              ));
-    }
-    setState(() {
-      isLoading = false;
-    });
+    getBorrowById();
+    getCurrentUser();
   }
 
   @override
@@ -306,56 +296,334 @@ class _SingleBorrowState extends State<SingleBorrow> {
     );
   }
 
-  generatePdfAndView(context) async {
-    print('pdf');
-    // final pw.Document pdf = pw.Document(deflate: zlib.encode);
+  getBuyerName() {
+    return showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            title: Text('Buyer Info'),
+            content: Container(
+              height: MediaQuery.of(context).size.height / 5,
+              child: ListView(
+                physics: BouncingScrollPhysics(),
+                children: <Widget>[
+                  Text(
+                    "Info",
+                    style: Variables.inputLabelTextStyle,
+                  ),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 15),
+                    decoration: BoxDecoration(
+                        color: Colors.yellow[100],
+                        borderRadius: BorderRadius.circular(8)),
+                    child: TextFormField(
+                      maxLines: 5,
+                      cursorColor: Variables.primaryColor,
+                      style: Variables.inputTextStyle,
+                      decoration: InputDecoration(
+                          border: InputBorder.none, hintText: 'Buyer Info'),
+                      controller: _buyerInfoController,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              FlatButton(
+                onPressed: () {
+                  Navigator.of(context).pop(DialogAction.Abort);
+                },
+                child: Text(
+                  "No",
+                  style: TextStyle(color: Variables.primaryColor),
+                ),
+              ),
+              RaisedButton(
+                elevation: 0,
+                color: Variables.primaryColor,
+                onPressed: () async {
+                  Navigator.pop(context);
 
-    // pdf.addPage(pw.MultiPage(
-    //     build: (context) => [
-    //           pw.Table.fromTextArray(context: context, data: <List<String>>[
-    //             <String>['Bill No', 'Product', 'price'],
-    //             [
-    //               borrowModel.billNo.toString(),
-    //               ...borrowModel.productList.map((e) => e.toString()),
-    //               ...borrowModel.qtyList.map((e) => e.toString())
-    //             ]
-    //           ])
-    //         ]));
-    // print('Generation done!');
-    // final String dir = (await getApplicationDocumentsDirectory()).path;
-    // String path = '$dir/myoutput.pdf';
-    // print(path);
-    // final File file = File(path);
+                  List<List<dynamic>> datas = List();
+                  int amount = 0;
 
-    // file.writeAsBytesSync(pdf.save());
+                  // 'Product', 'HSN', 'GST', 'Qty', 'Rate', 'Amount', 'SGST', 'CGST', 'Total'
+                  for (dynamic i = 0; i < borrowModel.productList.length; i++) {
+                    List<dynamic> data = List();
+                    Product product =
+                        await _adminMethods.getProductDetailsFromProductId(
+                            borrowModel.productListId[i]);
+                    data.add(borrowModel.productList[i]);
+                    data.add(product.hsnCode);
+                    data.add(borrowModel.taxList);
+                    data.add(borrowModel.qtyList[i]);
+                    data.add(borrowModel.sellingRateList[i]);
+                    amount = amount +
+                        (borrowModel.qtyList[i] *
+                            borrowModel.sellingRateList[i]);
+                    datas.add(data);
+                  }
+                  if (datas != null) {
+                    generatePakkaBillPdfAndView(context, datas, amount);
+                  } else {
+                    CustomCircularLoading();
+                  }
+                },
+                child: Text(
+                  "Yes",
+                  style: TextStyle(color: Variables.lightGreyColor),
+                ),
+              )
+            ],
+          );
+        });
+  }
 
-    final pw.Document pdf = pw.Document();
-    pdf.addPage(
-        //Your PDF design here with the widget system of the plugin
-        pw.MultiPage(
-      pageFormat:
-          PdfPageFormat.letter.copyWith(marginBottom: 1.5 * PdfPageFormat.cm),
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      header: (pw.Context context) {
-        return pw.Container(
-            alignment: pw.Alignment.centerRight,
-            margin: const pw.EdgeInsets.only(bottom: 3.0 * PdfPageFormat.mm),
-            padding: const pw.EdgeInsets.only(bottom: 3.0 * PdfPageFormat.mm),
-            decoration: const pw.BoxDecoration(
-                border: pw.BoxBorder(
-                    bottom: true, width: 0.5, color: PdfColors.grey)),
-            child: pw.Text('VCR',
-                style: pw.Theme.of(context)
-                    .defaultTextStyle
-                    .copyWith(color: PdfColors.grey)));
-      },
-    ));
-    Directory output = await getApplicationDocumentsDirectory();
-    final file = File('${output.path}/example.pdf');
+  generatePakkaBillPdfAndView(
+      context, List<List<dynamic>> datas, int amount) async {
+    if (await Permission.storage.request().isGranted) {
+      if (datas != null) {
+        pdf.addPage(pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          margin: pw.EdgeInsets.all(32),
+          build: (pw.Context context) {
+            return <pw.Widget>[
+              pw.Column(
+                  mainAxisAlignment: pw.MainAxisAlignment.center,
+                  crossAxisAlignment: pw.CrossAxisAlignment.center,
+                  children: [
+                    pw.Container(
+                        child: pw.Container(
+                            alignment: pw.Alignment.center,
+                            child: pw.Text("Tax Invoice",
+                                style: pw.TextStyle(
+                                  fontSize: 12,
+                                )))),
+                    pw.SizedBox(height: 20),
+                    pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text('GSTIN:33AHIPC1946Q1Z4'),
+                          pw.Column(children: [
+                            pw.Text('Mobile :9488327699'),
+                            pw.Text('Email :annai.charlinf@gmail.com'),
+                          ])
+                        ]),
+                    pw.SizedBox(height: 10),
+                    pw.Container(
+                        child: pw.Container(
+                            alignment: pw.Alignment.center,
+                            child: pw.Text("Annai Store",
+                                style: pw.TextStyle(
+                                    fontSize: 30,
+                                    fontWeight: pw.FontWeight.bold,
+                                    fontStyle: pw.FontStyle.italic)))),
+                    pw.SizedBox(height: 10),
+                    pw.Paragraph(
+                        text: "No.1 Yadhavar Middle Street\n Valliioor-627117",
+                        textAlign: pw.TextAlign.center,
+                        style: pw.TextStyle(
+                            fontWeight: pw.FontWeight.normal,
+                            letterSpacing: 1)),
+                    pw.SizedBox(height: 20),
+                    pw.Container(
+                      height: 70,
+                      child: pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          children: [
+                            pw.Column(
+                                mainAxisAlignment:
+                                    pw.MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                                children: [
+                                  pw.Column(children: [
+                                    pw.Text('Buyer:'),
+                                    pw.Text("${_buyerInfoController.text}"),
+                                  ]),
+                                  pw.Column(
+                                      crossAxisAlignment:
+                                          pw.CrossAxisAlignment.start,
+                                      children: [
+                                        pw.Text('GSTIN:33AHIPC1946Q1Z4'),
+                                        pw.Text(
+                                            "Mobile No:${borrowModel.mobileNo}"),
+                                      ])
+                                ]),
+                            pw.Column(
+                                mainAxisAlignment:
+                                    pw.MainAxisAlignment.spaceBetween,
+                                children: [
+                                  pw.Text('Bill No:  ${borrowModel.billNo}'),
+                                  pw.Text(
+                                      'Date:${DateFormat("dd/MM/yyyy").format(borrowModel.timestamp.toDate())}'),
+                                ]),
+                          ]),
+                    ),
+                    pw.Text(
+                      '',
+                      style: pw.TextStyle(
+                        decoration: pw.TextDecoration.underline,
+                        decorationStyle: pw.TextDecorationStyle.double,
+                      ),
+                    ),
+                    pw.SizedBox(height: 5),
+                    // pw.Table.fromTextArray(
+                    //     context: context,
+                    //     data: <List<dynamic>>[
+                    //       <dynamic>[
+                    //         'Product',
+                    //         'HSN',
+                    //         'GST',
+                    //         'Qty',
+                    //         'Rate',
+                    //         'Amount',
+                    //         'SGST',
+                    //         'CGST',
+                    //         'Total'
+                    //       ],
+                    //       // ...datas.map((e) =>
+                    //       //     [e[0], e[1], '${e[2]}', e[3], '${e[2] * e[3]}'])
+                    //     ]),
+                    pw.SizedBox(height: 5),
+                    pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text(
+                              'Total Items: ${borrowModel.productList.length}',
+                              style: pw.TextStyle(fontSize: 10),
+                              textAlign: pw.TextAlign.left),
+                          pw.Text('Total Amount: $amount',
+                              style: pw.TextStyle(fontSize: 10),
+                              textAlign: pw.TextAlign.left),
+                        ])
+                  ])
+            ];
+          },
+        ));
 
-    await file.writeAsBytes(pdf.save(), flush: true);
+        Directory documentDirectory = await getApplicationDocumentsDirectory();
 
-    return '${output.path}/example.pdf';
+        String documentPath = documentDirectory.path;
+
+        File file = File("$documentPath/example.pdf");
+        try {
+          file.writeAsBytesSync(pdf.save());
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => PdfPreviewwScreen(
+                        path: file.path,
+                      )));
+        } catch (e) {
+          Dialogs.okDialog(context, 'Error',
+              'Avoid Next line in buyer Text Field', Colors.red[200]);
+          print(e);
+        }
+      }
+    } else {
+      Dialogs.okDialog(
+          context, 'Error', 'You have denied your permission', Colors.red[200]);
+    }
+
+    setState(() {
+      _buyerInfoController.clear();
+    });
+  }
+
+  generateKachaPdfAndView(context) async {
+    if (await Permission.storage.request().isGranted) {
+      List<List<dynamic>> datas = List();
+      int amount = 0;
+
+      for (dynamic i = 0; i < borrowModel.productList.length; i++) {
+        List<dynamic> data = List();
+        data.add(borrowModel.productList[i]);
+        data.add(borrowModel.qtyList[i]);
+        data.add(borrowModel.sellingRateList[i]);
+        amount =
+            amount + (borrowModel.qtyList[i] * borrowModel.sellingRateList[i]);
+        datas.add(data);
+      }
+
+      pdf.addPage(pw.MultiPage(
+        pageFormat: PdfPageFormat.a5,
+        margin: pw.EdgeInsets.all(32),
+        build: (pw.Context context) {
+          return <pw.Widget>[
+            pw.Column(
+                mainAxisAlignment: pw.MainAxisAlignment.center,
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
+                children: [
+                  pw.Container(
+                      child: pw.Container(
+                          alignment: pw.Alignment.center,
+                          child: pw.Text("Annai Store",
+                              style: pw.TextStyle(
+                                  fontSize: 30,
+                                  fontWeight: pw.FontWeight.bold,
+                                  fontStyle: pw.FontStyle.italic)))),
+                  pw.SizedBox(height: 20),
+                  pw.Paragraph(
+                      text:
+                          "No.1 Yadhavar Middle Street\n Valliioor-627117\nCell:9488327699\nGSTIN:33AHIPC1946Q1Z4",
+                      textAlign: pw.TextAlign.center,
+                      style: pw.TextStyle(
+                          fontWeight: pw.FontWeight.normal, letterSpacing: 1)),
+                  pw.SizedBox(height: 20),
+                  pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text('Bill No:  ${borrowModel.billNo}'),
+                        pw.Text(
+                            'Date:${DateFormat("dd/MM/yyyy").format(borrowModel.timestamp.toDate())}'),
+                      ]),
+                  pw.Text(
+                    '',
+                    style: pw.TextStyle(
+                      decoration: pw.TextDecoration.underline,
+                      decorationStyle: pw.TextDecorationStyle.double,
+                    ),
+                  ),
+                  pw.SizedBox(height: 5),
+                  pw.Table.fromTextArray(
+                      context: context,
+                      data: <List<dynamic>>[
+                        <dynamic>['Product', 'Qty', 'Rate', 'Amount'],
+                        ...datas.map(
+                            (e) => [e[0], e[1], '${e[2]}', '${e[1] * e[2]}'])
+                      ]),
+                  pw.SizedBox(height: 5),
+                  pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      children: [
+                        pw.Text(
+                            'Total Items: ${borrowModel.productList.length}',
+                            style: pw.TextStyle(fontSize: 10),
+                            textAlign: pw.TextAlign.left),
+                        pw.Text('Total Amount: $amount',
+                            style: pw.TextStyle(fontSize: 10),
+                            textAlign: pw.TextAlign.left),
+                      ])
+                ])
+          ];
+        },
+      ));
+
+      Directory documentDirectory = await getApplicationDocumentsDirectory();
+
+      String documentPath = documentDirectory.path;
+
+      File file = File("$documentPath/example.pdf");
+
+      file.writeAsBytesSync(pdf.save());
+      return file.path;
+    } else {
+      Dialogs.okDialog(
+          context, 'Error', 'You have denied your permission', Colors.red[200]);
+    }
   }
 
   void _showModalSheet() {
@@ -431,15 +699,16 @@ class _SingleBorrowState extends State<SingleBorrow> {
         children: [
           GestureDetector(
             onTap: () async {
-              String fullPath = await generatePdfAndView(context);
-              print(fullPath);
+              // String fullPath = await generateKachaPdfAndView(context);
+              // print(fullPath);
 
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => PdfPreviewwScreen(
-                            path: fullPath,
-                          )));
+              // Navigator.push(
+              //     context,
+              //     MaterialPageRoute(
+              //         builder: (context) => PdfPreviewwScreen(
+              //               path: fullPath,
+              //             )));
+              getBuyerName();
             },
             child: Column(
               children: [
