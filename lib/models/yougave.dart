@@ -13,6 +13,7 @@ class BorrowModel {
   String mobileNo;
   Timestamp timestamp;
   String customerName;
+  bool isTax;
 
   BorrowModel(
       {this.billNo,
@@ -26,7 +27,8 @@ class BorrowModel {
       this.qtyList,
       this.sellingRateList,
       this.taxList,
-      this.productListId});
+      this.productListId,
+      this.isTax});
   Map toMap(BorrowModel youGave) {
     var data = Map<String, dynamic>();
     data['bill_no'] = youGave.billNo;
@@ -41,6 +43,7 @@ class BorrowModel {
     data['selling_rate_list'] = youGave.sellingRateList;
     data['tax_list'] = youGave.taxList;
     data['product_list_id'] = youGave.productListId;
+    data['is_tax'] = youGave.isTax;
     return data;
   }
 
@@ -57,5 +60,6 @@ class BorrowModel {
     this.taxList = mapData['tax_list'];
     this.timestamp = mapData['timestamp'];
     this.productListId = mapData['product_list_id'];
+    this.isTax = mapData['is_tax'];
   }
 }

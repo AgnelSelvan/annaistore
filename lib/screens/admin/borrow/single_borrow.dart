@@ -861,6 +861,18 @@ class _SingleBorrowState extends State<SingleBorrow> {
         });
   }
 
+  getKachaBill() async {
+    String fullPath = await generateKachaPdfAndView(context);
+    print(fullPath);
+
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => PdfPreviewwScreen(
+                  path: fullPath,
+                )));
+  }
+
   buildBodyHeadButtons() {
     return Container(
       color: Colors.white,
@@ -870,16 +882,13 @@ class _SingleBorrowState extends State<SingleBorrow> {
         children: [
           GestureDetector(
             onTap: () async {
-              // String fullPath = await generateKachaPdfAndView(context);
-              // print(fullPath);
-
-              // Navigator.push(
-              //     context,
-              //     MaterialPageRoute(
-              //         builder: (context) => PdfPreviewwScreen(
-              //               path: fullPath,
-              //             )));
-              getBuyerName();
+              print(borrowModel.billNo);
+              if (borrowModel.isTax == null) {
+                Dialogs.okDialog(
+                    context, 'Error', 'Somthing went wrong!', Colors.red[200]);
+              } else {
+                borrowModel.isTax ? getBuyerName() : getKachaBill();
+              }
             },
             child: Column(
               children: [

@@ -47,7 +47,7 @@ class _BillScreenState extends State<BillScreen> {
   List<int> taxList = [];
   double totalPrice;
   int tax;
-  bool _isTaxCheckBox = false;
+  bool _isTaxCheckBox = true;
 
   @override
   void initState() {
@@ -101,31 +101,8 @@ class _BillScreenState extends State<BillScreen> {
                       const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
                   child: Column(
                     children: <Widget>[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          BuildHeader(
-                            text: "BILL",
-                          ),
-                          Row(
-                            children: [
-                              Checkbox(
-                                  activeColor: Variables.primaryColor,
-                                  focusColor: Variables.primaryColor,
-                                  value: _isTaxCheckBox,
-                                  onChanged: (bool value) {
-                                    print(value);
-                                    setState(() {
-                                      _isTaxCheckBox = value;
-                                    });
-                                  }),
-                              Text(
-                                "include tax",
-                                style: TextStyle(fontSize: 16),
-                              )
-                            ],
-                          ),
-                        ],
+                      BuildHeader(
+                        text: "BILL",
                       ),
                       SizedBox(
                         height: 25,
@@ -181,6 +158,8 @@ class _BillScreenState extends State<BillScreen> {
                         ],
                       ),
                       SizedBox(height: 15),
+                      productList.isEmpty ? Container() : buildTaxCheckBox(),
+                      SizedBox(height: 15),
                       productList.isEmpty ? Container() : buildPriceField(),
                       SizedBox(height: 15),
                       _isTaxCheckBox
@@ -204,6 +183,47 @@ class _BillScreenState extends State<BillScreen> {
         ));
   }
 
+  buildTaxCheckBox() {
+    return Row(
+      children: [
+        Checkbox(
+            activeColor: Variables.primaryColor,
+            focusColor: Variables.primaryColor,
+            value: _isTaxCheckBox,
+            onChanged: (bool value) {
+              print(value);
+              setState(() {
+                _isTaxCheckBox = value;
+              });
+              var sum = 0;
+              for (var i = 0; i < sellingRateList.length; i++) {
+                sum += sellingRateList[i] * qtyList[i];
+                tax += taxList[i];
+              }
+              if (!_isTaxCheckBox) {
+                print(sum);
+                setState(() {
+                  totalPrice = sum.toDouble();
+                  _totalPriceController =
+                      TextEditingController(text: totalPrice.toString());
+                });
+              }
+              if (_isTaxCheckBox) {
+                totalPrice = (sum + (sum * (tax / 100)));
+                setState(() {
+                  _totalPriceController =
+                      TextEditingController(text: totalPrice.toString());
+                });
+              }
+            }),
+        Text(
+          "include tax",
+          style: TextStyle(fontSize: 16),
+        )
+      ],
+    );
+  }
+
   buildBottomContainer() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -220,6 +240,7 @@ class _BillScreenState extends State<BillScreen> {
                 totalPrice: totalPrice,
                 billNo: _billNumberController.text,
                 taxList: taxList,
+                isTax: _isTaxCheckBox,
               )));
         }),
         buildRaisedButton('Paid', Colors.green[300], Colors.white, () {})
@@ -367,19 +388,35 @@ class _BillScreenState extends State<BillScreen> {
                           var sum = 0;
                           tax = 0;
                           totalPrice = 0;
-                          for (var i = 0; i < sellingRateList.length; i++) {
-                            sum += sellingRateList[i] * qtyList[i];
-                            tax += taxList[i];
+                          if (_isTaxCheckBox) {
+                            for (var i = 0; i < sellingRateList.length; i++) {
+                              sum += sellingRateList[i] * qtyList[i];
+                              tax += taxList[i];
+                            }
+                            totalPrice = (sum + (sum * (tax / 100)));
+                            setState(() {
+                              _totalPriceController = TextEditingController(
+                                  text: totalPrice.toString());
+                              _priceController =
+                                  TextEditingController(text: sum.toString());
+                              _taxController =
+                                  TextEditingController(text: tax.toString());
+                            });
+                          } else if (!_isTaxCheckBox) {
+                            for (var i = 0; i < sellingRateList.length; i++) {
+                              sum += sellingRateList[i] * qtyList[i];
+                              tax += taxList[i];
+                            }
+                            totalPrice = sum.toDouble();
+                            setState(() {
+                              _totalPriceController = TextEditingController(
+                                  text: totalPrice.toString());
+                              _priceController =
+                                  TextEditingController(text: sum.toString());
+                              _taxController =
+                                  TextEditingController(text: tax.toString());
+                            });
                           }
-                          totalPrice = (sum + (sum * (tax / 100)));
-                          setState(() {
-                            _totalPriceController = TextEditingController(
-                                text: totalPrice.toString());
-                            _priceController =
-                                TextEditingController(text: sum.toString());
-                            _taxController =
-                                TextEditingController(text: tax.toString());
-                          });
                           print(productListId);
                           print(productList);
                           print(totalPrice);
@@ -462,19 +499,35 @@ class _BillScreenState extends State<BillScreen> {
                   var sum = 0;
                   tax = 0;
                   totalPrice = 0;
-                  for (var i = 0; i < sellingRateList.length; i++) {
-                    sum += sellingRateList[i] * qtyList[i];
-                    tax += taxList[i];
+                  if (_isTaxCheckBox) {
+                    for (var i = 0; i < sellingRateList.length; i++) {
+                      sum += sellingRateList[i] * qtyList[i];
+                      tax += taxList[i];
+                    }
+                    totalPrice = (sum + (sum * (tax / 100)));
+                    setState(() {
+                      _totalPriceController =
+                          TextEditingController(text: totalPrice.toString());
+                      _priceController =
+                          TextEditingController(text: sum.toString());
+                      _taxController =
+                          TextEditingController(text: tax.toString());
+                    });
+                  } else if (!_isTaxCheckBox) {
+                    for (var i = 0; i < sellingRateList.length; i++) {
+                      sum += sellingRateList[i] * qtyList[i];
+                      tax += taxList[i];
+                    }
+                    totalPrice = sum.toDouble();
+                    setState(() {
+                      _totalPriceController =
+                          TextEditingController(text: totalPrice.toString());
+                      _priceController =
+                          TextEditingController(text: sum.toString());
+                      _taxController =
+                          TextEditingController(text: tax.toString());
+                    });
                   }
-                  totalPrice = (sum + (sum * (tax / 100)));
-                  setState(() {
-                    _priceController =
-                        TextEditingController(text: sum.toString());
-                    _taxController =
-                        TextEditingController(text: tax.toString());
-                    _totalPriceController =
-                        TextEditingController(text: totalPrice.toString());
-                  });
 
                   print(productList);
                   print(qtyList);

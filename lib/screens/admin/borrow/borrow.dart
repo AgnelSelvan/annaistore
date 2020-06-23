@@ -10,6 +10,7 @@ import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/utils/utilities.dart';
 import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
+import 'package:annaistore/widgets/dialogs.dart';
 import 'package:annaistore/widgets/widgets.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -30,6 +31,7 @@ class BorrowScreen extends StatefulWidget {
   final List<int> sellingRateList;
   final double totalPrice;
   final String billNo;
+  final bool isTax;
 
   BorrowScreen(
       {@required this.billNo,
@@ -38,7 +40,8 @@ class BorrowScreen extends StatefulWidget {
       @required this.qtyList,
       @required this.sellingRateList,
       @required this.taxList,
-      @required this.totalPrice});
+      @required this.totalPrice,
+      @required this.isTax});
 
   @override
   _BorrowScreenState createState() => _BorrowScreenState();
@@ -175,17 +178,11 @@ class _BorrowScreenState extends State<BorrowScreen> {
               style: TextStyle(fontSize: 16),
             ),
             SizedBox(height: 5),
-            ListView.builder(
-              shrinkWrap: true,
-              itemCount: widget.productList.length,
-              itemBuilder: (context, index) {
-                return Container(
-                  child: Text(
-                    "${widget.billNo}",
-                    style: Variables.inputLabelTextStyle,
-                  ),
-                );
-              },
+            Container(
+              child: Text(
+                "${widget.billNo}",
+                style: Variables.inputLabelTextStyle,
+              ),
             )
           ],
         ),
@@ -198,17 +195,11 @@ class _BorrowScreenState extends State<BorrowScreen> {
               style: TextStyle(fontSize: 16),
             ),
             SizedBox(height: 5),
-            ListView.builder(
-              shrinkWrap: true,
-              itemCount: widget.productList.length,
-              itemBuilder: (context, index) {
-                return Container(
-                  child: Text(
-                    "${selectedContact.phones.elementAt(0).value}",
-                    style: Variables.inputLabelTextStyle,
-                  ),
-                );
-              },
+            Container(
+              child: Text(
+                "${selectedContact.phones.elementAt(0).value}",
+                style: Variables.inputLabelTextStyle,
+              ),
             )
           ],
         ),
@@ -221,17 +212,11 @@ class _BorrowScreenState extends State<BorrowScreen> {
               style: TextStyle(fontSize: 16),
             ),
             SizedBox(height: 5),
-            ListView.builder(
-              shrinkWrap: true,
-              itemCount: widget.productList.length,
-              itemBuilder: (context, index) {
-                return Container(
-                  child: Text(
-                    "${selectedContact.displayName}",
-                    style: Variables.inputLabelTextStyle,
-                  ),
-                );
-              },
+            Container(
+              child: Text(
+                "${selectedContact.displayName}",
+                style: Variables.inputLabelTextStyle,
+              ),
             )
           ],
         ),
@@ -379,11 +364,12 @@ class _BorrowScreenState extends State<BorrowScreen> {
         Container(
             width: MediaQuery.of(context).size.width / 2,
             child:
-                buildRaisedButton('Save', Colors.green[200], Colors.white, () {
+                buildRaisedButton('Save', Colors.green[300], Colors.white, () {
               BorrowModel borrowModel = BorrowModel(
                   borrowId: Utils.getDocId(),
                   timestamp: Timestamp.now(),
                   billNo: widget.billNo,
+                  isTax: widget.isTax,
                   customerName: selectedContact.displayName,
                   givenAmount: int.parse(customerGivenMoney.text),
                   mobileNo: selectedContact.phones.elementAt(0).value.trim(),
@@ -394,7 +380,8 @@ class _BorrowScreenState extends State<BorrowScreen> {
                   sellingRateList: widget.sellingRateList,
                   taxList: widget.taxList);
               _adminMethods.addBorrowToDb(borrowModel);
-              Navigator.push(context, BouncyPageRoute(widget: BorrowList()));
+              Navigator.pushAndRemoveUntil(context,
+                  BouncyPageRoute(widget: RootScreen()), (route) => false);
             }))
       ],
     );
