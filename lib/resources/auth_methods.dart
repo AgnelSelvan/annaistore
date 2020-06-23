@@ -171,7 +171,6 @@ class AuthMethods {
     try {
       print("UserId: $userId");
       DocumentSnapshot doc = await _userCollection.document(userId).get();
-      print(doc.data);
       return User.fromMap(doc.data);
     } catch (e) {
       print("get user by details error: $e");
