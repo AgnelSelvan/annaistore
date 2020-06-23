@@ -50,19 +50,25 @@ class _HomeScreenState extends State<HomeScreen>
                 content: Container(
                   padding: EdgeInsets.symmetric(horizontal: 15),
                   decoration: BoxDecoration(
-                      color: Colors.yellow[100],
+                      color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(8)),
                   child: TextFormField(
                     cursorColor: Variables.primaryColor,
                     validator: (value) {
                       if (value.isEmpty)
                         return "You cannot have an Mobile number!";
+                      return null;
                     },
                     maxLines: 1,
                     keyboardType: TextInputType.number,
                     style: Variables.inputTextStyle,
                     decoration: InputDecoration(
-                        border: InputBorder.none, hintText: '1234567890'),
+                        prefixIcon: Icon(
+                          Icons.dialpad,
+                          size: 16,
+                        ),
+                        border: InputBorder.none,
+                        hintText: '1234567890'),
                     controller: phoneNumberController,
                   ),
                 ),

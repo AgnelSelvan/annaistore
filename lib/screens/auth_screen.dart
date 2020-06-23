@@ -32,9 +32,9 @@ class AuthScreenState extends State<AuthScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   bool isLoading = false;
-  bool viewPhoneVisible = true;
+  bool viewPhoneVisible = false;
   bool viewGoogleVisible = false;
-  bool viewEmailVisible = false;
+  bool viewEmailVisible = true;
 
   void mobileLogin() {
     _auth.verifyPhoneNumber(
@@ -146,7 +146,7 @@ class AuthScreenState extends State<AuthScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            viewPhoneVisible ? buildPhoneUI() : Container(),
+            // viewPhoneVisible ? buildPhoneUI() : Container(),
             viewEmailVisible ? isNew ? signUp() : login() : Container(),
             Column(
               children: [
@@ -161,20 +161,20 @@ class AuthScreenState extends State<AuthScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      CircleAvatar(
-                        backgroundColor: Colors.blue,
-                        child: IconButton(
-                            icon: Icon(
-                              Icons.phone,
-                              color: Colors.white,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                viewEmailVisible = false;
-                                viewPhoneVisible = true;
-                              });
-                            }),
-                      ),
+                      // CircleAvatar(
+                      //   backgroundColor: Colors.blue,
+                      //   child: IconButton(
+                      //       icon: Icon(
+                      //         Icons.phone,
+                      //         color: Colors.white,
+                      //       ),
+                      //       onPressed: () {
+                      //         setState(() {
+                      //           viewEmailVisible = false;
+                      //           viewPhoneVisible = true;
+                      //         });
+                      //       }),
+                      // ),
                       CircleAvatar(
                         backgroundColor: Colors.white,
                         child: IconButton(
