@@ -1,11 +1,11 @@
 import 'package:annaistore/constants/strings.dart';
+import 'package:annaistore/models/borrow.dart';
 import 'package:annaistore/models/category.dart';
 import 'package:annaistore/models/product.dart';
 import 'package:annaistore/models/stock.dart';
 import 'package:annaistore/models/sub-category.dart';
 import 'package:annaistore/models/unit.dart';
 import 'package:annaistore/models/user.dart';
-import 'package:annaistore/models/yougave.dart';
 import 'package:annaistore/utils/utilities.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -21,6 +21,7 @@ class AdminMethods {
   CollectionReference _customerCollection = _firestore.collection('customers');
   CollectionReference _borrowsCollection = _firestore.collection('borrows');
   CollectionReference _stocksCollection = _firestore.collection('stocks');
+  CollectionReference _buysCollection = _firestore.collection('buys');
 
   Future<void> addSymbolToDb(String formalName, String symbol) async {
     Unit unit = Unit(formalName: formalName, unit: symbol, unitId: symbol);
@@ -272,9 +273,61 @@ class AdminMethods {
   }
 
   Future<void> addBorrowToDb(BorrowModel borrowModel) async {
-    await _borrowsCollection
-        .document(borrowModel.borrowId)
-        .setData(borrowModel.toMap(borrowModel));
+    QuerySnapshot docs = await _borrowsCollection.getDocuments();
+    List<DocumentSnapshot> docsList = docs.documents.toList();
+    bool isDataExists = false;
+    String existsBorrowId;
+    for (var doc in docsList) {
+      BorrowModel borrow = BorrowModel.fromMap(doc.data);
+      if (borrow.customerName == borrowModel.customerName) {
+        isDataExists = true;
+        existsBorrowId = borrow.borrowId;
+      }
+    }
+    print(isDataExists);
+    if (isDataExists) {
+      print(existsBorrowId);
+      await _borrowsCollection
+          .document(existsBorrowId)
+          .collection('same_user_borrow')
+          .document(borrowModel.borrowId)
+          .setData(borrowModel.toMap(borrowModel));
+    } else {
+      await _borrowsCollection
+          .document(borrowModel.borrowId)
+          .setData(borrowModel.toMap(borrowModel));
+    }
+  }
+
+  Future<int> getTotalAmountByBorrowId(String borrowId) async {
+    var amount = 0;
+    DocumentSnapshot doc = await _borrowsCollection.document(borrowId).get();
+    amount = amount + (doc.data['price'] - doc.data['given_amount']);
+
+    QuerySnapshot docs = await _borrowsCollection
+        .document(borrowId)
+        .collection('same_user_borrow')
+        .getDocuments();
+    List<DocumentSnapshot> docsList = docs.documents.toList();
+    for (var doc in docsList) {
+      BorrowModel borrowModel = BorrowModel.fromMap(doc.data);
+      amount = amount + (borrowModel.price - borrowModel.givenAmount);
+    }
+
+    return amount;
+  }
+
+  Future<List<DocumentSnapshot>> getListOfBorrow(String borrowId) async {
+    QuerySnapshot docs = await _borrowsCollection
+        .document(borrowId)
+        .collection('same_user_borrow')
+        .getDocuments();
+    List<DocumentSnapshot> docsList = docs.documents.toList();
+    // for (var doc in docsList) {
+    //   BorrowModel borrowModel = BorrowModel.fromMap(doc.data);
+    //   print(borrowModel.borrowId);
+    // }
+    return docsList;
   }
 
   Stream<QuerySnapshot> getAllBorrowList() {
@@ -311,5 +364,9 @@ class AdminMethods {
         .getDocuments();
 
     return docs.documents.toList();
+  }
+
+  Future<bool> addBuyedDetailsToDb() {
+    // _buysCollection.document().setData(data)
   }
 }

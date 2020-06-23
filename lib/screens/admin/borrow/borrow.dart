@@ -1,8 +1,8 @@
 import 'dart:io';
 
-import 'package:annaistore/models/product.dart';
-import 'package:annaistore/models/yougave.dart';
+import 'package:annaistore/models/borrow.dart';
 import 'package:annaistore/resources/admin_methods.dart';
+import 'package:annaistore/screens/admin/bill_screen.dart';
 import 'package:annaistore/screens/admin/borrow/borrow_list.dart';
 import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/screens/root_screen.dart';
@@ -368,20 +368,27 @@ class _BorrowScreenState extends State<BorrowScreen> {
               BorrowModel borrowModel = BorrowModel(
                   borrowId: Utils.getDocId(),
                   timestamp: Timestamp.now(),
+                  isPaid: false,
                   billNo: widget.billNo,
                   isTax: widget.isTax,
                   customerName: selectedContact.displayName,
                   givenAmount: int.parse(customerGivenMoney.text),
-                  mobileNo: selectedContact.phones.elementAt(0).value.trim(),
+                  mobileNo: selectedContact.phones
+                      .elementAt(0)
+                      .value
+                      .replaceAll(" ", ""),
                   price: int.parse(priceController.text),
                   productList: widget.productList,
                   productListId: widget.productListId,
                   qtyList: widget.qtyList,
                   sellingRateList: widget.sellingRateList,
                   taxList: widget.taxList);
+              print(borrowModel.taxList);
               _adminMethods.addBorrowToDb(borrowModel);
               Navigator.pushAndRemoveUntil(context,
-                  BouncyPageRoute(widget: RootScreen()), (route) => false);
+                  BouncyPageRoute(widget: RootScreen()), (route) => true);
+              Dialogs.okDialog(context, 'Successfull', 'Added Successfully',
+                  Colors.green[200]);
             }))
       ],
     );

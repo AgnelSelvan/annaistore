@@ -196,6 +196,7 @@ class _BillScreenState extends State<BillScreen> {
                 _isTaxCheckBox = value;
               });
               var sum = 0;
+              tax = 0;
               for (var i = 0; i < sellingRateList.length; i++) {
                 sum += sellingRateList[i] * qtyList[i];
                 tax += taxList[i];
@@ -209,6 +210,8 @@ class _BillScreenState extends State<BillScreen> {
                 });
               }
               if (_isTaxCheckBox) {
+                print(tax);
+
                 totalPrice = (sum + (sum * (tax / 100)));
                 setState(() {
                   _totalPriceController =

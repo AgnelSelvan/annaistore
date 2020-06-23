@@ -1,17 +1,19 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:annaistore/models/borrow.dart';
 import 'package:annaistore/models/product.dart';
 import 'package:annaistore/models/user.dart';
-import 'package:annaistore/models/yougave.dart';
 import 'package:annaistore/resources/admin_methods.dart';
 import 'package:annaistore/resources/auth_methods.dart';
 import 'package:annaistore/screens/admin/borrow/pdf_viewer.dart';
 import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/utils/universal_variables.dart';
+import 'package:annaistore/utils/utilities.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
 import 'package:annaistore/widgets/custom_divider.dart';
 import 'package:annaistore/widgets/dialogs.dart';
 import 'package:annaistore/widgets/widgets.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -54,11 +56,13 @@ class _SingleBorrowState extends State<SingleBorrow> {
   final pdf = pw.Document();
 
   List<List<dynamic>> datas = List();
+  List<DocumentSnapshot> docList = List();
   double amount = 0;
   double grossAmount = 0;
   double totalSGST = 0;
   double totalCGST = 0;
   String amounten;
+  var amountToBeGiven = 0;
 
   getBorrowById() async {
     setState(() {
@@ -69,6 +73,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
     setState(() {
       borrowModel = _borrowModel;
       isLoading = false;
+      amountToBeGiven = (_borrowModel.price - _borrowModel.givenAmount);
     });
 
     for (dynamic i = 0; i < borrowModel.productList.length; i++) {
@@ -115,6 +120,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
         isLoading = false;
       });
     }
+    print(currentUser.mobileNo);
   }
 
   convertWidgetToImage() async {
@@ -166,11 +172,27 @@ class _SingleBorrowState extends State<SingleBorrow> {
     });
   }
 
+  getListOfBorrow() async {
+    List<DocumentSnapshot> docs =
+        await _adminMethods.getListOfBorrow(widget.borrowId);
+    setState(() {
+      docList = docs;
+    });
+    for (var doc in docs) {
+      setState(() {
+        amountToBeGiven =
+            amountToBeGiven + (doc.data['price'] - doc.data['given_amount']);
+      });
+    }
+    print(amountToBeGiven);
+  }
+
   @override
   void initState() {
     super.initState();
     getBorrowById();
     getCurrentUser();
+    getListOfBorrow();
   }
 
   @override
@@ -243,7 +265,23 @@ class _SingleBorrowState extends State<SingleBorrow> {
                     color: Variables.blackColor,
                     fontWeight: FontWeight.w300,
                     letterSpacing: 0.3),
-              )
+              ),
+              SizedBox(height: 5),
+              Column(
+                  children: List.generate(docList.length, (index) {
+                return Column(
+                  children: [
+                    Text(
+                      docList[index].data['bill_no'].toString(),
+                      style: TextStyle(
+                          color: Variables.blackColor,
+                          fontWeight: FontWeight.w300,
+                          letterSpacing: 0.3),
+                    ),
+                    SizedBox(height: 5),
+                  ],
+                );
+              }))
             ],
           ),
           Column(
@@ -265,7 +303,24 @@ class _SingleBorrowState extends State<SingleBorrow> {
                     color: Variables.blackColor,
                     fontWeight: FontWeight.w300,
                     letterSpacing: 0.3),
-              )
+              ),
+              SizedBox(height: 5),
+              Column(
+                  children: List.generate(docList.length, (index) {
+                return Column(
+                  children: [
+                    Text(
+                      DateFormat('dd/MM/yyyy')
+                          .format(docList[index].data['timestamp'].toDate()),
+                      style: TextStyle(
+                          color: Variables.blackColor,
+                          fontWeight: FontWeight.w300,
+                          letterSpacing: 0.3),
+                    ),
+                    SizedBox(height: 5),
+                  ],
+                );
+              }))
             ],
           ),
           Column(
@@ -287,7 +342,23 @@ class _SingleBorrowState extends State<SingleBorrow> {
                     color: Variables.blackColor,
                     fontWeight: FontWeight.w300,
                     letterSpacing: 0.3),
-              )
+              ),
+              SizedBox(height: 5),
+              Column(
+                  children: List.generate(docList.length, (index) {
+                return Column(
+                  children: [
+                    Text(
+                      docList[index].data['price'].toString(),
+                      style: TextStyle(
+                          color: Variables.blackColor,
+                          fontWeight: FontWeight.w300,
+                          letterSpacing: 0.3),
+                    ),
+                    SizedBox(height: 5),
+                  ],
+                );
+              }))
             ],
           ),
           Column(
@@ -309,7 +380,23 @@ class _SingleBorrowState extends State<SingleBorrow> {
                     color: Variables.blackColor,
                     fontWeight: FontWeight.w300,
                     letterSpacing: 0.3),
-              )
+              ),
+              SizedBox(height: 5),
+              Column(
+                  children: List.generate(docList.length, (index) {
+                return Column(
+                  children: [
+                    Text(
+                      docList[index].data['given_amount'].toString(),
+                      style: TextStyle(
+                          color: Variables.blackColor,
+                          fontWeight: FontWeight.w300,
+                          letterSpacing: 0.3),
+                    ),
+                    SizedBox(height: 5),
+                  ],
+                );
+              }))
             ],
           ),
           Column(
@@ -317,7 +404,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
             children: [
               Container(
                 child: Text(
-                  "Total Price",
+                  "Ttl Price",
                   style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -331,7 +418,63 @@ class _SingleBorrowState extends State<SingleBorrow> {
                     color: Variables.blackColor,
                     fontWeight: FontWeight.w300,
                     letterSpacing: 0.3),
-              )
+              ),
+              SizedBox(height: 5),
+              Column(
+                  children: List.generate(docList.length, (index) {
+                return Column(
+                  children: [
+                    Text(
+                      (docList[index].data['price'] -
+                              docList[index].data['given_amount'])
+                          .toString(),
+                      style: TextStyle(
+                          color: Variables.blackColor,
+                          fontWeight: FontWeight.w300,
+                          letterSpacing: 0.3),
+                    ),
+                    SizedBox(height: 5),
+                  ],
+                );
+              }))
+            ],
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                child: Text(
+                  "Paid",
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: .5),
+                ),
+              ),
+              SizedBox(height: 10),
+              Text(
+                borrowModel.isPaid ? 'Yes' : 'No',
+                style: TextStyle(
+                    color: Variables.blackColor,
+                    fontWeight: FontWeight.w300,
+                    letterSpacing: 0.3),
+              ),
+              SizedBox(height: 5),
+              Column(
+                  children: List.generate(docList.length, (index) {
+                return Column(
+                  children: [
+                    Text(
+                      docList[index].data['is_paid'] ? 'Yes' : 'No',
+                      style: TextStyle(
+                          color: Variables.blackColor,
+                          fontWeight: FontWeight.w300,
+                          letterSpacing: 0.3),
+                    ),
+                    SizedBox(height: 5),
+                  ],
+                );
+              }))
             ],
           )
         ],
@@ -406,288 +549,302 @@ class _SingleBorrowState extends State<SingleBorrow> {
   generatePakkaBillPdfAndView(context) async {
     if (await Permission.storage.request().isGranted) {
       try {
-        pdf.addPage(pw.MultiPage(
-          pageFormat: PdfPageFormat.a4,
-          margin: pw.EdgeInsets.all(24),
-          build: (pw.Context context) {
-            return <pw.Widget>[
-              pw.Container(
-                  height: PdfPageFormat.a4.height / 1.1,
-                  width: PdfPageFormat.a4.width,
-                  child: pw.Column(
-                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: pw.CrossAxisAlignment.center,
-                      children: [
-                        pw.Column(children: [
-                          pw.Container(
-                              child: pw.Container(
-                                  alignment: pw.Alignment.center,
-                                  child: pw.Text("Tax Invoice",
-                                      style: pw.TextStyle(
-                                        fontSize: 12,
-                                      )))),
-                          pw.SizedBox(height: 10),
-                          pw.Row(
-                              mainAxisAlignment:
-                                  pw.MainAxisAlignment.spaceBetween,
-                              children: [
-                                pw.Text('GSTIN:33AHIPC1946Q1Z4'),
-                                pw.Column(children: [
-                                  pw.Text('Mobile :9488327699'),
-                                  pw.Text('Email :annai.charlinf@gmail.com'),
-                                ])
-                              ]),
-                          pw.SizedBox(height: 5),
-                          pw.Container(
-                              child: pw.Container(
-                                  alignment: pw.Alignment.center,
-                                  child: pw.Text("Annai Store",
-                                      style: pw.TextStyle(
-                                          fontSize: 28,
-                                          fontWeight: pw.FontWeight.bold,
-                                          fontStyle: pw.FontStyle.italic)))),
-                          pw.SizedBox(height: 5),
-                          pw.Paragraph(
-                              text:
-                                  "No.1 Yadhavar Middle Street\n Valliioor-627117",
-                              textAlign: pw.TextAlign.center,
-                              style: pw.TextStyle(
-                                  fontWeight: pw.FontWeight.normal,
-                                  letterSpacing: 1)),
-                          pw.SizedBox(height: 10),
-                          pw.Container(
-                            height: 70,
-                            child: pw.Row(
-                                mainAxisAlignment:
-                                    pw.MainAxisAlignment.spaceBetween,
-                                children: [
-                                  pw.Column(
-                                      mainAxisAlignment:
-                                          pw.MainAxisAlignment.spaceBetween,
-                                      crossAxisAlignment:
-                                          pw.CrossAxisAlignment.start,
-                                      children: [
-                                        pw.Column(children: [
-                                          pw.Text('Buyer:'),
-                                          pw.Text(
-                                              "${_buyerInfoController.text}"),
-                                        ]),
-                                        pw.Column(
-                                            crossAxisAlignment:
-                                                pw.CrossAxisAlignment.start,
-                                            children: [
-                                              pw.Text('GSTIN:33AHIPC1946Q1Z4'),
-                                              pw.Text(
-                                                  "Mobile No:${borrowModel.mobileNo}"),
-                                            ])
-                                      ]),
-                                  pw.Column(
-                                      mainAxisAlignment:
-                                          pw.MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        pw.Text(
-                                            'Bill No:  ${borrowModel.billNo}'),
-                                        pw.Text(
-                                            'Date:${DateFormat("dd/MM/yyyy").format(borrowModel.timestamp.toDate())}'),
-                                      ]),
-                                ]),
-                          ),
-                          pw.SizedBox(height: 8),
-                          pw.Table.fromTextArray(
-                              border: pw.TableBorder(
-                                width: 1,
-                              ),
-                              context: context,
-                              data: <List<dynamic>>[
-                                <dynamic>[
-                                  'Product',
-                                  'HSN',
-                                  'GST',
-                                  'Qty',
-                                  'Rate',
-                                  'Amount',
-                                  'SGST',
-                                  'CGST',
-                                  'Total'
-                                ],
-                                ...datas.map((e) => [
-                                      e[0],
-                                      e[1],
-                                      '${e[2]}',
-                                      e[3],
-                                      e[4],
-                                      '${e[3] * e[4]}',
-                                      '${(e[3] * e[4]) * (e[2] / 100)}',
-                                      '${(e[3] * e[4]) * (e[2] / 100)}',
-                                      '${(e[3] * e[4]) + 2 * ((e[3] * e[4]) * (e[2] / 100))}'
-                                    ])
-                              ]),
-                          pw.Row(
-                              mainAxisAlignment:
-                                  pw.MainAxisAlignment.spaceBetween,
-                              children: [
-                                pw.Text(
-                                    'Total Items: ${borrowModel.productList.length}',
-                                    textAlign: pw.TextAlign.left),
-                              ]),
-                          pw.SizedBox(height: 40),
-                        ]),
-                        pw.Container(
-                            child: pw.Column(
-                                mainAxisAlignment:
-                                    pw.MainAxisAlignment.spaceAround,
-                                children: [
-                              pw.Row(
-                                  mainAxisAlignment:
-                                      pw.MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    pw.Row(
-                                        mainAxisAlignment:
-                                            pw.MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          pw.Text(
-                                            "Rupees:",
-                                            style: pw.TextStyle(
-                                                fontWeight: pw.FontWeight.bold),
-                                          ),
-                                          pw.Text(
-                                            amounten.toString(),
-                                          )
-                                        ]),
-                                    pw.Column(
-                                        mainAxisAlignment:
-                                            pw.MainAxisAlignment.start,
-                                        crossAxisAlignment:
-                                            pw.CrossAxisAlignment.start,
-                                        children: [
-                                          pw.Row(
-                                              mainAxisAlignment: pw
-                                                  .MainAxisAlignment
-                                                  .spaceBetween,
-                                              children: [
-                                                pw.Text(
-                                                  "Gross Amount:",
-                                                  style: pw.TextStyle(
-                                                      fontWeight:
-                                                          pw.FontWeight.bold),
-                                                ),
-                                                pw.Text(
-                                                  grossAmount.toString(),
-                                                )
-                                              ]),
-                                          pw.Row(
-                                              mainAxisAlignment: pw
-                                                  .MainAxisAlignment
-                                                  .spaceBetween,
-                                              children: [
-                                                pw.Text(
-                                                  "Add SGST:",
-                                                  style: pw.TextStyle(
-                                                      fontWeight:
-                                                          pw.FontWeight.bold),
-                                                ),
-                                                pw.Text(
-                                                  totalSGST.toString(),
-                                                )
-                                              ]),
-                                          pw.Row(
-                                              mainAxisAlignment: pw
-                                                  .MainAxisAlignment
-                                                  .spaceBetween,
-                                              children: [
-                                                pw.Text(
-                                                  "Add CGST:",
-                                                  style: pw.TextStyle(
-                                                      fontWeight:
-                                                          pw.FontWeight.bold),
-                                                ),
-                                                pw.Text(
-                                                  totalCGST.toString(),
-                                                )
-                                              ]),
-                                        ])
-                                  ]),
-                              pw.Row(
-                                  mainAxisAlignment:
-                                      pw.MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    pw.Text('Note',
-                                        style: pw.TextStyle(
-                                            fontWeight: pw.FontWeight.bold),
-                                        textAlign: pw.TextAlign.left),
-                                    pw.Column(children: [
-                                      pw.Row(
-                                          mainAxisAlignment:
-                                              pw.MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            pw.Text(
-                                              "Total Amount:",
-                                              style: pw.TextStyle(
-                                                  fontWeight:
-                                                      pw.FontWeight.bold),
-                                            ),
-                                            pw.Text(
-                                              amount.toString(),
-                                            )
-                                          ]),
-                                    ])
-                                  ]),
-                              pw.SizedBox(height: 20),
-                              pw.Row(
-                                  mainAxisAlignment:
-                                      pw.MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    pw.Column(
-                                        mainAxisAlignment:
-                                            pw.MainAxisAlignment.start,
-                                        crossAxisAlignment:
-                                            pw.CrossAxisAlignment.start,
-                                        children: [
-                                          pw.Text(
-                                            'VITY UNION BANK',
-                                          ),
-                                          pw.Text(
-                                            'A/C No: 510909010138545',
-                                          ),
-                                          pw.Text(
-                                            'IFSC No: CIUB0000656',
-                                          ),
-                                          pw.Text('Branch: Vallioor',
-                                              textAlign: pw.TextAlign.left),
-                                        ]),
-                                    pw.Column(children: [
-                                      pw.Text('Annai Store',
-                                          style: pw.TextStyle(
-                                              fontWeight: pw.FontWeight.bold),
-                                          textAlign: pw.TextAlign.left),
-                                      pw.SizedBox(height: 50),
-                                      pw.Text('Authorised Signature',
-                                          textAlign: pw.TextAlign.left),
-                                    ])
-                                  ]),
-                            ]))
-                      ]))
-            ];
-          },
-        ));
+        //   pdf.addPage(pw.MultiPage(
+        //     pageFormat: PdfPageFormat.a4,
+        //     margin: pw.EdgeInsets.all(24),
+        //     build: (pw.Context context) {
+        //       return <pw.Widget>[
+        //         pw.Container(
+        //             height: PdfPageFormat.a4.height / 1.1,
+        //             width: PdfPageFormat.a4.width,
+        //             child: pw.Column(
+        //                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        //                 crossAxisAlignment: pw.CrossAxisAlignment.center,
+        //                 children: [
+        //                   pw.Column(children: [
+        //                     pw.Container(
+        //                         child: pw.Container(
+        //                             alignment: pw.Alignment.center,
+        //                             child: pw.Text("Tax Invoice",
+        //                                 style: pw.TextStyle(
+        //                                   fontSize: 12,
+        //                                 )))),
+        //                     pw.SizedBox(height: 10),
+        //                     pw.Row(
+        //                         mainAxisAlignment:
+        //                             pw.MainAxisAlignment.spaceBetween,
+        //                         children: [
+        //                           pw.Text('GSTIN:33AHIPC1946Q1Z4'),
+        //                           pw.Column(children: [
+        //                             pw.Text('Mobile :9488327699'),
+        //                             pw.Text('Email :annai.charlinf@gmail.com'),
+        //                           ])
+        //                         ]),
+        //                     pw.SizedBox(height: 5),
+        //                     pw.Container(
+        //                         child: pw.Container(
+        //                             alignment: pw.Alignment.center,
+        //                             child: pw.Text("Annai Store",
+        //                                 style: pw.TextStyle(
+        //                                     fontSize: 28,
+        //                                     fontWeight: pw.FontWeight.bold,
+        //                                     fontStyle: pw.FontStyle.italic)))),
+        //                     pw.SizedBox(height: 5),
+        //                     pw.Paragraph(
+        //                         text:
+        //                             "No.1 Yadhavar Middle Street\n Valliioor-627117",
+        //                         textAlign: pw.TextAlign.center,
+        //                         style: pw.TextStyle(
+        //                             fontWeight: pw.FontWeight.normal,
+        //                             letterSpacing: 1)),
+        //                     pw.SizedBox(height: 10),
+        //                     pw.Container(
+        //                       height: 70,
+        //                       child: pw.Row(
+        //                           mainAxisAlignment:
+        //                               pw.MainAxisAlignment.spaceBetween,
+        //                           children: [
+        //                             pw.Column(
+        //                                 mainAxisAlignment:
+        //                                     pw.MainAxisAlignment.spaceBetween,
+        //                                 crossAxisAlignment:
+        //                                     pw.CrossAxisAlignment.start,
+        //                                 children: [
+        //                                   pw.Column(children: [
+        //                                     pw.Text('Buyer:'),
+        //                                     pw.Text(
+        //                                         "${_buyerInfoController.text}"),
+        //                                   ]),
+        //                                   pw.Column(
+        //                                       crossAxisAlignment:
+        //                                           pw.CrossAxisAlignment.start,
+        //                                       children: [
+        //                                         pw.Text('GSTIN:33AHIPC1946Q1Z4'),
+        //                                         pw.Text(
+        //                                             "Mobile No:${borrowModel.mobileNo}"),
+        //                                       ])
+        //                                 ]),
+        //                             pw.Column(
+        //                                 mainAxisAlignment:
+        //                                     pw.MainAxisAlignment.spaceBetween,
+        //                                 children: [
+        //                                   pw.Text(
+        //                                       'Bill No:  ${borrowModel.billNo}'),
+        //                                   pw.Text(
+        //                                       'Date:${DateFormat("dd/MM/yyyy").format(borrowModel.timestamp.toDate())}'),
+        //                                 ]),
+        //                           ]),
+        //                     ),
+        //                     pw.SizedBox(height: 8),
+        //                     pw.Table.fromTextArray(
+        //                         border: pw.TableBorder(
+        //                           width: 1,
+        //                         ),
+        //                         context: context,
+        //                         data: <List<dynamic>>[
+        //                           <dynamic>[
+        //                             'Product',
+        //                             'HSN',
+        //                             'GST',
+        //                             'Qty',
+        //                             'Rate',
+        //                             'Amount',
+        //                             'SGST',
+        //                             'CGST',
+        //                             'Total'
+        //                           ],
+        //                           ...datas.map((e) => [
+        //                                 e[0],
+        //                                 e[1],
+        //                                 '${e[2]}',
+        //                                 e[3],
+        //                                 e[4],
+        //                                 '${e[3] * e[4]}',
+        //                                 '${(e[3] * e[4]) * (e[2] / 100)}',
+        //                                 '${(e[3] * e[4]) * (e[2] / 100)}',
+        //                                 '${(e[3] * e[4]) + 2 * ((e[3] * e[4]) * (e[2] / 100))}'
+        //                               ])
+        //                         ]),
+        //                     pw.Row(
+        //                         mainAxisAlignment:
+        //                             pw.MainAxisAlignment.spaceBetween,
+        //                         children: [
+        //                           pw.Text(
+        //                               'Total Items: ${borrowModel.productList.length}',
+        //                               textAlign: pw.TextAlign.left),
+        //                         ]),
+        //                     pw.SizedBox(height: 40),
+        //                   ]),
+        //                   pw.Container(
+        //                       child: pw.Column(
+        //                           mainAxisAlignment:
+        //                               pw.MainAxisAlignment.spaceAround,
+        //                           children: [
+        //                         pw.Row(
+        //                             mainAxisAlignment:
+        //                                 pw.MainAxisAlignment.spaceBetween,
+        //                             children: [
+        //                               pw.Row(
+        //                                   mainAxisAlignment:
+        //                                       pw.MainAxisAlignment.spaceBetween,
+        //                                   children: [
+        //                                     pw.Text(
+        //                                       "Rupees:",
+        //                                       style: pw.TextStyle(
+        //                                           fontWeight: pw.FontWeight.bold),
+        //                                     ),
+        //                                     pw.Text(
+        //                                       amounten.toString(),
+        //                                     )
+        //                                   ]),
+        //                               pw.Column(
+        //                                   mainAxisAlignment:
+        //                                       pw.MainAxisAlignment.start,
+        //                                   crossAxisAlignment:
+        //                                       pw.CrossAxisAlignment.start,
+        //                                   children: [
+        //                                     pw.Row(
+        //                                         mainAxisAlignment: pw
+        //                                             .MainAxisAlignment
+        //                                             .spaceBetween,
+        //                                         children: [
+        //                                           pw.Text(
+        //                                             "Gross Amount:",
+        //                                             style: pw.TextStyle(
+        //                                                 fontWeight:
+        //                                                     pw.FontWeight.bold),
+        //                                           ),
+        //                                           pw.Text(
+        //                                             grossAmount.toString(),
+        //                                           )
+        //                                         ]),
+        //                                     pw.Row(
+        //                                         mainAxisAlignment: pw
+        //                                             .MainAxisAlignment
+        //                                             .spaceBetween,
+        //                                         children: [
+        //                                           pw.Text(
+        //                                             "Add SGST:",
+        //                                             style: pw.TextStyle(
+        //                                                 fontWeight:
+        //                                                     pw.FontWeight.bold),
+        //                                           ),
+        //                                           pw.Text(
+        //                                             totalSGST.toString(),
+        //                                           )
+        //                                         ]),
+        //                                     pw.Row(
+        //                                         mainAxisAlignment: pw
+        //                                             .MainAxisAlignment
+        //                                             .spaceBetween,
+        //                                         children: [
+        //                                           pw.Text(
+        //                                             "Add CGST:",
+        //                                             style: pw.TextStyle(
+        //                                                 fontWeight:
+        //                                                     pw.FontWeight.bold),
+        //                                           ),
+        //                                           pw.Text(
+        //                                             totalCGST.toString(),
+        //                                           )
+        //                                         ]),
+        //                                   ])
+        //                             ]),
+        //                         pw.Row(
+        //                             mainAxisAlignment:
+        //                                 pw.MainAxisAlignment.spaceBetween,
+        //                             children: [
+        //                               pw.Text('Note',
+        //                                   style: pw.TextStyle(
+        //                                       fontWeight: pw.FontWeight.bold),
+        //                                   textAlign: pw.TextAlign.left),
+        //                               pw.Column(children: [
+        //                                 pw.Row(
+        //                                     mainAxisAlignment:
+        //                                         pw.MainAxisAlignment.spaceBetween,
+        //                                     children: [
+        //                                       pw.Text(
+        //                                         "Total Amount:",
+        //                                         style: pw.TextStyle(
+        //                                             fontWeight:
+        //                                                 pw.FontWeight.bold),
+        //                                       ),
+        //                                       pw.Text(
+        //                                         amount.toString(),
+        //                                       )
+        //                                     ]),
+        //                               ])
+        //                             ]),
+        //                         pw.SizedBox(height: 20),
+        //                         pw.Row(
+        //                             mainAxisAlignment:
+        //                                 pw.MainAxisAlignment.spaceBetween,
+        //                             children: [
+        //                               pw.Column(
+        //                                   mainAxisAlignment:
+        //                                       pw.MainAxisAlignment.start,
+        //                                   crossAxisAlignment:
+        //                                       pw.CrossAxisAlignment.start,
+        //                                   children: [
+        //                                     pw.Text(
+        //                                       'VITY UNION BANK',
+        //                                     ),
+        //                                     pw.Text(
+        //                                       'A/C No: 510909010138545',
+        //                                     ),
+        //                                     pw.Text(
+        //                                       'IFSC No: CIUB0000656',
+        //                                     ),
+        //                                     pw.Text('Branch: Vallioor',
+        //                                         textAlign: pw.TextAlign.left),
+        //                                   ]),
+        //                               pw.Column(children: [
+        //                                 pw.Text('Annai Store',
+        //                                     style: pw.TextStyle(
+        //                                         fontWeight: pw.FontWeight.bold),
+        //                                     textAlign: pw.TextAlign.left),
+        //                                 pw.SizedBox(height: 50),
+        //                                 pw.Text('Authorised Signature',
+        //                                     textAlign: pw.TextAlign.left),
+        //                               ])
+        //                             ]),
+        //                       ]))
+        //                 ]))
+        //       ];
+        //     },
+        //   ));
 
-        Directory documentDirectory = await getApplicationDocumentsDirectory();
+        //   Directory documentDirectory = await getApplicationDocumentsDirectory();
 
-        String documentPath = documentDirectory.path;
+        //   String documentPath = documentDirectory.path;
 
-        File file = File("$documentPath/example.pdf");
-        try {
-          file.writeAsBytesSync(pdf.save());
+        //   File file = File("$documentPath/example.pdf");
+        //   try {
+        //     file.writeAsBytesSync(pdf.save());
+        //   } catch (e) {
+        //     Dialogs.okDialog(context, 'Error',
+        //         'Avoid Next line in buyer Text Field', Colors.red[200]);
+        //     print(e);
+        //   }
+        String fullPath = await Utils.generatePakkaBill(
+            borrowModel,
+            _buyerInfoController.text,
+            datas,
+            grossAmount.toString(),
+            totalSGST.toString(),
+            totalCGST.toString(),
+            amounten,
+            amount.toString());
+        if (fullPath == 'textfieldError') {
+          Dialogs.okDialog(context, 'Error',
+              'Dont use next line in buyer info textfield', Colors.red[200]);
+        } else {
           Navigator.push(
               context,
               MaterialPageRoute(
                   builder: (context) => PdfPreviewwScreen(
-                        path: file.path,
+                        path: fullPath,
                       )));
-        } catch (e) {
-          Dialogs.okDialog(context, 'Error',
-              'Avoid Next line in buyer Text Field', Colors.red[200]);
-          print(e);
         }
       } catch (e) {
         Dialogs.okDialog(
@@ -701,99 +858,6 @@ class _SingleBorrowState extends State<SingleBorrow> {
     setState(() {
       _buyerInfoController.clear();
     });
-  }
-
-  generateKachaPdfAndView(context) async {
-    if (await Permission.storage.request().isGranted) {
-      List<List<dynamic>> datas = List();
-      int amount = 0;
-
-      for (dynamic i = 0; i < borrowModel.productList.length; i++) {
-        List<dynamic> data = List();
-        data.add(borrowModel.productList[i]);
-        data.add(borrowModel.qtyList[i]);
-        data.add(borrowModel.sellingRateList[i]);
-        amount =
-            amount + (borrowModel.qtyList[i] * borrowModel.sellingRateList[i]);
-        datas.add(data);
-      }
-
-      pdf.addPage(pw.MultiPage(
-        pageFormat: PdfPageFormat.a5,
-        margin: pw.EdgeInsets.all(32),
-        build: (pw.Context context) {
-          return <pw.Widget>[
-            pw.Column(
-                mainAxisAlignment: pw.MainAxisAlignment.center,
-                crossAxisAlignment: pw.CrossAxisAlignment.center,
-                children: [
-                  pw.Container(
-                      child: pw.Container(
-                          alignment: pw.Alignment.center,
-                          child: pw.Text("Annai Store",
-                              style: pw.TextStyle(
-                                  fontSize: 30,
-                                  fontWeight: pw.FontWeight.bold,
-                                  fontStyle: pw.FontStyle.italic)))),
-                  pw.SizedBox(height: 20),
-                  pw.Paragraph(
-                      text:
-                          "No.1 Yadhavar Middle Street\n Valliioor-627117\nCell:9488327699\nGSTIN:33AHIPC1946Q1Z4",
-                      textAlign: pw.TextAlign.center,
-                      style: pw.TextStyle(
-                          fontWeight: pw.FontWeight.normal, letterSpacing: 1)),
-                  pw.SizedBox(height: 20),
-                  pw.Row(
-                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                      children: [
-                        pw.Text('Bill No:  ${borrowModel.billNo}'),
-                        pw.Text(
-                            'Date:${DateFormat("dd/MM/yyyy").format(borrowModel.timestamp.toDate())}'),
-                      ]),
-                  pw.Text(
-                    '',
-                    style: pw.TextStyle(
-                      decoration: pw.TextDecoration.underline,
-                      decorationStyle: pw.TextDecorationStyle.double,
-                    ),
-                  ),
-                  pw.SizedBox(height: 5),
-                  pw.Table.fromTextArray(
-                      context: context,
-                      data: <List<dynamic>>[
-                        <dynamic>['Product', 'Qty', 'Rate', 'Amount'],
-                        ...datas.map(
-                            (e) => [e[0], e[1], '${e[2]}', '${e[1] * e[2]}'])
-                      ]),
-                  pw.SizedBox(height: 5),
-                  pw.Row(
-                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                      children: [
-                        pw.Text(
-                            'Total Items: ${borrowModel.productList.length}',
-                            style: pw.TextStyle(fontSize: 10),
-                            textAlign: pw.TextAlign.left),
-                        pw.Text('Total Amount: $amount',
-                            style: pw.TextStyle(fontSize: 10),
-                            textAlign: pw.TextAlign.left),
-                      ])
-                ])
-          ];
-        },
-      ));
-
-      Directory documentDirectory = await getApplicationDocumentsDirectory();
-
-      String documentPath = documentDirectory.path;
-
-      File file = File("$documentPath/example.pdf");
-
-      file.writeAsBytesSync(pdf.save());
-      return file.path;
-    } else {
-      Dialogs.okDialog(
-          context, 'Error', 'You have denied your permission', Colors.red[200]);
-    }
   }
 
   void _showModalSheet() {
@@ -825,8 +889,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
                               fontSize: 20,
                               fontWeight: FontWeight.w500),
                         ),
-                        Text(
-                            "₹${(borrowModel.price - borrowModel.givenAmount).toString()}",
+                        Text("₹${amountToBeGiven.toString()}",
                             style: TextStyle(
                                 color: Colors.black,
                                 fontSize: 20,
@@ -862,15 +925,21 @@ class _SingleBorrowState extends State<SingleBorrow> {
   }
 
   getKachaBill() async {
-    String fullPath = await generateKachaPdfAndView(context);
-    print(fullPath);
+    File file = await Utils.generateKachaBill(borrowModel);
+    if (file == null) {
+      Dialogs.okDialog(
+          context, 'Error', "Somthing went wrong!", Colors.red[200]);
+    } else {
+      String fullPath = file.path;
+      print('Utils working');
 
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => PdfPreviewwScreen(
-                  path: fullPath,
-                )));
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => PdfPreviewwScreen(
+                    path: fullPath,
+                  )));
+    }
   }
 
   buildBodyHeadButtons() {
@@ -994,7 +1063,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "₹ ${(snapshot.data.price - snapshot.data.givenAmount).toString()}",
+                    "₹ ${amountToBeGiven.toString()}",
                     style: TextStyle(
                         color: Variables.lightGreyColor,
                         fontWeight: FontWeight.w500,

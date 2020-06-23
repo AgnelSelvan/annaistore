@@ -1,5 +1,5 @@
+import 'package:annaistore/models/borrow.dart';
 import 'package:annaistore/models/user.dart';
-import 'package:annaistore/models/yougave.dart';
 import 'package:annaistore/resources/admin_methods.dart';
 import 'package:annaistore/resources/auth_methods.dart';
 import 'package:annaistore/screens/admin/borrow/single_borrow.dart';
@@ -8,6 +8,7 @@ import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
 import 'package:annaistore/widgets/custom_divider.dart';
+import 'package:annaistore/widgets/dialogs.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -37,10 +38,15 @@ class _BorrowListState extends State<BorrowList> {
 
     FirebaseUser firebaseUser = await _authMethods.getCurrentUser();
     User user = await _authMethods.getUserDetailsById(firebaseUser.uid);
-    setState(() {
-      currentUser = user;
-      isLoading = false;
-    });
+    try {
+      setState(() {
+        currentUser = user;
+        isLoading = false;
+      });
+    } catch (e) {
+      Dialogs.okDialog(
+          context, 'Error', 'Somthing went wrong!', Colors.red[200]);
+    }
     if (user.role == 'user') {
       getBorrowListOfMe();
     }
@@ -124,14 +130,22 @@ class _BorrowListState extends State<BorrowList> {
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              "₹ ${myAmount.toString()}",
-              style: TextStyle(
-                  color: Variables.lightGreyColor,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 18,
-                  letterSpacing: 1),
-            ),
+            FutureBuilder(
+                future: _adminMethods.getTotalAmountByBorrowId(
+                    myBorrowList[0].data['borrow_id']),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return CustomCircularLoading();
+                  }
+                  return Text(
+                    "₹ ${snapshot.data.toString()}",
+                    style: TextStyle(
+                        color: Variables.lightGreyColor,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 18,
+                        letterSpacing: 1),
+                  );
+                }),
             SizedBox(height: 10),
             Text(
               "You have to give",
@@ -173,14 +187,19 @@ class _BorrowListState extends State<BorrowList> {
             leading: CircleAvatar(
               backgroundColor: Variables.primaryColor,
               child: Text(
-                borrow.customerName[0],
+                'AS',
                 style: TextStyle(color: Colors.white),
               ),
             ),
-            trailing: Text(
-              "₹ ${(borrow.price - borrow.givenAmount).toString()}",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
+            trailing: FutureBuilder<Object>(
+                future: _adminMethods.getTotalAmountByBorrowId(
+                    myBorrowList[index].data['borrow_id']),
+                builder: (context, snapshot) {
+                  return Text(
+                    "₹ ${(snapshot.data).toString()}",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  );
+                }),
           );
         });
   }
@@ -220,11 +239,19 @@ class _BorrowListState extends State<BorrowList> {
                         style: TextStyle(color: Colors.white),
                       ),
                     ),
-                    trailing: Text(
-                      "₹ ${(borrow.price - borrow.givenAmount).toString()}",
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
+                    trailing: FutureBuilder<int>(
+                        future: _adminMethods
+                            .getTotalAmountByBorrowId(borrow.borrowId),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) {
+                            return CustomCircularLoading();
+                          }
+                          return Text(
+                            "₹ ${snapshot.data.toString()}",
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16),
+                          );
+                        }),
                   );
                 });
           }

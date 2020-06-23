@@ -37,6 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   User currentUser;
   String currentUserId;
   bool isAdmin = false;
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -102,262 +103,278 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       drawer: customDrawer(context, currentUserId),
       backgroundColor: Colors.yellow[50],
-      body: ListView(
-        physics: BouncingScrollPhysics(),
-        children: <Widget>[
-          Container(
-            width: double.infinity,
-            height: MediaQuery.of(context).size.height,
-            color: Colors.yellow[50],
-            child: Column(
+      body: isLoading
+          ? CustomCircularLoading()
+          : ListView(
+              physics: BouncingScrollPhysics(),
               children: <Widget>[
-                SizedBox(height: 30),
-                FutureBuilder(
-                    future: _authMethods.getUserDetailsById(currentUserId),
-                    builder: (context, snapshot) {
-                      User currentUser = snapshot.data;
-                      if (snapshot.hasData) {
-                        return Column(
-                          children: <Widget>[
-                            currentUser.profilePhoto == null
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(120),
-                                    child: Container(
-                                      width: 100,
-                                      child: Image.asset(
-                                          'assets/images/unknown_user.jpeg'),
-                                    ))
-                                : ClipRRect(
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: CachedNetworkImage(
-                                        imageUrl: currentUser.profilePhoto),
-                                  ),
-                            SizedBox(height: 10),
-                            Text(
-                              currentUser.name,
-                              style: TextStyle(
-                                color: Variables.blackColor,
-                                fontWeight: FontWeight.w400,
-                                fontSize: 18,
-                                letterSpacing: 0.7,
-                              ),
-                            ),
-                            SizedBox(height: 10),
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                  vertical: 7, horizontal: 15),
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(50),
-                                  color: Colors.white),
-                              child: Text(
-                                currentUser.username,
-                                style: TextStyle(color: Variables.primaryColor),
-                              ),
-                            ),
-                          ],
-                        );
-                      }
-                      return CustomCircularLoading();
-                    }),
-                SizedBox(height: 10),
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    margin: EdgeInsets.only(top: 15),
-                    decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius:
-                            BorderRadius.vertical(top: Radius.circular(50))),
-                    child: ListView(
-                      physics: BouncingScrollPhysics(),
-                      children: <Widget>[
-                        FutureBuilder(
+                Container(
+                  width: double.infinity,
+                  height: MediaQuery.of(context).size.height,
+                  color: Colors.yellow[50],
+                  child: Column(
+                    children: <Widget>[
+                      SizedBox(height: 30),
+                      FutureBuilder(
                           future:
                               _authMethods.getUserDetailsById(currentUserId),
-                          builder: (context, AsyncSnapshot<User> snapshot) {
+                          builder: (context, snapshot) {
+                            User currentUser = snapshot.data;
                             if (snapshot.hasData) {
-                              User currentUser = snapshot.data;
-                              print(currentUser.role);
-                              return currentUser.role == 'admin'
-                                  ? ExpandableTheme(
-                                      data: const ExpandableThemeData(
-                                        iconColor: Colors.yellow,
-                                        useInkWell: true,
-                                      ),
-                                      child: ExpandableNotifier(
-                                          child: ScrollOnExpand(
-                                              scrollOnExpand: true,
-                                              scrollOnCollapse: false,
-                                              child: ExpandablePanel(
-                                                theme:
-                                                    const ExpandableThemeData(
-                                                  headerAlignment:
-                                                      ExpandablePanelHeaderAlignment
-                                                          .center,
-                                                  tapBodyToCollapse: true,
-                                                ),
-                                                header: Padding(
-                                                  padding: EdgeInsets.all(10),
-                                                  child: ListTile(
-                                                    leading: Icon(
-                                                      Icons.add,
-                                                      size: 16,
-                                                      color: Variables
-                                                          .primaryColor,
-                                                    ),
-                                                    title: Text(
-                                                      'Add',
-                                                      style: TextStyle(
-                                                          color: Variables
-                                                              .blackColor,
-                                                          fontSize: 16,
-                                                          letterSpacing: 0.3,
-                                                          fontWeight:
-                                                              FontWeight.w400),
-                                                    ),
-                                                  ),
-                                                ),
-                                                expanded: Column(
-                                                  children: <Widget>[
-                                                    CustomTile(
-                                                      text: "Add Stock",
-                                                      icon: FontAwesome
-                                                          .stack_overflow,
-                                                      onTap: () {
-                                                        Navigator.push(
-                                                            context,
-                                                            BouncyPageRoute(
-                                                                widget:
-                                                                    StockScreen()));
-                                                      },
-                                                    ),
-                                                    CustomTile(
-                                                      text: "Add Category",
-                                                      icon:
-                                                          FontAwesome.list_alt,
-                                                      onTap: () {
-                                                        Navigator.push(
-                                                            context,
-                                                            BouncyPageRoute(
-                                                                widget:
-                                                                    AddCategory()));
-                                                      },
-                                                    ),
-                                                    CustomTile(
-                                                      text: "Add Sub-Category",
-                                                      icon:
-                                                          FontAwesome.list_alt,
-                                                      onTap: () {
-                                                        Navigator.push(
-                                                            context,
-                                                            BouncyPageRoute(
-                                                                widget:
-                                                                    AddSubCategory()));
-                                                      },
-                                                    ),
-                                                    CustomTile(
-                                                      text: "Add Product",
-                                                      icon: FontAwesome
-                                                          .product_hunt,
-                                                      onTap: () {
-                                                        Navigator.push(
-                                                            context,
-                                                            BouncyPageRoute(
-                                                                widget:
-                                                                    AddProduct()));
-                                                      },
-                                                    ),
-                                                    CustomTile(
-                                                      text: "Add Unit",
-                                                      icon: Icons.ac_unit,
-                                                      onTap: () {
-                                                        Navigator.push(
-                                                            context,
-                                                            BouncyPageRoute(
-                                                                widget:
-                                                                    AddUnit()));
-                                                      },
-                                                    ),
-                                                    CustomTile(
-                                                      text:
-                                                          "Add Regular Customer",
-                                                      icon: Icons.report,
-                                                      onTap: () {},
-                                                    )
-                                                  ],
-                                                ),
-                                              ))))
-                                  : Container();
+                              return Column(
+                                children: <Widget>[
+                                  currentUser.profilePhoto == null
+                                      ? ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(120),
+                                          child: Container(
+                                            width: 100,
+                                            child: Image.asset(
+                                                'assets/images/unknown_user.jpeg'),
+                                          ))
+                                      : ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                          child: CachedNetworkImage(
+                                              imageUrl:
+                                                  currentUser.profilePhoto),
+                                        ),
+                                  SizedBox(height: 10),
+                                  Text(
+                                    currentUser.name,
+                                    style: TextStyle(
+                                      color: Variables.blackColor,
+                                      fontWeight: FontWeight.w400,
+                                      fontSize: 18,
+                                      letterSpacing: 0.7,
+                                    ),
+                                  ),
+                                  SizedBox(height: 10),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                        vertical: 7, horizontal: 15),
+                                    decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(50),
+                                        color: Colors.white),
+                                    child: Text(
+                                      currentUser.username,
+                                      style: TextStyle(
+                                          color: Variables.primaryColor),
+                                    ),
+                                  ),
+                                ],
+                              );
                             }
                             return CustomCircularLoading();
-                          },
-                        ),
-                        isAdmin
-                            ? CustomTile(
-                                text: "Make Admin",
-                                icon: FontAwesome.user_circle_o,
-                                onTap: () {
-                                  Navigator.push(
-                                      context,
-                                      BouncyPageRoute(
-                                          widget: MakeAdminScreen()));
+                          }),
+                      SizedBox(height: 10),
+                      Expanded(
+                        child: Container(
+                          width: double.infinity,
+                          margin: EdgeInsets.only(top: 15),
+                          decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(50))),
+                          child: ListView(
+                            physics: BouncingScrollPhysics(),
+                            children: <Widget>[
+                              FutureBuilder(
+                                future: _authMethods
+                                    .getUserDetailsById(currentUserId),
+                                builder:
+                                    (context, AsyncSnapshot<User> snapshot) {
+                                  if (snapshot.hasData) {
+                                    User currentUser = snapshot.data;
+                                    print(currentUser.role);
+                                    return currentUser.role == 'admin'
+                                        ? ExpandableTheme(
+                                            data: const ExpandableThemeData(
+                                              iconColor: Colors.yellow,
+                                              useInkWell: true,
+                                            ),
+                                            child: ExpandableNotifier(
+                                                child: ScrollOnExpand(
+                                                    scrollOnExpand: true,
+                                                    scrollOnCollapse: false,
+                                                    child: ExpandablePanel(
+                                                      theme:
+                                                          const ExpandableThemeData(
+                                                        headerAlignment:
+                                                            ExpandablePanelHeaderAlignment
+                                                                .center,
+                                                        tapBodyToCollapse: true,
+                                                      ),
+                                                      header: Padding(
+                                                        padding:
+                                                            EdgeInsets.all(10),
+                                                        child: ListTile(
+                                                          leading: Icon(
+                                                            Icons.add,
+                                                            size: 16,
+                                                            color: Variables
+                                                                .primaryColor,
+                                                          ),
+                                                          title: Text(
+                                                            'Add',
+                                                            style: TextStyle(
+                                                                color: Variables
+                                                                    .blackColor,
+                                                                fontSize: 16,
+                                                                letterSpacing:
+                                                                    0.3,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w400),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      expanded: Column(
+                                                        children: <Widget>[
+                                                          CustomTile(
+                                                            text: "Add Stock",
+                                                            icon: FontAwesome
+                                                                .stack_overflow,
+                                                            onTap: () {
+                                                              Navigator.push(
+                                                                  context,
+                                                                  BouncyPageRoute(
+                                                                      widget:
+                                                                          StockScreen()));
+                                                            },
+                                                          ),
+                                                          CustomTile(
+                                                            text:
+                                                                "Add Category",
+                                                            icon: FontAwesome
+                                                                .list_alt,
+                                                            onTap: () {
+                                                              Navigator.push(
+                                                                  context,
+                                                                  BouncyPageRoute(
+                                                                      widget:
+                                                                          AddCategory()));
+                                                            },
+                                                          ),
+                                                          CustomTile(
+                                                            text:
+                                                                "Add Sub-Category",
+                                                            icon: FontAwesome
+                                                                .list_alt,
+                                                            onTap: () {
+                                                              Navigator.push(
+                                                                  context,
+                                                                  BouncyPageRoute(
+                                                                      widget:
+                                                                          AddSubCategory()));
+                                                            },
+                                                          ),
+                                                          CustomTile(
+                                                            text: "Add Product",
+                                                            icon: FontAwesome
+                                                                .product_hunt,
+                                                            onTap: () {
+                                                              Navigator.push(
+                                                                  context,
+                                                                  BouncyPageRoute(
+                                                                      widget:
+                                                                          AddProduct()));
+                                                            },
+                                                          ),
+                                                          CustomTile(
+                                                            text: "Add Unit",
+                                                            icon: Icons.ac_unit,
+                                                            onTap: () {
+                                                              Navigator.push(
+                                                                  context,
+                                                                  BouncyPageRoute(
+                                                                      widget:
+                                                                          AddUnit()));
+                                                            },
+                                                          ),
+                                                          CustomTile(
+                                                            text:
+                                                                "Add Regular Customer",
+                                                            icon: Icons.report,
+                                                            onTap: () {},
+                                                          )
+                                                        ],
+                                                      ),
+                                                    ))))
+                                        : Container();
+                                  }
+                                  return CustomCircularLoading();
                                 },
-                              )
-                            : Container(),
-                        isAdmin
-                            ? CustomTile(
-                                text: "Billing",
-                                icon: FontAwesome.money,
+                              ),
+                              isAdmin
+                                  ? CustomTile(
+                                      text: "Make Admin",
+                                      icon: FontAwesome.user_circle_o,
+                                      onTap: () {
+                                        Navigator.push(
+                                            context,
+                                            BouncyPageRoute(
+                                                widget: MakeAdminScreen()));
+                                      },
+                                    )
+                                  : Container(),
+                              isAdmin
+                                  ? CustomTile(
+                                      text: "Billing",
+                                      icon: FontAwesome.money,
+                                      onTap: () {
+                                        Navigator.push(
+                                            context,
+                                            BouncyPageRoute(
+                                                widget: BillScreen()));
+                                      },
+                                    )
+                                  : Container(),
+                              CustomTile(
+                                text: "Borrow",
+                                icon: Icons.edit,
                                 onTap: () {
                                   Navigator.push(context,
-                                      BouncyPageRoute(widget: BillScreen()));
+                                      BouncyPageRoute(widget: BorrowList()));
                                 },
-                              )
-                            : Container(),
-                        CustomTile(
-                          text: "Borrow",
-                          icon: Icons.edit,
-                          onTap: () {
-                            Navigator.push(
-                                context, BouncyPageRoute(widget: BorrowList()));
-                          },
+                              ),
+                              CustomTile(
+                                text: "Tax Calculator",
+                                icon: FontAwesome.calculator,
+                                onTap: () {
+                                  Navigator.push(context,
+                                      BouncyPageRoute(widget: TaxCalculator()));
+                                },
+                              ),
+                              CustomTile(
+                                text: "Edit Account",
+                                icon: Icons.edit,
+                                onTap: () {
+                                  Navigator.push(context,
+                                      BouncyPageRoute(widget: EditScreen()));
+                                },
+                              ),
+                              // CustomTile(
+                              //   text: "Borrow",
+                              //   icon: FontAwesome.tasks,
+                              //   onTap: () {
+                              //     Navigator.push(context,
+                              //         BouncyPageRoute(widget: BorrowScreen()));
+                              //   },
+                              // ),
+                              CustomTile(text: "Reports", icon: Icons.report),
+                              CustomTile(
+                                  text: "Give your suggestion",
+                                  icon: Icons.chat),
+                            ],
+                          ),
                         ),
-                        CustomTile(
-                          text: "Tax Calculator",
-                          icon: FontAwesome.calculator,
-                          onTap: () {
-                            Navigator.push(context,
-                                BouncyPageRoute(widget: TaxCalculator()));
-                          },
-                        ),
-                        CustomTile(
-                          text: "Edit Account",
-                          icon: Icons.edit,
-                          onTap: () {
-                            Navigator.push(
-                                context, BouncyPageRoute(widget: EditScreen()));
-                          },
-                        ),
-                        // CustomTile(
-                        //   text: "Borrow",
-                        //   icon: FontAwesome.tasks,
-                        //   onTap: () {
-                        //     Navigator.push(context,
-                        //         BouncyPageRoute(widget: BorrowScreen()));
-                        //   },
-                        // ),
-                        CustomTile(text: "Reports", icon: Icons.report),
-                        CustomTile(
-                            text: "Give your suggestion", icon: Icons.chat),
-                      ],
-                    ),
+                      )
+                    ],
                   ),
-                )
+                ),
               ],
             ),
-          ),
-        ],
-      ),
     );
   }
 }
