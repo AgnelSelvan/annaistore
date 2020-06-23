@@ -1,5 +1,6 @@
 import 'package:annaistore/constants/strings.dart';
 import 'package:annaistore/models/borrow.dart';
+import 'package:annaistore/models/buy.dart';
 import 'package:annaistore/models/category.dart';
 import 'package:annaistore/models/product.dart';
 import 'package:annaistore/models/stock.dart';
@@ -366,7 +367,12 @@ class AdminMethods {
     return docs.documents.toList();
   }
 
-  Future<bool> addBuyedDetailsToDb() {
-    // _buysCollection.document().setData(data)
+  Future<bool> addBuyedDetailsToDb(Buys buys) async {
+    try {
+      await _buysCollection.document(buys.buyId).setData(buys.toMap(buys));
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 }

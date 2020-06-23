@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:annaistore/models/buy.dart';
 import 'package:annaistore/models/category.dart';
 import 'package:annaistore/models/product.dart';
 import 'package:annaistore/resources/admin_methods.dart';
@@ -7,6 +8,7 @@ import 'package:annaistore/screens/admin/add/add_product.dart';
 import 'package:annaistore/screens/admin/borrow/borrow.dart';
 import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/utils/universal_variables.dart';
+import 'package:annaistore/utils/utilities.dart';
 import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
 import 'package:annaistore/widgets/dialogs.dart';
@@ -246,7 +248,24 @@ class _BillScreenState extends State<BillScreen> {
                 isTax: _isTaxCheckBox,
               )));
         }),
-        buildRaisedButton('Paid', Colors.green[300], Colors.white, () {})
+        buildRaisedButton('Paid', Colors.green[300], Colors.white, () {
+          Buys buys = Buys(
+              buyId: Utils.getDocId(),
+              productList: productList,
+              productListId: productListId,
+              qtyList: qtyList,
+              taxList: taxList,
+              sellingRateList: sellingRateList,
+              price: totalPrice.toInt(),
+              billNo: _billNumberController.text,
+              isTax: _isTaxCheckBox,
+              isPaid: true,
+              timestamp: Timestamp.now());
+          _adminMethods.addBuyedDetailsToDb(buys);
+          Navigator.pop(context);
+          Dialogs.okDialog(
+              context, 'Successfull', 'Added Successfully', Colors.green[200]);
+        })
       ],
     );
   }
