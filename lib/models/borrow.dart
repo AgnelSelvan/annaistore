@@ -1,69 +1,17 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
-class BorrowModel {
+class Borrow {
   String borrowId;
-  List<dynamic> productListId;
-  List<dynamic> productList;
-  List<dynamic> qtyList;
-  List<dynamic> taxList;
-  List<dynamic> sellingRateList;
-  int price;
-  int givenAmount;
-  String billNo;
-  String mobileNo;
-  Timestamp timestamp;
-  String customerName;
-  bool isTax;
-  bool isPaid;
+  String billId;
 
-  BorrowModel(
-      {this.billNo,
-      this.borrowId,
-      this.customerName,
-      this.givenAmount,
-      this.mobileNo,
-      this.price,
-      this.productList,
-      this.timestamp,
-      this.qtyList,
-      this.sellingRateList,
-      this.taxList,
-      this.productListId,
-      this.isTax,
-      this.isPaid});
-  Map toMap(BorrowModel youGave) {
+  Borrow({this.borrowId, this.billId});
+  Map toMap(Borrow borrow) {
     var data = Map<String, dynamic>();
-    data['bill_no'] = youGave.billNo;
-    data['borrow_id'] = youGave.borrowId;
-    data['customer_name'] = youGave.customerName;
-    data['given_amount'] = youGave.givenAmount;
-    data['mobile_no'] = youGave.mobileNo;
-    data['price'] = youGave.price;
-    data['timestamp'] = youGave.timestamp;
-    data['product_list'] = youGave.productList;
-    data['quantity_list'] = youGave.qtyList;
-    data['selling_rate_list'] = youGave.sellingRateList;
-    data['tax_list'] = youGave.taxList;
-    data['product_list_id'] = youGave.productListId;
-    data['is_tax'] = youGave.isTax;
-    data['is_paid'] = youGave.isPaid;
+    data['borrow_id'] = borrow.borrowId;
+    data['bill_id'] = borrow.billId;
     return data;
   }
 
-  BorrowModel.fromMap(Map<String, dynamic> mapData) {
-    this.billNo = mapData['bill_no'];
+  Borrow.fromMap(Map<String, dynamic> mapData) {
     this.borrowId = mapData['borrow_id'];
-    this.customerName = mapData['customer_name'];
-    this.givenAmount = mapData['given_amount'];
-    this.mobileNo = mapData['mobile_no'];
-    this.price = mapData['price'];
-    this.productList = mapData['product_list'];
-    this.qtyList = mapData['quantity_list'];
-    this.sellingRateList = mapData['selling_rate_list'];
-    this.taxList = mapData['tax_list'];
-    this.timestamp = mapData['timestamp'];
-    this.productListId = mapData['product_list_id'];
-    this.isTax = mapData['is_tax'];
-    this.isPaid = mapData['is_paid'];
+    this.billId = mapData['bill_id'];
   }
 }

@@ -12,11 +12,11 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
+          bgColor: Colors.white,
           title: Text("Annai Store", style: Variables.appBarTextStyle),
           actions: null,
           leading: GestureDetector(

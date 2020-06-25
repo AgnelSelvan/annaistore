@@ -1,4 +1,5 @@
-import 'package:annaistore/models/borrow.dart';
+import 'package:annaistore/models/bill.dart';
+import 'package:annaistore/models/borrow_model.dart';
 import 'package:annaistore/models/user.dart';
 import 'package:annaistore/resources/admin_methods.dart';
 import 'package:annaistore/resources/auth_methods.dart';
@@ -56,7 +57,6 @@ class _BorrowListState extends State<BorrowList> {
     print("CurrentUser: ${currentUser.mobileNo}");
     List<DocumentSnapshot> docs =
         await _adminMethods.getBorrowListOfMe(currentUser);
-    print(docs.map((e) => e));
     setState(() {
       myBorrowList = docs;
     });
@@ -209,51 +209,96 @@ class _BorrowListState extends State<BorrowList> {
         stream: _adminMethods.getAllBorrowList(),
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            List<DocumentSnapshot> docs = snapshot.data.documents;
+            List<DocumentSnapshot> docsList = snapshot.data.documents;
             return ListView.separated(
-                physics: BouncingScrollPhysics(),
                 shrinkWrap: true,
-                itemCount: docs.length,
+                itemBuilder: (context, index) {
+                  return FutureBuilder(
+                      future: _adminMethods
+                          .getBillById(docsList[index].data['bill_id']),
+                      builder: (context, AsyncSnapshot<Bill> snapshot) {
+                        return ListTile(
+                          onTap: () {
+                            Navigator.push(
+                                context,
+                                BouncyPageRoute(
+                                    widget: SingleBorrow(
+                                        borrowId: snapshot.data.borrowId)));
+                          },
+                          title: Text(snapshot.data.customerName),
+                          subtitle: Text(snapshot.data.mobileNo),
+                          leading: CircleAvatar(
+                            backgroundColor: Variables.primaryColor,
+                            child: Text(
+                              snapshot.data.customerName[0],
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                          trailing: FutureBuilder<int>(
+                              future: _adminMethods.getTotalAmountByBorrowId(
+                                  snapshot.data.borrowId),
+                              builder: (context, snapshot) {
+                                if (!snapshot.hasData) {
+                                  return CustomCircularLoading();
+                                }
+                                return Text(
+                                  "₹ ${snapshot.data.toString()}",
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: Variables.blackColor,
+                                      fontSize: 16),
+                                );
+                              }),
+                        );
+                      });
+                },
                 separatorBuilder: (_, __) =>
                     CustomDivider(leftSpacing: 20, rightSpacing: 20),
-                itemBuilder: (context, index) {
-                  BorrowModel borrow = BorrowModel.fromMap(docs[index].data);
-                  if (docs.length == 0) {
-                    return ListTile(
-                      title: Text("No borrows yet!"),
-                    );
-                  }
-                  return ListTile(
-                    onTap: () {
-                      Navigator.push(
-                          context,
-                          BouncyPageRoute(
-                              widget: SingleBorrow(borrowId: borrow.borrowId)));
-                    },
-                    title: Text(borrow.customerName),
-                    subtitle: Text(borrow.mobileNo),
-                    leading: CircleAvatar(
-                      backgroundColor: Variables.primaryColor,
-                      child: Text(
-                        borrow.customerName[0],
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    trailing: FutureBuilder<int>(
-                        future: _adminMethods
-                            .getTotalAmountByBorrowId(borrow.borrowId),
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData) {
-                            return CustomCircularLoading();
-                          }
-                          return Text(
-                            "₹ ${snapshot.data.toString()}",
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 16),
-                          );
-                        }),
-                  );
-                });
+                itemCount: docsList.length);
+            // return ListView.separated(
+            //     physics: BouncingScrollPhysics(),
+            //     shrinkWrap: true,
+            //     itemCount: docs.length,
+            //     separatorBuilder: (_, __) =>
+            //         CustomDivider(leftSpacing: 20, rightSpacing: 20),
+            //     itemBuilder: (context, index) {
+            //       BorrowModel borrow = BorrowModel.fromMap(docs[index].data);
+            //       if (docs.length == 0) {
+            //         return ListTile(
+            //           title: Text("No borrows yet!"),
+            //         );
+            //       }
+            //       return ListTile(
+            //         onTap: () {
+            //           Navigator.push(
+            //               context,
+            //               BouncyPageRoute(
+            //                   widget: SingleBorrow(borrowId: borrow.borrowId)));
+            //         },
+            //         title: Text(borrow.customerName),
+            //         subtitle: Text(borrow.mobileNo),
+            //         leading: CircleAvatar(
+            //           backgroundColor: Variables.primaryColor,
+            //           child: Text(
+            //             borrow.customerName[0],
+            //             style: TextStyle(color: Colors.white),
+            //           ),
+            //         ),
+            //         trailing: FutureBuilder<int>(
+            //             future: _adminMethods
+            //                 .getTotalAmountByBorrowId(borrow.borrowId),
+            //             builder: (context, snapshot) {
+            //               if (!snapshot.hasData) {
+            //                 return CustomCircularLoading();
+            //               }
+            //               return Text(
+            //                 "₹ ${snapshot.data.toString()}",
+            //                 style: TextStyle(
+            //                     fontWeight: FontWeight.bold, fontSize: 16),
+            //               );
+            //             }),
+            //       );
+            //     });
           }
           return CustomCircularLoading();
         });

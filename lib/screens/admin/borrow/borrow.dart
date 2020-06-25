@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:annaistore/models/bill.dart';
 import 'package:annaistore/models/borrow.dart';
+import 'package:annaistore/models/borrow_model.dart';
 import 'package:annaistore/resources/admin_methods.dart';
 import 'package:annaistore/screens/admin/bill_screen.dart';
 import 'package:annaistore/screens/admin/borrow/borrow_list.dart';
@@ -363,32 +365,66 @@ class _BorrowScreenState extends State<BorrowScreen> {
         SizedBox(height: 30),
         Container(
             width: MediaQuery.of(context).size.width / 2,
-            child:
-                buildRaisedButton('Save', Colors.green[300], Colors.white, () {
-              BorrowModel borrowModel = BorrowModel(
-                  borrowId: Utils.getDocId(),
-                  timestamp: Timestamp.now(),
-                  isPaid: false,
-                  billNo: widget.billNo,
-                  isTax: widget.isTax,
-                  customerName: selectedContact.displayName,
-                  givenAmount: int.parse(customerGivenMoney.text),
-                  mobileNo: selectedContact.phones
-                      .elementAt(0)
-                      .value
-                      .replaceAll(" ", ""),
-                  price: int.parse(priceController.text),
-                  productList: widget.productList,
-                  productListId: widget.productListId,
-                  qtyList: widget.qtyList,
-                  sellingRateList: widget.sellingRateList,
-                  taxList: widget.taxList);
-              print(borrowModel.taxList);
-              _adminMethods.addBorrowToDb(borrowModel);
-              Navigator.pushAndRemoveUntil(context,
-                  BouncyPageRoute(widget: RootScreen()), (route) => true);
-              Dialogs.okDialog(context, 'Successfull', 'Added Successfully',
-                  Colors.green[200]);
+            child: buildRaisedButton('Save', Colors.green[300], Colors.white,
+                () async {
+              // BorrowModel borrowModel = BorrowModel(
+              //     borrowId: Utils.getDocId(),
+              //     timestamp: Timestamp.now(),
+              //     isPaid: false,
+              //     billNo: widget.billNo,
+              //     isTax: widget.isTax,
+              //     customerName: selectedContact.displayName,
+              //     givenAmount: int.parse(customerGivenMoney.text),
+              //     mobileNo: selectedContact.phones
+              //         .elementAt(0)
+              //         .value
+              //         .replaceAll(" ", ""),
+              //     price: int.parse(priceController.text),
+              //     productList: widget.productList,
+              //     productListId: widget.productListId,
+              //     qtyList: widget.qtyList,
+              //     sellingRateList: widget.sellingRateList,
+              //     taxList: widget.taxList);
+              // print(borrowModel.taxList);
+              // _adminMethods.addBorrowToDb(borrowModel);
+              // Navigator.pushAndRemoveUntil(context,
+              //     BouncyPageRoute(widget: RootScreen()), (route) => true);
+              // Dialogs.okDialog(context, 'Successfull', 'Added Successfully',
+              //     Colors.green[200]);
+              String borrowId = Utils.getDocId();
+              String billId = Utils.getDocId();
+              Bill bill = Bill(
+                billId: billId,
+                productListId: widget.productListId,
+                productList: widget.productList,
+                qtyList: widget.qtyList,
+                taxList: widget.taxList,
+                sellingRateList: widget.sellingRateList,
+                price: int.parse(priceController.text),
+                givenAmount: int.parse(customerGivenMoney.text),
+                billNo: widget.billNo,
+                mobileNo: selectedContact.phones
+                    .elementAt(0)
+                    .value
+                    .replaceAll(' ', ''),
+                timestamp: Timestamp.now(),
+                customerName: selectedContact.displayName,
+                isTax: widget.isTax,
+                isPaid: false,
+                borrowId: borrowId,
+              );
+              bool isBillAdded = await _adminMethods.addBillToDb(bill);
+              Borrow borrow = Borrow(billId: billId, borrowId: borrowId);
+              if (isBillAdded) {
+                _adminMethods.addBorrowToDb(borrow);
+                Navigator.pushAndRemoveUntil(context,
+                    BouncyPageRoute(widget: RootScreen()), (route) => true);
+                Dialogs.okDialog(context, 'Successfull', 'Added Successfully',
+                    Colors.green[200]);
+              } else {
+                Dialogs.okDialog(
+                    context, 'Error', 'Somthing went wrong', Colors.red[200]);
+              }
             }))
       ],
     );

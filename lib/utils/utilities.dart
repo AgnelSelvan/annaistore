@@ -1,7 +1,8 @@
 import 'dart:io';
 import 'dart:math';
 
-import 'package:annaistore/models/borrow.dart';
+import 'package:annaistore/models/bill.dart';
+import 'package:annaistore/models/borrow_model.dart';
 import 'package:annaistore/widgets/dialogs.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
@@ -32,7 +33,7 @@ class Utils {
     return 'User$uniqueNumber';
   }
 
-  static Future<File> generateKachaBill(BorrowModel borrowModel) async {
+  static Future<File> generateKachaBill(Bill borrowModel) async {
     if (await Permission.storage.request().isGranted) {
       final pdf = pw.Document();
       List<List<dynamic>> datas = List();
@@ -126,14 +127,14 @@ class Utils {
   }
 
   static Future<String> generatePakkaBill(
-      BorrowModel borrowModel,
+      Bill borrowModel,
       String buyerInfo,
       List<List<dynamic>> datas,
-      String grossAmount,
-      String totalSGST,
-      String totalCGST,
+      double grossAmount,
+      double totalSGST,
+      double totalCGST,
       String amoutEn,
-      String amount) async {
+      double amount) async {
     final pdf = pw.Document();
     pdf.addPage(pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
@@ -243,9 +244,9 @@ class Utils {
                                   e[3],
                                   e[4],
                                   '${e[3] * e[4]}',
-                                  '${(e[3] * e[4]) * (e[2] / 100)}',
-                                  '${(e[3] * e[4]) * (e[2] / 100)}',
-                                  '${(e[3] * e[4]) + 2 * ((e[3] * e[4]) * (e[2] / 100))}'
+                                  '${(((e[3] * e[4]) * (e[2] / 100)) / 2).toStringAsFixed(2)}',
+                                  '${(((e[3] * e[4]) * (e[2] / 100)) / 2).toStringAsFixed(2)}',
+                                  '${(e[3] * e[4]) + ((e[3] * e[4]) * (e[2] / 100))}'
                                 ])
                           ]),
                       pw.Row(
@@ -347,7 +348,7 @@ class Utils {
                                               fontWeight: pw.FontWeight.bold),
                                         ),
                                         pw.Text(
-                                          amount.toString(),
+                                          amount.toInt().round().toString(),
                                         )
                                       ]),
                                 ])

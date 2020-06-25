@@ -45,7 +45,7 @@ class AuthMethods {
   Future<bool> signIn(String email, String password) async {
     try {
       AuthResult result = await _auth.signInWithEmailAndPassword(
-          email: email, password: password);
+          email: email, password: password);  
       return true;
     } catch (e) {
       return false;

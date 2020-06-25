@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:annaistore/models/bill.dart';
 import 'package:annaistore/models/borrow.dart';
+import 'package:annaistore/models/borrow_model.dart';
 import 'package:annaistore/models/product.dart';
 import 'package:annaistore/models/user.dart';
 import 'package:annaistore/resources/admin_methods.dart';
@@ -9,6 +11,7 @@ import 'package:annaistore/screens/admin/borrow/pdf_viewer.dart';
 import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/utils/utilities.dart';
+import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
 import 'package:annaistore/widgets/custom_divider.dart';
 import 'package:annaistore/widgets/dialogs.dart';
@@ -20,6 +23,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_icons/flutter_icons.dart';
+import 'package:focused_menu/focused_menu.dart';
+import 'package:focused_menu/modals.dart';
 import 'package:intl/intl.dart';
 import 'package:number_to_words_spelling/number_to_words_spelling.dart';
 import 'package:path_provider/path_provider.dart';
@@ -51,12 +56,12 @@ class _SingleBorrowState extends State<SingleBorrow> {
   User currentUser;
   final _imageSaver = ImageSaver();
   // VoidCallback
-  BorrowModel borrowModel;
+  Bill bill;
   bool isLoading = false;
   final pdf = pw.Document();
 
   List<List<dynamic>> datas = List();
-  List<DocumentSnapshot> docList = List();
+  List<Bill> docList = List();
   double amount = 0;
   double grossAmount = 0;
   double totalSGST = 0;
@@ -68,37 +73,38 @@ class _SingleBorrowState extends State<SingleBorrow> {
     setState(() {
       isLoading = true;
     });
-    BorrowModel _borrowModel =
-        await _adminMethods.getBorrowById(widget.borrowId);
+    Borrow borrow = await _adminMethods.getBorrowById(widget.borrowId);
+    Bill _bill = await _adminMethods.getBillById(borrow.billId);
     setState(() {
-      borrowModel = _borrowModel;
+      bill = _bill;
       isLoading = false;
-      amountToBeGiven = (_borrowModel.price - _borrowModel.givenAmount);
+      amountToBeGiven = amountToBeGiven + (_bill.price - _bill.givenAmount);
     });
 
-    for (dynamic i = 0; i < borrowModel.productList.length; i++) {
+    for (dynamic i = 0; i < bill.productList.length; i++) {
       List<dynamic> data = List();
       Product product = await _adminMethods
-          .getProductDetailsFromProductId(borrowModel.productListId[i]);
-      data.add(borrowModel.productList[i]);
+          .getProductDetailsFromProductId(bill.productListId[i]);
+      data.add(bill.productList[i]);
       data.add(product.hsnCode);
-      data.add(borrowModel.taxList[i]);
-      data.add(borrowModel.qtyList[i]);
-      data.add(borrowModel.sellingRateList[i]);
+      data.add(bill.taxList[i]);
+      data.add(bill.qtyList[i]);
+      data.add(bill.sellingRateList[i]);
       amount = amount +
-          ((borrowModel.qtyList[i] * borrowModel.sellingRateList[i]) +
-              (2 *
-                  ((borrowModel.qtyList[i] * borrowModel.sellingRateList[i]) *
-                      (borrowModel.taxList[i] / 100))));
-      grossAmount = grossAmount +
-          (borrowModel.qtyList[i] * borrowModel.sellingRateList[i]);
+          ((bill.qtyList[i] * bill.sellingRateList[i]) +
+              ((bill.qtyList[i] * bill.sellingRateList[i]) *
+                  (bill.taxList[i] / 100)));
+      grossAmount = grossAmount + (bill.qtyList[i] * bill.sellingRateList[i]);
       totalSGST = totalSGST +
-          ((borrowModel.qtyList[i] * borrowModel.sellingRateList[i]) *
-              (borrowModel.taxList[i] / 100));
+          (((bill.qtyList[i] * bill.sellingRateList[i]) *
+                  (bill.taxList[i] / 100)) /
+              2);
       totalCGST = totalCGST +
-          ((borrowModel.qtyList[i] * borrowModel.sellingRateList[i]) *
-              (borrowModel.taxList[i] / 100));
+          (((bill.qtyList[i] * bill.sellingRateList[i]) *
+                  (bill.taxList[i] / 100)) /
+              2);
       datas.add(data);
+      print("totalSGST:$totalSGST");
     }
     setState(() {
       amounten = NumberWordsSpelling.toWord(amount.toStringAsFixed(0), 'en_US');
@@ -147,7 +153,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
     print(file);
 
     String text =
-        'Dear sir/madam, your payment of ₹ ${(borrowModel.price - borrowModel.givenAmount).toString()} is still pending. Make payment as soon as possible';
+        'Dear sir/madam, your payment of ₹ ${(bill.price - bill.givenAmount).toString()} is still pending. Make payment as soon as possible';
     try {
       await Share.file('esys image', 'sample.png', png, 'image/png',
           text: text);
@@ -175,13 +181,14 @@ class _SingleBorrowState extends State<SingleBorrow> {
   getListOfBorrow() async {
     List<DocumentSnapshot> docs =
         await _adminMethods.getListOfBorrow(widget.borrowId);
-    setState(() {
-      docList = docs;
-    });
     for (var doc in docs) {
+      Bill bill = await _adminMethods.getBillById(doc.data['bill_id']);
       setState(() {
-        amountToBeGiven =
-            amountToBeGiven + (doc.data['price'] - doc.data['given_amount']);
+        docList.add(bill);
+      });
+
+      setState(() {
+        amountToBeGiven = amountToBeGiven + (bill.price - bill.givenAmount);
       });
     }
     print(amountToBeGiven);
@@ -257,26 +264,81 @@ class _SingleBorrowState extends State<SingleBorrow> {
                 ),
               ),
               SizedBox(height: 15),
-              Text(
-                borrowModel.billNo == null
-                    ? 'Error Loading...'
-                    : borrowModel.billNo,
-                style: TextStyle(
-                    color: Variables.blackColor,
-                    fontWeight: FontWeight.w300,
-                    letterSpacing: 0.3),
+              Container(
+                height: 25,
+                alignment: Alignment.center,
+                child: Text(
+                  bill.billNo == null ? 'Error Loading...' : bill.billNo,
+                  style: TextStyle(
+                      color: Variables.blackColor,
+                      fontWeight: FontWeight.w300,
+                      letterSpacing: 0.3),
+                ),
               ),
               SizedBox(height: 5),
               Column(
                   children: List.generate(docList.length, (index) {
                 return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      docList[index].data['bill_no'].toString(),
-                      style: TextStyle(
-                          color: Variables.blackColor,
-                          fontWeight: FontWeight.w300,
-                          letterSpacing: 0.3),
+                    FocusedMenuHolder(
+                      blurSize: 2,
+                      menuItems: <FocusedMenuItem>[
+                        FocusedMenuItem(
+                            title: Text("Report"),
+                            onPressed: () {
+                              if (bill.isTax == null) {
+                                Dialogs.okDialog(context, 'Error',
+                                    'Somthing went wrong!', Colors.red[200]);
+                              } else {
+                                bill.isTax ? getBuyerName() : getKachaBill();
+                              }
+                            },
+                            trailingIcon: Icon(
+                              FontAwesome.file_pdf_o,
+                              color: Colors.red[200],
+                            )),
+                        FocusedMenuItem(
+                            title: Text("Whatsapp"),
+                            onPressed: () {
+                              _showModalSheet();
+                            },
+                            trailingIcon: Icon(
+                              FontAwesome.whatsapp,
+                              color: Colors.green[200],
+                            )),
+                        FocusedMenuItem(
+                            title: Text("SMS"),
+                            onPressed: () async {
+                              var uri =
+                                  'sms:${bill.mobileNo}?body=Dear sir/madam, your payment of ₹ ${(bill.price - bill.givenAmount).toString()} is still pending. Make payment as soon as possible';
+                              if (await canLaunch(uri)) {
+                                await launch(uri);
+                              } else {
+                                Dialogs.okDialog(
+                                    context,
+                                    'Error',
+                                    'Error launching whatsapp',
+                                    Colors.red[200]);
+                              }
+                            },
+                            trailingIcon: Icon(
+                              Icons.sms,
+                              color: Colors.blue[200],
+                            ))
+                      ],
+                      onPressed: () {},
+                      child: Container(
+                        height: 25,
+                        alignment: Alignment.center,
+                        child: Text(
+                          docList[index].billNo.toString(),
+                          style: TextStyle(
+                              color: Variables.blackColor,
+                              fontWeight: FontWeight.w300,
+                              letterSpacing: 0.3),
+                        ),
+                      ),
                     ),
                     SizedBox(height: 5),
                   ],
@@ -297,28 +359,37 @@ class _SingleBorrowState extends State<SingleBorrow> {
                 ),
               ),
               SizedBox(height: 15),
-              Text(
-                DateFormat('dd/MM/yyyy').format(borrowModel.timestamp.toDate()),
-                style: TextStyle(
-                    color: Variables.blackColor,
-                    fontWeight: FontWeight.w300,
-                    letterSpacing: 0.3),
+              Container(
+                height: 25,
+                alignment: Alignment.center,
+                child: Text(
+                  DateFormat('dd/MM/yyyy').format(bill.timestamp.toDate()),
+                  style: TextStyle(
+                      color: Variables.blackColor,
+                      fontWeight: FontWeight.w300,
+                      letterSpacing: 0.3),
+                ),
               ),
               SizedBox(height: 5),
               Column(
                   children: List.generate(docList.length, (index) {
-                return Column(
-                  children: [
-                    Text(
-                      DateFormat('dd/MM/yyyy')
-                          .format(docList[index].data['timestamp'].toDate()),
-                      style: TextStyle(
-                          color: Variables.blackColor,
-                          fontWeight: FontWeight.w300,
-                          letterSpacing: 0.3),
-                    ),
-                    SizedBox(height: 5),
-                  ],
+                return Container(
+                  height: 25,
+                  alignment: Alignment.center,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        DateFormat('dd/MM/yyyy')
+                            .format(docList[index].timestamp.toDate()),
+                        style: TextStyle(
+                            color: Variables.blackColor,
+                            fontWeight: FontWeight.w300,
+                            letterSpacing: 0.3),
+                      ),
+                      SizedBox(height: 5),
+                    ],
+                  ),
                 );
               }))
             ],
@@ -336,24 +407,32 @@ class _SingleBorrowState extends State<SingleBorrow> {
                 ),
               ),
               SizedBox(height: 15),
-              Text(
-                "₹${borrowModel.price.toString()}",
-                style: TextStyle(
-                    color: Variables.blackColor,
-                    fontWeight: FontWeight.w300,
-                    letterSpacing: 0.3),
+              Container(
+                height: 25,
+                alignment: Alignment.center,
+                child: Text(
+                  "₹${bill.price.toString()}",
+                  style: TextStyle(
+                      color: Variables.blackColor,
+                      fontWeight: FontWeight.w300,
+                      letterSpacing: 0.3),
+                ),
               ),
               SizedBox(height: 5),
               Column(
                   children: List.generate(docList.length, (index) {
                 return Column(
                   children: [
-                    Text(
-                      docList[index].data['price'].toString(),
-                      style: TextStyle(
-                          color: Variables.blackColor,
-                          fontWeight: FontWeight.w300,
-                          letterSpacing: 0.3),
+                    Container(
+                      height: 25,
+                      alignment: Alignment.center,
+                      child: Text(
+                        '₹${docList[index].price.toString()}',
+                        style: TextStyle(
+                            color: Variables.blackColor,
+                            fontWeight: FontWeight.w300,
+                            letterSpacing: 0.3),
+                      ),
                     ),
                     SizedBox(height: 5),
                   ],
@@ -374,24 +453,32 @@ class _SingleBorrowState extends State<SingleBorrow> {
                 ),
               ),
               SizedBox(height: 15),
-              Text(
-                "₹${borrowModel.givenAmount.toString()}",
-                style: TextStyle(
-                    color: Variables.blackColor,
-                    fontWeight: FontWeight.w300,
-                    letterSpacing: 0.3),
+              Container(
+                height: 25,
+                alignment: Alignment.center,
+                child: Text(
+                  "₹${bill.givenAmount.toString()}",
+                  style: TextStyle(
+                      color: Variables.blackColor,
+                      fontWeight: FontWeight.w300,
+                      letterSpacing: 0.3),
+                ),
               ),
               SizedBox(height: 5),
               Column(
                   children: List.generate(docList.length, (index) {
                 return Column(
                   children: [
-                    Text(
-                      docList[index].data['given_amount'].toString(),
-                      style: TextStyle(
-                          color: Variables.blackColor,
-                          fontWeight: FontWeight.w300,
-                          letterSpacing: 0.3),
+                    Container(
+                      height: 25,
+                      alignment: Alignment.center,
+                      child: Text(
+                        '₹${docList[index].givenAmount.toString()}',
+                        style: TextStyle(
+                            color: Variables.blackColor,
+                            fontWeight: FontWeight.w300,
+                            letterSpacing: 0.3),
+                      ),
                     ),
                     SizedBox(height: 5),
                   ],
@@ -412,26 +499,32 @@ class _SingleBorrowState extends State<SingleBorrow> {
                 ),
               ),
               SizedBox(height: 10),
-              Text(
-                "₹${(borrowModel.price - borrowModel.givenAmount).toString()}",
-                style: TextStyle(
-                    color: Variables.blackColor,
-                    fontWeight: FontWeight.w300,
-                    letterSpacing: 0.3),
+              Container(
+                height: 25,
+                alignment: Alignment.center,
+                child: Text(
+                  "₹${(bill.price - bill.givenAmount).toString()}",
+                  style: TextStyle(
+                      color: Variables.blackColor,
+                      fontWeight: FontWeight.w300,
+                      letterSpacing: 0.3),
+                ),
               ),
               SizedBox(height: 5),
               Column(
                   children: List.generate(docList.length, (index) {
                 return Column(
                   children: [
-                    Text(
-                      (docList[index].data['price'] -
-                              docList[index].data['given_amount'])
-                          .toString(),
-                      style: TextStyle(
-                          color: Variables.blackColor,
-                          fontWeight: FontWeight.w300,
-                          letterSpacing: 0.3),
+                    Container(
+                      height: 25,
+                      alignment: Alignment.center,
+                      child: Text(
+                        '₹${(docList[index].price - docList[index].givenAmount).toString()}',
+                        style: TextStyle(
+                            color: Variables.blackColor,
+                            fontWeight: FontWeight.w300,
+                            letterSpacing: 0.3),
+                      ),
                     ),
                     SizedBox(height: 5),
                   ],
@@ -452,24 +545,32 @@ class _SingleBorrowState extends State<SingleBorrow> {
                 ),
               ),
               SizedBox(height: 10),
-              Text(
-                borrowModel.isPaid ? 'Yes' : 'No',
-                style: TextStyle(
-                    color: Variables.blackColor,
-                    fontWeight: FontWeight.w300,
-                    letterSpacing: 0.3),
+              Container(
+                height: 25,
+                alignment: Alignment.center,
+                child: Text(
+                  bill.isPaid ? 'Yes' : 'No',
+                  style: TextStyle(
+                      color: Variables.blackColor,
+                      fontWeight: FontWeight.w300,
+                      letterSpacing: 0.3),
+                ),
               ),
               SizedBox(height: 5),
               Column(
                   children: List.generate(docList.length, (index) {
                 return Column(
                   children: [
-                    Text(
-                      docList[index].data['is_paid'] ? 'Yes' : 'No',
-                      style: TextStyle(
-                          color: Variables.blackColor,
-                          fontWeight: FontWeight.w300,
-                          letterSpacing: 0.3),
+                    Container(
+                      height: 25,
+                      alignment: Alignment.center,
+                      child: Text(
+                        docList[index].isPaid ? 'Yes' : 'No',
+                        style: TextStyle(
+                            color: Variables.blackColor,
+                            fontWeight: FontWeight.w300,
+                            letterSpacing: 0.3),
+                      ),
                     ),
                     SizedBox(height: 5),
                   ],
@@ -827,24 +928,24 @@ class _SingleBorrowState extends State<SingleBorrow> {
         //     print(e);
         //   }
         String fullPath = await Utils.generatePakkaBill(
-            borrowModel,
+            bill,
             _buyerInfoController.text,
             datas,
-            grossAmount.toString(),
-            totalSGST.toString(),
-            totalCGST.toString(),
+            grossAmount,
+            totalSGST,
+            totalCGST,
             amounten,
-            amount.toString());
+            amount);
         if (fullPath == 'textfieldError') {
           Dialogs.okDialog(context, 'Error',
               'Dont use next line in buyer info textfield', Colors.red[200]);
         } else {
           Navigator.push(
               context,
-              MaterialPageRoute(
-                  builder: (context) => PdfPreviewwScreen(
-                        path: fullPath,
-                      )));
+              BouncyPageRoute(
+                  widget: PdfPreviewwScreen(
+                path: fullPath,
+              )));
         }
       } catch (e) {
         Dialogs.okDialog(
@@ -896,7 +997,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
                                 fontWeight: FontWeight.w500)),
                         Text(
                             DateFormat('dd/MM/yyyy')
-                                .format(borrowModel.timestamp.toDate()),
+                                .format(bill.timestamp.toDate()),
                             style: TextStyle(
                                 color: Variables.blackColor,
                                 fontSize: 16,
@@ -925,7 +1026,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
   }
 
   getKachaBill() async {
-    File file = await Utils.generateKachaBill(borrowModel);
+    File file = await Utils.generateKachaBill(bill);
     if (file == null) {
       Dialogs.okDialog(
           context, 'Error', "Somthing went wrong!", Colors.red[200]);
@@ -951,12 +1052,12 @@ class _SingleBorrowState extends State<SingleBorrow> {
         children: [
           GestureDetector(
             onTap: () async {
-              print(borrowModel.billNo);
-              if (borrowModel.isTax == null) {
+              print(bill.billNo);
+              if (bill.isTax == null) {
                 Dialogs.okDialog(
                     context, 'Error', 'Somthing went wrong!', Colors.red[200]);
               } else {
-                borrowModel.isTax ? getBuyerName() : getKachaBill();
+                bill.isTax ? getBuyerName() : getKachaBill();
               }
             },
             child: Column(
@@ -1004,7 +1105,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
           GestureDetector(
             onTap: () async {
               var uri =
-                  'sms:${borrowModel.mobileNo}?body=Dear sir/madam, your payment of ₹ ${(borrowModel.price - borrowModel.givenAmount).toString()} is still pending. Make payment as soon as possible';
+                  'sms:${bill.mobileNo}?body=Dear sir/madam, your payment of ₹ ${(bill.price - bill.givenAmount).toString()} is still pending. Make payment as soon as possible';
               if (await canLaunch(uri)) {
                 await launch(uri);
               } else {
@@ -1038,51 +1139,42 @@ class _SingleBorrowState extends State<SingleBorrow> {
 
   buildStickyHeaderListView(context) {
     return Container(
-      padding: EdgeInsets.all(8),
-      height: MediaQuery.of(context).size.height / 4,
-      width: MediaQuery.of(context).size.width,
-      decoration: BoxDecoration(
-        color: Colors.white,
-      ),
-      child: FutureBuilder(
-          future: _adminMethods.getBorrowById(widget.borrowId),
-          builder: (context, AsyncSnapshot<BorrowModel> snapshot) {
-            if (!snapshot.hasData) {
-              return CustomCircularLoading();
-            }
-            // BorrowModel borrowModel = BorrowModel.fromMap(snapshot.data.);
-            return Container(
-              height: double.infinity,
-              width: MediaQuery.of(context).size.width / 2,
-              padding: EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                  color: Variables.lightPrimaryColor,
-                  borderRadius: BorderRadius.circular(10)),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "₹ ${amountToBeGiven.toString()}",
-                    style: TextStyle(
-                        color: Variables.lightGreyColor,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 18,
-                        letterSpacing: 1),
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    "You will get",
-                    style: TextStyle(
-                        color: Variables.lightGreyColor,
-                        fontWeight: FontWeight.w400,
-                        fontSize: 16,
-                        letterSpacing: 1),
-                  ),
-                ],
+        padding: EdgeInsets.all(8),
+        height: MediaQuery.of(context).size.height / 4,
+        width: MediaQuery.of(context).size.width,
+        decoration: BoxDecoration(
+          color: Colors.white,
+        ),
+        child: Container(
+          height: double.infinity,
+          width: MediaQuery.of(context).size.width / 2,
+          padding: EdgeInsets.all(10),
+          decoration: BoxDecoration(
+              color: Variables.lightPrimaryColor,
+              borderRadius: BorderRadius.circular(10)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "₹ ${amountToBeGiven.toString()}",
+                style: TextStyle(
+                    color: Variables.lightGreyColor,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 18,
+                    letterSpacing: 1),
               ),
-            );
-          }),
-    );
+              SizedBox(height: 10),
+              Text(
+                "You will get",
+                style: TextStyle(
+                    color: Variables.lightGreyColor,
+                    fontWeight: FontWeight.w400,
+                    fontSize: 16,
+                    letterSpacing: 1),
+              ),
+            ],
+          ),
+        ));
   }
 }

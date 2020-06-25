@@ -12,6 +12,7 @@ import 'package:annaistore/screens/admin/stock/stock_screen.dart';
 import 'package:annaistore/screens/auth_screen.dart';
 import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/screens/edit_profile_screen.dart';
+import 'package:annaistore/screens/report_screen.dart';
 import 'package:annaistore/screens/tax_calculator.dart';
 import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/widgets/bouncy_page_route.dart';
@@ -362,7 +363,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               //         BouncyPageRoute(widget: BorrowScreen()));
                               //   },
                               // ),
-                              CustomTile(text: "Reports", icon: Icons.report),
+                              CustomTile(
+                                text: "Reports",
+                                icon: Icons.report,
+                                onTap: () {
+                                  Navigator.push(context,
+                                      BouncyPageRoute(widget: ReportScreen()));
+                                },
+                              ),
                               CustomTile(
                                   text: "Give your suggestion",
                                   icon: Icons.chat),

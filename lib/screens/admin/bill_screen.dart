@@ -1,12 +1,13 @@
 import 'dart:math';
-
-import 'package:annaistore/models/buy.dart';
+import 'package:annaistore/models/bill.dart';
 import 'package:annaistore/models/category.dart';
+import 'package:annaistore/models/paid.dart';
 import 'package:annaistore/models/product.dart';
 import 'package:annaistore/resources/admin_methods.dart';
 import 'package:annaistore/screens/admin/add/add_product.dart';
 import 'package:annaistore/screens/admin/borrow/borrow.dart';
 import 'package:annaistore/screens/custom_loading.dart';
+import 'package:annaistore/screens/root_screen.dart';
 import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/utils/utilities.dart';
 import 'package:annaistore/widgets/bouncy_page_route.dart';
@@ -249,22 +250,96 @@ class _BillScreenState extends State<BillScreen> {
               )));
         }),
         buildRaisedButton('Paid', Colors.green[300], Colors.white, () {
-          Buys buys = Buys(
-              buyId: Utils.getDocId(),
-              productList: productList,
-              productListId: productListId,
-              qtyList: qtyList,
-              taxList: taxList,
-              sellingRateList: sellingRateList,
-              price: totalPrice.toInt(),
-              billNo: _billNumberController.text,
-              isTax: _isTaxCheckBox,
-              isPaid: true,
-              timestamp: Timestamp.now());
-          _adminMethods.addBuyedDetailsToDb(buys);
-          Navigator.pop(context);
-          Dialogs.okDialog(
-              context, 'Successfull', 'Added Successfully', Colors.green[200]);
+          // Buys buys = Buys(
+          //     buyId: Utils.getDocId(),
+          //     productList: productList,
+          //     productListId: productListId,
+          //     qtyList: qtyList,
+          //     taxList: taxList,
+          //     sellingRateList: sellingRateList,
+          //     price: totalPrice.toInt(),
+          //     billNo: _billNumberController.text,
+          //     isTax: _isTaxCheckBox,
+          //     isPaid: true,
+          //     timestamp: Timestamp.now());
+          // _adminMethods.addBuyedDetailsToDb(buys);
+          // Navigator.pop(context);
+          // Dialogs.okDialog(
+          //     context, 'Successfull', 'Added Successfully', Colors.green[200]);
+          showDialog(
+              context: context,
+              builder: (context) {
+                TextEditingController _customerNameController =
+                    TextEditingController();
+                return AlertDialog(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  title: Text("Enter Customer Name"),
+                  content: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8)),
+                    child: TextFormField(
+                      cursorColor: Variables.primaryColor,
+                      validator: (value) {
+                        if (value.trim().isEmpty)
+                          return "You cannot have an empty name!";
+                        return null;
+                      },
+                      maxLines: 1,
+                      style: Variables.inputTextStyle,
+                      decoration: InputDecoration(
+                          prefixIcon: Icon(
+                            Icons.person,
+                            size: 16,
+                          ),
+                          border: InputBorder.none,
+                          hintText: 'Ram'),
+                      controller: _customerNameController,
+                    ),
+                  ),
+                  actions: [
+                    buildRaisedButton(
+                        "Confirm", Variables.primaryColor, Colors.white,
+                        () async {
+                      print(_customerNameController.text);
+                      String billId = Utils.getDocId();
+                      String paidId = Utils.getDocId();
+                      Bill bill = Bill(
+                          billId: billId,
+                          billNo: _billNumberController.text,
+                          customerName: _customerNameController.text,
+                          givenAmount: totalPrice.round(),
+                          price: totalPrice.toInt(),
+                          productList: productList,
+                          timestamp: Timestamp.now(),
+                          qtyList: qtyList,
+                          sellingRateList: sellingRateList,
+                          taxList: taxList,
+                          productListId: productListId,
+                          isTax: _isTaxCheckBox,
+                          isPaid: true,
+                          paidId: paidId);
+                      Paid paid = Paid(billId: billId, buyId: paidId);
+                      bool isBillSubmitted =
+                          await _adminMethods.addBillToDb(bill);
+                      if (isBillSubmitted) {
+                        _adminMethods.addBuyToDb(paid);
+                        Navigator.pushAndRemoveUntil(
+                            context,
+                            BouncyPageRoute(widget: RootScreen()),
+                            (route) => true);
+                        Dialogs.okDialog(context, 'Successfull',
+                            'Added Successfully', Colors.green[200]);
+                      } else {
+                        Dialogs.okDialog(context, 'Error',
+                            'Somthing went wrong', Colors.red[200]);
+                      }
+                    })
+                  ],
+                );
+              });
         })
       ],
     );

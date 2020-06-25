@@ -1,8 +1,6 @@
 import 'dart:io';
-
 import 'package:annaistore/resources/auth_methods.dart';
 import 'package:annaistore/screens/auth_screen.dart';
-import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/screens/root_screen.dart';
 import 'package:annaistore/theme/theme_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -30,24 +28,26 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
-      stream: themeController.darkThemeEnabled,
-      initialData: false,
-      builder: (context, snapshot) => MaterialApp(
-        // theme: snapshot.data ? ThemeData.dark() : ThemeData.light(),
-        // theme: AppTheme.lightTheme,
-        // darkTheme: AppTheme.darkTheme,
-        // themeMode: snapshot.data ? ThemeMode.dark : ThemeMode.light,
-        // home: HomePage(snapshot.data)
-        home: FutureBuilder(
-          future: _authMethods.getCurrentUser(),
-          builder: (context, AsyncSnapshot<FirebaseUser> snapshot) {
-            if (snapshot.hasData) {
-              return RootScreen();
-            } else {
-              return AuthScreen();
-            }
-          },
+    return MaterialApp(
+      home: StreamBuilder(
+        stream: themeController.darkThemeEnabled,
+        initialData: false,
+        builder: (context, snapshot) => MaterialApp(
+          // theme: snapshot.data ? ThemeData.dark() : ThemeData.light(),
+          // theme: AppTheme.lightTheme,
+          // darkTheme: AppTheme.darkTheme,
+          // themeMode: snapshot.data ? ThemeMode.dark : ThemeMode.light,
+          // home: HomePage(snapshot.data)
+          home: FutureBuilder(
+            future: _authMethods.getCurrentUser(),
+            builder: (context, AsyncSnapshot<FirebaseUser> snapshot) {
+              if (snapshot.hasData) {
+                return RootScreen();
+              } else {
+                return AuthScreen();
+              }
+            },
+          ),
         ),
       ),
     );
