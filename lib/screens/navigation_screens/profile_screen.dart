@@ -9,11 +9,12 @@ import 'package:annaistore/screens/admin/admin_page.dart';
 import 'package:annaistore/screens/admin/bill_screen.dart';
 import 'package:annaistore/screens/admin/borrow/borrow_list.dart';
 import 'package:annaistore/screens/admin/stock/stock_screen.dart';
+import 'package:annaistore/screens/admin/tax/tax_calculator.dart';
+import 'package:annaistore/screens/admin/tax/tax_report.dart';
 import 'package:annaistore/screens/auth_screen.dart';
 import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/screens/edit_profile_screen.dart';
 import 'package:annaistore/screens/report_screen.dart';
-import 'package:annaistore/screens/tax_calculator.dart';
 import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
@@ -340,6 +341,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 },
                               ),
                               CustomTile(
+                                text: "Tax Report",
+                                icon: FontAwesome.hand_paper_o,
+                                onTap: () {
+                                  Navigator.push(context,
+                                      BouncyPageRoute(widget: TaxReport()));
+                                },
+                              ),
+                              CustomTile(
                                 text: "Tax Calculator",
                                 icon: FontAwesome.calculator,
                                 onTap: () {
@@ -355,14 +364,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       BouncyPageRoute(widget: EditScreen()));
                                 },
                               ),
-                              // CustomTile(
-                              //   text: "Borrow",
-                              //   icon: FontAwesome.tasks,
-                              //   onTap: () {
-                              //     Navigator.push(context,
-                              //         BouncyPageRoute(widget: BorrowScreen()));
-                              //   },
-                              // ),
                               CustomTile(
                                 text: "Reports",
                                 icon: Icons.report,

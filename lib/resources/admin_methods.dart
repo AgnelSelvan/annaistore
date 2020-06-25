@@ -482,4 +482,25 @@ class AdminMethods {
       return false;
     }
   }
+
+  Future<List<Bill>> getTaxReport(
+      Timestamp startDate, Timestamp endDate) async {
+    List<Bill> billsList = List();
+    QuerySnapshot docs = await _billsCollection
+        .where('timestamp', isGreaterThanOrEqualTo: startDate)
+        .orderBy('timestamp')
+        // .where('timestamp', isLessThanOrEqualTo: endDate)
+        .getDocuments();
+
+    List<DocumentSnapshot> docsList = docs.documents.toList();
+    for (var doc in docsList) {
+      Bill bill = Bill.fromMap(doc.data);
+      // print(bill.isTax);
+      if (bill.isTax) {
+        billsList.add(bill);
+      }
+    }
+
+    return billsList;
+  }
 }

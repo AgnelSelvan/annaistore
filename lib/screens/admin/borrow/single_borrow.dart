@@ -69,7 +69,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
   String amounten;
   var amountToBeGiven = 0;
 
-  getBorrowById() async {
+  Future<void> getPdfDetailsBorrowById() async {
     setState(() {
       isLoading = true;
     });
@@ -117,8 +117,8 @@ class _SingleBorrowState extends State<SingleBorrow> {
     });
     FirebaseUser user = await _authMethods.getCurrentUser();
     if (user == null) {
-      // Dialogs.okDialog(
-      //     context, 'Error', 'Check your internet connection', Colors.red[200]);
+      Dialogs.okDialog(
+          context, 'Error', 'Check your internet connection', Colors.red[200]);
     } else {
       User nowUser = await _authMethods.getUserDetailsById(user.uid);
       setState(() {
@@ -197,7 +197,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
   @override
   void initState() {
     super.initState();
-    getBorrowById();
+    getPdfDetailsBorrowById();
     getCurrentUser();
     getListOfBorrow();
   }
@@ -633,8 +633,6 @@ class _SingleBorrowState extends State<SingleBorrow> {
                 color: Variables.primaryColor,
                 onPressed: () async {
                   Navigator.pop(context);
-
-                  print(datas);
                   generatePakkaBillPdfAndView(context);
                 },
                 child: Text(
@@ -650,283 +648,6 @@ class _SingleBorrowState extends State<SingleBorrow> {
   generatePakkaBillPdfAndView(context) async {
     if (await Permission.storage.request().isGranted) {
       try {
-        //   pdf.addPage(pw.MultiPage(
-        //     pageFormat: PdfPageFormat.a4,
-        //     margin: pw.EdgeInsets.all(24),
-        //     build: (pw.Context context) {
-        //       return <pw.Widget>[
-        //         pw.Container(
-        //             height: PdfPageFormat.a4.height / 1.1,
-        //             width: PdfPageFormat.a4.width,
-        //             child: pw.Column(
-        //                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-        //                 crossAxisAlignment: pw.CrossAxisAlignment.center,
-        //                 children: [
-        //                   pw.Column(children: [
-        //                     pw.Container(
-        //                         child: pw.Container(
-        //                             alignment: pw.Alignment.center,
-        //                             child: pw.Text("Tax Invoice",
-        //                                 style: pw.TextStyle(
-        //                                   fontSize: 12,
-        //                                 )))),
-        //                     pw.SizedBox(height: 10),
-        //                     pw.Row(
-        //                         mainAxisAlignment:
-        //                             pw.MainAxisAlignment.spaceBetween,
-        //                         children: [
-        //                           pw.Text('GSTIN:33AHIPC1946Q1Z4'),
-        //                           pw.Column(children: [
-        //                             pw.Text('Mobile :9488327699'),
-        //                             pw.Text('Email :annai.charlinf@gmail.com'),
-        //                           ])
-        //                         ]),
-        //                     pw.SizedBox(height: 5),
-        //                     pw.Container(
-        //                         child: pw.Container(
-        //                             alignment: pw.Alignment.center,
-        //                             child: pw.Text("Annai Store",
-        //                                 style: pw.TextStyle(
-        //                                     fontSize: 28,
-        //                                     fontWeight: pw.FontWeight.bold,
-        //                                     fontStyle: pw.FontStyle.italic)))),
-        //                     pw.SizedBox(height: 5),
-        //                     pw.Paragraph(
-        //                         text:
-        //                             "No.1 Yadhavar Middle Street\n Valliioor-627117",
-        //                         textAlign: pw.TextAlign.center,
-        //                         style: pw.TextStyle(
-        //                             fontWeight: pw.FontWeight.normal,
-        //                             letterSpacing: 1)),
-        //                     pw.SizedBox(height: 10),
-        //                     pw.Container(
-        //                       height: 70,
-        //                       child: pw.Row(
-        //                           mainAxisAlignment:
-        //                               pw.MainAxisAlignment.spaceBetween,
-        //                           children: [
-        //                             pw.Column(
-        //                                 mainAxisAlignment:
-        //                                     pw.MainAxisAlignment.spaceBetween,
-        //                                 crossAxisAlignment:
-        //                                     pw.CrossAxisAlignment.start,
-        //                                 children: [
-        //                                   pw.Column(children: [
-        //                                     pw.Text('Buyer:'),
-        //                                     pw.Text(
-        //                                         "${_buyerInfoController.text}"),
-        //                                   ]),
-        //                                   pw.Column(
-        //                                       crossAxisAlignment:
-        //                                           pw.CrossAxisAlignment.start,
-        //                                       children: [
-        //                                         pw.Text('GSTIN:33AHIPC1946Q1Z4'),
-        //                                         pw.Text(
-        //                                             "Mobile No:${borrowModel.mobileNo}"),
-        //                                       ])
-        //                                 ]),
-        //                             pw.Column(
-        //                                 mainAxisAlignment:
-        //                                     pw.MainAxisAlignment.spaceBetween,
-        //                                 children: [
-        //                                   pw.Text(
-        //                                       'Bill No:  ${borrowModel.billNo}'),
-        //                                   pw.Text(
-        //                                       'Date:${DateFormat("dd/MM/yyyy").format(borrowModel.timestamp.toDate())}'),
-        //                                 ]),
-        //                           ]),
-        //                     ),
-        //                     pw.SizedBox(height: 8),
-        //                     pw.Table.fromTextArray(
-        //                         border: pw.TableBorder(
-        //                           width: 1,
-        //                         ),
-        //                         context: context,
-        //                         data: <List<dynamic>>[
-        //                           <dynamic>[
-        //                             'Product',
-        //                             'HSN',
-        //                             'GST',
-        //                             'Qty',
-        //                             'Rate',
-        //                             'Amount',
-        //                             'SGST',
-        //                             'CGST',
-        //                             'Total'
-        //                           ],
-        //                           ...datas.map((e) => [
-        //                                 e[0],
-        //                                 e[1],
-        //                                 '${e[2]}',
-        //                                 e[3],
-        //                                 e[4],
-        //                                 '${e[3] * e[4]}',
-        //                                 '${(e[3] * e[4]) * (e[2] / 100)}',
-        //                                 '${(e[3] * e[4]) * (e[2] / 100)}',
-        //                                 '${(e[3] * e[4]) + 2 * ((e[3] * e[4]) * (e[2] / 100))}'
-        //                               ])
-        //                         ]),
-        //                     pw.Row(
-        //                         mainAxisAlignment:
-        //                             pw.MainAxisAlignment.spaceBetween,
-        //                         children: [
-        //                           pw.Text(
-        //                               'Total Items: ${borrowModel.productList.length}',
-        //                               textAlign: pw.TextAlign.left),
-        //                         ]),
-        //                     pw.SizedBox(height: 40),
-        //                   ]),
-        //                   pw.Container(
-        //                       child: pw.Column(
-        //                           mainAxisAlignment:
-        //                               pw.MainAxisAlignment.spaceAround,
-        //                           children: [
-        //                         pw.Row(
-        //                             mainAxisAlignment:
-        //                                 pw.MainAxisAlignment.spaceBetween,
-        //                             children: [
-        //                               pw.Row(
-        //                                   mainAxisAlignment:
-        //                                       pw.MainAxisAlignment.spaceBetween,
-        //                                   children: [
-        //                                     pw.Text(
-        //                                       "Rupees:",
-        //                                       style: pw.TextStyle(
-        //                                           fontWeight: pw.FontWeight.bold),
-        //                                     ),
-        //                                     pw.Text(
-        //                                       amounten.toString(),
-        //                                     )
-        //                                   ]),
-        //                               pw.Column(
-        //                                   mainAxisAlignment:
-        //                                       pw.MainAxisAlignment.start,
-        //                                   crossAxisAlignment:
-        //                                       pw.CrossAxisAlignment.start,
-        //                                   children: [
-        //                                     pw.Row(
-        //                                         mainAxisAlignment: pw
-        //                                             .MainAxisAlignment
-        //                                             .spaceBetween,
-        //                                         children: [
-        //                                           pw.Text(
-        //                                             "Gross Amount:",
-        //                                             style: pw.TextStyle(
-        //                                                 fontWeight:
-        //                                                     pw.FontWeight.bold),
-        //                                           ),
-        //                                           pw.Text(
-        //                                             grossAmount.toString(),
-        //                                           )
-        //                                         ]),
-        //                                     pw.Row(
-        //                                         mainAxisAlignment: pw
-        //                                             .MainAxisAlignment
-        //                                             .spaceBetween,
-        //                                         children: [
-        //                                           pw.Text(
-        //                                             "Add SGST:",
-        //                                             style: pw.TextStyle(
-        //                                                 fontWeight:
-        //                                                     pw.FontWeight.bold),
-        //                                           ),
-        //                                           pw.Text(
-        //                                             totalSGST.toString(),
-        //                                           )
-        //                                         ]),
-        //                                     pw.Row(
-        //                                         mainAxisAlignment: pw
-        //                                             .MainAxisAlignment
-        //                                             .spaceBetween,
-        //                                         children: [
-        //                                           pw.Text(
-        //                                             "Add CGST:",
-        //                                             style: pw.TextStyle(
-        //                                                 fontWeight:
-        //                                                     pw.FontWeight.bold),
-        //                                           ),
-        //                                           pw.Text(
-        //                                             totalCGST.toString(),
-        //                                           )
-        //                                         ]),
-        //                                   ])
-        //                             ]),
-        //                         pw.Row(
-        //                             mainAxisAlignment:
-        //                                 pw.MainAxisAlignment.spaceBetween,
-        //                             children: [
-        //                               pw.Text('Note',
-        //                                   style: pw.TextStyle(
-        //                                       fontWeight: pw.FontWeight.bold),
-        //                                   textAlign: pw.TextAlign.left),
-        //                               pw.Column(children: [
-        //                                 pw.Row(
-        //                                     mainAxisAlignment:
-        //                                         pw.MainAxisAlignment.spaceBetween,
-        //                                     children: [
-        //                                       pw.Text(
-        //                                         "Total Amount:",
-        //                                         style: pw.TextStyle(
-        //                                             fontWeight:
-        //                                                 pw.FontWeight.bold),
-        //                                       ),
-        //                                       pw.Text(
-        //                                         amount.toString(),
-        //                                       )
-        //                                     ]),
-        //                               ])
-        //                             ]),
-        //                         pw.SizedBox(height: 20),
-        //                         pw.Row(
-        //                             mainAxisAlignment:
-        //                                 pw.MainAxisAlignment.spaceBetween,
-        //                             children: [
-        //                               pw.Column(
-        //                                   mainAxisAlignment:
-        //                                       pw.MainAxisAlignment.start,
-        //                                   crossAxisAlignment:
-        //                                       pw.CrossAxisAlignment.start,
-        //                                   children: [
-        //                                     pw.Text(
-        //                                       'VITY UNION BANK',
-        //                                     ),
-        //                                     pw.Text(
-        //                                       'A/C No: 510909010138545',
-        //                                     ),
-        //                                     pw.Text(
-        //                                       'IFSC No: CIUB0000656',
-        //                                     ),
-        //                                     pw.Text('Branch: Vallioor',
-        //                                         textAlign: pw.TextAlign.left),
-        //                                   ]),
-        //                               pw.Column(children: [
-        //                                 pw.Text('Annai Store',
-        //                                     style: pw.TextStyle(
-        //                                         fontWeight: pw.FontWeight.bold),
-        //                                     textAlign: pw.TextAlign.left),
-        //                                 pw.SizedBox(height: 50),
-        //                                 pw.Text('Authorised Signature',
-        //                                     textAlign: pw.TextAlign.left),
-        //                               ])
-        //                             ]),
-        //                       ]))
-        //                 ]))
-        //       ];
-        //     },
-        //   ));
-
-        //   Directory documentDirectory = await getApplicationDocumentsDirectory();
-
-        //   String documentPath = documentDirectory.path;
-
-        //   File file = File("$documentPath/example.pdf");
-        //   try {
-        //     file.writeAsBytesSync(pdf.save());
-        //   } catch (e) {
-        //     Dialogs.okDialog(context, 'Error',
-        //         'Avoid Next line in buyer Text Field', Colors.red[200]);
-        //     print(e);
-        //   }
         String fullPath = await Utils.generatePakkaBill(
             bill,
             _buyerInfoController.text,
