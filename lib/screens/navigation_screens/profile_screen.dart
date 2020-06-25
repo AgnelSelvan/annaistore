@@ -8,6 +8,7 @@ import 'package:annaistore/screens/admin/add/add_unit.dart';
 import 'package:annaistore/screens/admin/admin_page.dart';
 import 'package:annaistore/screens/admin/bill_screen.dart';
 import 'package:annaistore/screens/admin/borrow/borrow_list.dart';
+import 'package:annaistore/screens/admin/history.dart';
 import 'package:annaistore/screens/admin/stock/stock_screen.dart';
 import 'package:annaistore/screens/admin/tax/tax_calculator.dart';
 import 'package:annaistore/screens/admin/tax/tax_report.dart';
@@ -346,6 +347,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 onTap: () {
                                   Navigator.push(context,
                                       BouncyPageRoute(widget: TaxReport()));
+                                },
+                              ),
+                              CustomTile(
+                                text: "History",
+                                icon: FontAwesome.history,
+                                onTap: () {
+                                  Navigator.push(context,
+                                      BouncyPageRoute(widget: HistoryScreen()));
                                 },
                               ),
                               CustomTile(

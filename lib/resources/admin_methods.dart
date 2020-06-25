@@ -503,4 +503,23 @@ class AdminMethods {
 
     return billsList;
   }
+
+  Future<String> getBillNo() async {
+    QuerySnapshot docs = await _billsCollection
+        .orderBy('timestamp', descending: true)
+        .getDocuments();
+    if (docs.documents.length == 0) {
+      return 1001.toString();
+    }
+    List<DocumentSnapshot> docsList = docs.documents.toList();
+
+    print(docsList[0].data['bill_no']);
+    return (int.parse(docsList[0].data['bill_no']) + 1).toString();
+  }
+
+  Future<List<DocumentSnapshot>> getAllPaids() async {
+    QuerySnapshot docs = await _paidsCollection.getDocuments();
+    List<DocumentSnapshot> docsList = docs.documents.toList();
+    return docsList;
+  }
 }

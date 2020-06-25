@@ -32,8 +32,7 @@ class BillScreen extends StatefulWidget {
 
 class _BillScreenState extends State<BillScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  static Random random = new Random();
-  static int randomNumber = random.nextInt(900000) + 100000;
+  String randomNumber;
   TextEditingController _billNumberController;
   TextEditingController _qtyController;
   TextEditingController _priceController;
@@ -55,13 +54,20 @@ class _BillScreenState extends State<BillScreen> {
   @override
   void initState() {
     super.initState();
+    getBillNo();
 
-    _billNumberController =
-        TextEditingController(text: randomNumber.toString());
     _qtyController = TextEditingController();
     _priceController = TextEditingController();
     _taxController = TextEditingController();
     _totalPriceController = TextEditingController();
+  }
+
+  getBillNo() async {
+    randomNumber = await _adminMethods.getBillNo();
+    setState(() {
+      _billNumberController =
+          TextEditingController(text: randomNumber.toString());
+    });
   }
 
   void showWidget() {
