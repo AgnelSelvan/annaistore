@@ -80,35 +80,6 @@ class _SingleBorrowState extends State<SingleBorrow> {
       isLoading = false;
       amountToBeGiven = amountToBeGiven + (_bill.price - _bill.givenAmount);
     });
-
-    for (dynamic i = 0; i < bill.productList.length; i++) {
-      List<dynamic> data = List();
-      Product product = await _adminMethods
-          .getProductDetailsFromProductId(bill.productListId[i]);
-      data.add(bill.productList[i]);
-      data.add(product.hsnCode);
-      data.add(bill.taxList[i]);
-      data.add(bill.qtyList[i]);
-      data.add(bill.sellingRateList[i]);
-      amount = amount +
-          ((bill.qtyList[i] * bill.sellingRateList[i]) +
-              ((bill.qtyList[i] * bill.sellingRateList[i]) *
-                  (bill.taxList[i] / 100)));
-      grossAmount = grossAmount + (bill.qtyList[i] * bill.sellingRateList[i]);
-      totalSGST = totalSGST +
-          (((bill.qtyList[i] * bill.sellingRateList[i]) *
-                  (bill.taxList[i] / 100)) /
-              2);
-      totalCGST = totalCGST +
-          (((bill.qtyList[i] * bill.sellingRateList[i]) *
-                  (bill.taxList[i] / 100)) /
-              2);
-      datas.add(data);
-      print("totalSGST:$totalSGST");
-    }
-    setState(() {
-      amounten = NumberWordsSpelling.toWord(amount.toStringAsFixed(0), 'en_US');
-    });
   }
 
   getCurrentUser() async {
@@ -200,6 +171,38 @@ class _SingleBorrowState extends State<SingleBorrow> {
     getPdfDetailsBorrowById();
     getCurrentUser();
     getListOfBorrow();
+  }
+
+  getBillDetailsById(Bill bill) async {
+    // Bill bill = await _adminMethods.getBillById(bill.billId);
+    for (dynamic i = 0; i < bill.productList.length; i++) {
+      List<dynamic> data = List();
+      Product product = await _adminMethods
+          .getProductDetailsFromProductId(bill.productListId[i]);
+      data.add(bill.productList[i]);
+      data.add(product.hsnCode);
+      data.add(bill.taxList[i]);
+      data.add(bill.qtyList[i]);
+      data.add(bill.sellingRateList[i]);
+      amount = amount +
+          ((bill.qtyList[i] * bill.sellingRateList[i]) +
+              ((bill.qtyList[i] * bill.sellingRateList[i]) *
+                  (bill.taxList[i] / 100)));
+      grossAmount = grossAmount + (bill.qtyList[i] * bill.sellingRateList[i]);
+      totalSGST = totalSGST +
+          (((bill.qtyList[i] * bill.sellingRateList[i]) *
+                  (bill.taxList[i] / 100)) /
+              2);
+      totalCGST = totalCGST +
+          (((bill.qtyList[i] * bill.sellingRateList[i]) *
+                  (bill.taxList[i] / 100)) /
+              2);
+      datas.add(data);
+      print("totalSGST:$totalSGST");
+    }
+    setState(() {
+      amounten = NumberWordsSpelling.toWord(amount.toStringAsFixed(0), 'en_US');
+    });
   }
 
   @override
@@ -778,6 +781,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
                 Dialogs.okDialog(
                     context, 'Error', 'Somthing went wrong!', Colors.red[200]);
               } else {
+                getBillDetailsById(bill);
                 bill.isTax ? getBuyerName() : getKachaBill();
               }
             },

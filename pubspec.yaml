@@ -58,6 +58,9 @@ dependencies:
   flutter_sparkline: "^0.1.0"
   focused_menu: ^1.0.0
   csv: ^4.0.3
+  vector_math:
+  matrix_gesture_detector:
+  printing: ^3.5.0
   # flutter_share_me: ^0.9.1
   # syncfusion_flutter_pdf: ^18.1.36-beta
     # advanced_share:

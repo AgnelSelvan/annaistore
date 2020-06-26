@@ -1,7 +1,9 @@
 import 'package:annaistore/models/bill.dart';
 import 'package:annaistore/resources/admin_methods.dart';
+import 'package:annaistore/screens/admin/bill_detail_screen.dart';
 import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/utils/universal_variables.dart';
+import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
 import 'package:annaistore/widgets/custom_divider.dart';
 import 'package:annaistore/widgets/dialogs.dart';
@@ -26,9 +28,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
     setState(() {
       isLoading = true;
     });
-    List<DocumentSnapshot> docsList = await _adminMethods.getAllPaids();
+    List<DocumentSnapshot> docsList = await _adminMethods.getAllBills();
     for (var doc in docsList) {
-      Bill bill = await _adminMethods.getBillById(doc.data['bill_id']);
+      // Bill bill = await _adminMethods.getBillById(doc.data['bill_id']);
+      Bill bill = Bill.fromMap(doc.data);
       billsList.add(bill);
     }
     setState(() {
@@ -37,6 +40,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     if (billsList.length == 0) {
       Dialogs.okDialog(context, 'Error', "No Paid Bill Yet!", Colors.red[200]);
     }
+    print(billsList.length);
   }
 
   @override
@@ -65,9 +69,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
       body: isLoading
           ? CustomCircularLoading()
           : ListView.separated(
+              physics: BouncingScrollPhysics(),
               itemBuilder: (context, index) {
                 return ListTile(
-                  title: Text(billsList[index].customerName),
+                  title: Text(billsList[index].customerName == ""
+                      ? "CASH"
+                      : billsList[index].customerName),
                   subtitle: Text("Bill No: ${billsList[index].billNo}"),
                   trailing: IconButton(
                       icon: Icon(
@@ -75,11 +82,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         color: Variables.primaryColor,
                         size: 20,
                       ),
-                      onPressed: () {}),
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            BouncyPageRoute(
+                                widget: BillDetails(
+                              billId: billsList[index].billId,
+                            )));
+                      }),
                   leading: CircleAvatar(
                     backgroundColor: Variables.primaryColor,
                     child: Text(
-                      billsList[index].customerName[0],
+                      billsList[index].customerName == ""
+                          ? "C"
+                          : billsList[index].customerName[0],
                       style: TextStyle(color: Colors.white),
                     ),
                   ),

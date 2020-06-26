@@ -206,14 +206,28 @@ class _TaxReportState extends State<TaxReport> {
   generateCSVAndView(context, Timestamp startDate, Timestamp endDate) async {
     List<Bill> billsList = await _adminMethods.getTaxReport(startDate, endDate);
     List<List<dynamic>> datas = List();
+    for (var bill in billsList) {
+      for (var i = 0; i < bill.taxList.length; i++) {
+        List<dynamic> data = List();
+        print(i);
+        print(bill.taxList[i]);
+        data.add(bill.billNo);
+        data.add(bill.customerName);
+        data.add(DateFormat('dd-MM-yyyy')
+            .format(bill.timestamp.toDate())
+            .toString());
+        data.add(bill.sellingRateList[i] * bill.qtyList[i]);
+        print(bill.sellingRateList[i]);
+        data.add(bill.taxList[i]);
+        data.add((bill.sellingRateList[i] * bill.qtyList[i]) +
+            ((bill.sellingRateList[i] * bill.qtyList[i]) *
+                (bill.taxList[i] / 100)));
+        datas.add(data);
+      }
+      // datas.add(data);
+    }
+    print(datas);
 
-    // for (var i = 0; i < billsList.length; i++) {
-    //   for (var j = 0; i < billsList[i].productList.length; i++) {
-    //     List<dynamic> data = List();
-    //     Product product = await _adminMethods
-    //         .getProductDetailsFromProductId(billsList[i].productListId[j]);
-    //   }
-    // }
     String fromDate =
         DateFormat('dd-MM-yyyy').format(startDate.toDate()).toString();
     String finishDate =
@@ -225,19 +239,19 @@ class _TaxReportState extends State<TaxReport> {
         'Customer Name',
         'Date',
         'Rate',
-        'Product',
         "GST",
-        "Qty"
+        "Total Price"
       ],
-      ...billsList.map((e) => [
-            e.billNo,
-            e.customerName,
-            DateFormat('dd-MM-yyyy').format(e.timestamp.toDate()).toString(),
-            e.price.toString(),
-            e.productList.toString(),
-            e.taxList.toString(),
-            e.qtyList.toString()
-          ])
+      ...datas.map((e) {
+        return [
+          e[0],
+          e[1],
+          e[2],
+          e[3].toString(),
+          e[4].toString(),
+          e[5].toString()
+        ];
+      }),
     ];
     String csv = const ListToCsvConverter().convert(csvData);
     final String dir = (await getApplicationDocumentsDirectory()).path;
@@ -250,11 +264,11 @@ class _TaxReportState extends State<TaxReport> {
     // " as text delimiter and
     // \r\n as eol.
     await file.writeAsString(csv);
-    ShareExtend.share(path, 'file');
-    // Navigator.of(context).push(
-    //   MaterialPageRoute(
-    //     builder: (_) => LoadAndViewCsvPage(path: path),
-    //   ),
-    // );
+    // ShareExtend.share(path, 'file');
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => LoadAndViewCsvPage(path: path),
+      ),
+    );
   }
 }

@@ -415,6 +415,15 @@ class AdminMethods {
     return sum;
   }
 
+  Future<List<DocumentSnapshot>> getAllBills() async {
+    QuerySnapshot docs = await _billsCollection
+        .orderBy('bill_no', descending: false)
+        .getDocuments();
+    List<DocumentSnapshot> docsList = docs.documents.toList();
+    print(docsList.length);
+    return docsList;
+  }
+
   Future<Bill> getBillById(String billId) async {
     try {
       print(billId);
