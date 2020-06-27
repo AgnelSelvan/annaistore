@@ -143,8 +143,8 @@ class _AddProductState extends State<AddProduct> {
       print(value);
       if (!value) {
         try {
-          var purchasePrice = int.parse(_purchasePriceController.text);
-          var sellingPrice = int.parse(_sellingPriceFieldController.text);
+          var purchasePrice = double.parse(_purchasePriceController.text);
+          var sellingPrice = double.parse(_sellingPriceFieldController.text);
           int unitQty = _unitQtyFieldController.text == ''
               ? 0
               : int.parse(_unitQtyFieldController.text);

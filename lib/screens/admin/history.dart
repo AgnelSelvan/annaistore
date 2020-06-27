@@ -65,7 +65,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               color: Variables.primaryColor,
             ),
           ),
-          centerTitle: null),
+          centerTitle: true),
       body: isLoading
           ? CustomCircularLoading()
           : ListView.separated(

@@ -121,7 +121,7 @@ class _StockScreenState extends State<StockScreen>
               color: Variables.primaryColor,
             ),
           ),
-          centerTitle: null),
+          centerTitle: true),
       body: ListView(
         physics: const BouncingScrollPhysics(),
         children: <Widget>[

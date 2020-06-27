@@ -28,7 +28,7 @@ class _MapScreenState extends State<MapScreen> {
               color: Variables.primaryColor,
             ),
           ),
-          centerTitle: null),
+          centerTitle: true),
       body: BuildMap(),
     );
   }

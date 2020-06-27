@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:annaistore/models/bill.dart';
 import 'package:annaistore/models/borrow.dart';
-import 'package:annaistore/models/borrow_model.dart';
 import 'package:annaistore/resources/admin_methods.dart';
 import 'package:annaistore/screens/admin/bill_screen.dart';
 import 'package:annaistore/screens/admin/borrow/borrow_list.dart';
@@ -30,7 +29,7 @@ class BorrowScreen extends StatefulWidget {
   final List<String> productListId;
   final List<int> qtyList;
   final List<int> taxList;
-  final List<int> sellingRateList;
+  final List<double> sellingRateList;
   final double totalPrice;
   final String billNo;
   final bool isTax;
@@ -57,6 +56,7 @@ class _BorrowScreenState extends State<BorrowScreen> {
   TextEditingController mobileNumberController = TextEditingController();
   TextEditingController priceController = TextEditingController();
   TextEditingController totalPriceController = TextEditingController();
+  TextEditingController customerNameController = TextEditingController();
   Contact selectedContact;
   bool isLoading = false;
   FocusNode myFocusNode;
@@ -71,8 +71,7 @@ class _BorrowScreenState extends State<BorrowScreen> {
     customerGivenMoney.addListener(() {
       updateTotalAmount();
     });
-    priceController =
-        TextEditingController(text: widget.totalPrice.toInt().toString());
+    priceController = TextEditingController(text: widget.totalPrice.toString());
     myFocusNode = FocusNode();
   }
 
@@ -145,7 +144,7 @@ class _BorrowScreenState extends State<BorrowScreen> {
                 color: Variables.primaryColor,
               ),
             ),
-            centerTitle: null),
+            centerTitle: true),
         body: isLoading
             ? CustomCircularLoading()
             : SingleChildScrollView(
@@ -215,11 +214,28 @@ class _BorrowScreenState extends State<BorrowScreen> {
             ),
             SizedBox(height: 5),
             Container(
-              child: Text(
-                "${selectedContact.displayName}",
-                style: Variables.inputLabelTextStyle,
+              height: 55,
+              alignment: Alignment.center,
+              padding: EdgeInsets.symmetric(horizontal: 5),
+              decoration: BoxDecoration(
+                  color: Colors.yellow[100],
+                  borderRadius: BorderRadius.circular(8)),
+              child: TextFormField(
+                cursorColor: Variables.primaryColor,
+                maxLines: 1,
+                style: Variables.inputTextStyle,
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  hintText: 'Ram',
+                  prefixIcon: Icon(
+                    FontAwesome.user,
+                    size: 12,
+                    color: Colors.yellow[900],
+                  ),
+                ),
+                controller: customerNameController,
               ),
-            )
+            ),
           ],
         ),
         SizedBox(height: 20),
@@ -367,63 +383,44 @@ class _BorrowScreenState extends State<BorrowScreen> {
             width: MediaQuery.of(context).size.width / 2,
             child: buildRaisedButton('Save', Colors.green[300], Colors.white,
                 () async {
-              // BorrowModel borrowModel = BorrowModel(
-              //     borrowId: Utils.getDocId(),
-              //     timestamp: Timestamp.now(),
-              //     isPaid: false,
-              //     billNo: widget.billNo,
-              //     isTax: widget.isTax,
-              //     customerName: selectedContact.displayName,
-              //     givenAmount: int.parse(customerGivenMoney.text),
-              //     mobileNo: selectedContact.phones
-              //         .elementAt(0)
-              //         .value
-              //         .replaceAll(" ", ""),
-              //     price: int.parse(priceController.text),
-              //     productList: widget.productList,
-              //     productListId: widget.productListId,
-              //     qtyList: widget.qtyList,
-              //     sellingRateList: widget.sellingRateList,
-              //     taxList: widget.taxList);
-              // print(borrowModel.taxList);
-              // _adminMethods.addBorrowToDb(borrowModel);
-              // Navigator.pushAndRemoveUntil(context,
-              //     BouncyPageRoute(widget: RootScreen()), (route) => true);
-              // Dialogs.okDialog(context, 'Successfull', 'Added Successfully',
-              //     Colors.green[200]);
-              String borrowId = Utils.getDocId();
-              String billId = Utils.getDocId();
-              Bill bill = Bill(
-                billId: billId,
-                productListId: widget.productListId,
-                productList: widget.productList,
-                qtyList: widget.qtyList,
-                taxList: widget.taxList,
-                sellingRateList: widget.sellingRateList,
-                price: int.parse(priceController.text),
-                givenAmount: int.parse(customerGivenMoney.text),
-                billNo: widget.billNo,
-                mobileNo: selectedContact.phones
-                    .elementAt(0)
-                    .value
-                    .replaceAll(' ', ''),
-                timestamp: Timestamp.now(),
-                customerName: selectedContact.displayName,
-                isTax: widget.isTax,
-                isPaid: false,
-                borrowId: borrowId,
-              );
-              bool isBillAdded = await _adminMethods.addBillToDb(bill);
-              Borrow borrow = Borrow(billId: billId, borrowId: borrowId);
-              if (isBillAdded) {
-                _adminMethods.addBorrowToDb(borrow);
-                Navigator.pushAndRemoveUntil(context,
-                    BouncyPageRoute(widget: RootScreen()), (route) => true);
-                Dialogs.okDialog(context, 'Successfull', 'Added Successfully',
-                    Colors.green[200]);
-              } else {
-                Dialogs.okDialog(
-                    context, 'Error', 'Somthing went wrong', Colors.red[200]);
+              try {
+                String borrowId = Utils.getDocId();
+                String billId = Utils.getDocId();
+                Bill bill = Bill(
+                  billId: billId,
+                  productListId: widget.productListId,
+                  productList: widget.productList,
+                  qtyList: widget.qtyList,
+                  taxList: widget.taxList,
+                  sellingRateList: widget.sellingRateList,
+                  price: double.parse(priceController.text),
+                  givenAmount: double.parse(customerGivenMoney.text),
+                  billNo: widget.billNo,
+                  mobileNo: selectedContact.phones
+                      .elementAt(0)
+                      .value
+                      .replaceAll(' ', ''),
+                  timestamp: Timestamp.now(),
+                  customerName: customerNameController.text,
+                  isTax: widget.isTax,
+                  isPaid: false,
+                  borrowId: borrowId,
+                );
+                bool isBillAdded = await _adminMethods.addBillToDb(bill);
+                Borrow borrow = Borrow(billId: billId, borrowId: borrowId);
+                if (isBillAdded) {
+                  _adminMethods.addBorrowToDb(borrow);
+                  Navigator.pushAndRemoveUntil(context,
+                      BouncyPageRoute(widget: RootScreen()), (route) => true);
+                  Dialogs.okDialog(context, 'Successfull', 'Added Successfully',
+                      Colors.green[200]);
+                } else {
+                  Dialogs.okDialog(
+                      context, 'Error', 'Somthing went wrong', Colors.red[200]);
+                }
+              } catch (e) {
+                Dialogs.okDialog(context, 'Error', 'Given amount cant be empty',
+                    Colors.red[200]);
               }
             }))
       ],
@@ -445,6 +442,8 @@ class _BorrowScreenState extends State<BorrowScreen> {
               mobileNumberController = TextEditingController(
                   text: contact.phones.elementAt(0).value);
               selectedContact = contact;
+              customerNameController =
+                  TextEditingController(text: selectedContact.displayName);
             });
           },
           child: ListTile(

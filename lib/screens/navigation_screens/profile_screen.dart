@@ -19,7 +19,6 @@ import 'package:annaistore/screens/report_screen.dart';
 import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
-import 'package:annaistore/widgets/custom_drawer.dart';
 import 'package:annaistore/widgets/dialogs.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:expandable/expandable.dart';
@@ -94,17 +93,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 });
               })
         ],
-        leading: IconButton(
-            icon: Icon(
-              Icons.menu,
-              color: Variables.primaryColor,
-            ),
-            onPressed: () {
-              _scaffoldKey.currentState.openDrawer();
-            }),
-        centerTitle: null,
+        leading: null,
+        centerTitle: true,
       ),
-      drawer: customDrawer(context, currentUserId),
       backgroundColor: Colors.yellow[50],
       body: isLoading
           ? CustomCircularLoading()

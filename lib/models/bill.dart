@@ -7,8 +7,8 @@ class Bill {
   List<dynamic> qtyList;
   List<dynamic> taxList;
   List<dynamic> sellingRateList;
-  int price;
-  int givenAmount;
+  double price;
+  double givenAmount;
   String billNo;
   String mobileNo;
   Timestamp timestamp;

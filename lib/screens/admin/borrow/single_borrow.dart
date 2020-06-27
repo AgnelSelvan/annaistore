@@ -1,8 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:annaistore/models/bill.dart';
-import 'package:annaistore/models/borrow.dart';
-import 'package:annaistore/models/borrow_model.dart';
 import 'package:annaistore/models/product.dart';
 import 'package:annaistore/models/user.dart';
 import 'package:annaistore/resources/admin_methods.dart';
@@ -13,11 +11,8 @@ import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/utils/utilities.dart';
 import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
-import 'package:annaistore/widgets/custom_divider.dart';
 import 'package:annaistore/widgets/dialogs.dart';
 import 'package:annaistore/widgets/widgets.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:contacts_service/contacts_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -42,8 +37,8 @@ AdminMethods _adminMethods = AdminMethods();
 AuthMethods _authMethods = AuthMethods();
 
 class SingleBorrow extends StatefulWidget {
-  final String borrowId;
-  SingleBorrow({@required this.borrowId});
+  final String mobileNo;
+  SingleBorrow({@required this.mobileNo});
 
   @override
   _SingleBorrowState createState() => _SingleBorrowState();
@@ -51,34 +46,95 @@ class SingleBorrow extends StatefulWidget {
 
 class _SingleBorrowState extends State<SingleBorrow> {
   TextEditingController _buyerInfoController = TextEditingController();
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
   GlobalKey _containerKey = GlobalKey();
   User currentUser;
   final _imageSaver = ImageSaver();
-  // VoidCallback
-  Bill bill;
   bool isLoading = false;
   final pdf = pw.Document();
+  List<Bill> billsList = List();
+  double amountToBeGiven = 0;
 
-  List<List<dynamic>> datas = List();
-  List<Bill> docList = List();
-  double amount = 0;
-  double grossAmount = 0;
-  double totalSGST = 0;
-  double totalCGST = 0;
-  String amounten;
-  var amountToBeGiven = 0;
-
-  Future<void> getPdfDetailsBorrowById() async {
+  generatePdf(Bill bill) async {
+    double amount = 0;
+    double grossAmount = 0;
+    double totalSGST = 0;
+    double totalCGST = 0;
+    String amounten;
+    List<List<dynamic>> datas = List();
+    for (dynamic i = 0; i < bill.productList.length; i++) {
+      List<dynamic> data = List();
+      Product product = await _adminMethods
+          .getProductDetailsFromProductId(bill.productListId[i]);
+      data.add(bill.productList[i]);
+      data.add(product.hsnCode);
+      data.add(bill.taxList[i]);
+      data.add(bill.qtyList[i]);
+      data.add(bill.sellingRateList[i]);
+      amount = amount +
+          ((bill.qtyList[i] * bill.sellingRateList[i]) +
+              ((bill.qtyList[i] * bill.sellingRateList[i]) *
+                  (bill.taxList[i] / 100)));
+      grossAmount = grossAmount + (bill.qtyList[i] * bill.sellingRateList[i]);
+      totalSGST = totalSGST +
+          (((bill.qtyList[i] * bill.sellingRateList[i]) *
+                  (bill.taxList[i] / 100)) /
+              2);
+      totalCGST = totalCGST +
+          (((bill.qtyList[i] * bill.sellingRateList[i]) *
+                  (bill.taxList[i] / 100)) /
+              2);
+      datas.add(data);
+      print("totalSGST:$totalSGST");
+    }
     setState(() {
-      isLoading = true;
+      amounten = NumberWordsSpelling.toWord(amount.toStringAsFixed(0), 'en_US');
     });
-    Borrow borrow = await _adminMethods.getBorrowById(widget.borrowId);
-    Bill _bill = await _adminMethods.getBillById(borrow.billId);
+    generatePakkaBillPdf(context, bill, datas, grossAmount, totalSGST,
+        totalCGST, amounten, amount);
+  }
+
+  generatePakkaBillPdf(
+      context,
+      Bill bill,
+      List<List<dynamic>> datas,
+      double grossAmount,
+      double totalSGST,
+      double totalCGST,
+      String amounten,
+      double amount) async {
+    if (await Permission.storage.request().isGranted) {
+      try {
+        String fullPath = await Utils.generatePakkaBill(
+            bill,
+            _buyerInfoController.text,
+            datas,
+            grossAmount,
+            totalSGST,
+            totalCGST,
+            amounten,
+            amount);
+        if (fullPath == 'textfieldError') {
+          Dialogs.okDialog(context, 'Error',
+              'Dont use next line in buyer info textfield', Colors.red[200]);
+        } else {
+          Navigator.push(
+              context,
+              BouncyPageRoute(
+                  widget: PdfPreviewwScreen(
+                path: fullPath,
+              )));
+        }
+      } catch (e) {
+        Dialogs.okDialog(
+            context, 'Error', 'Something went wrong!', Colors.red[200]);
+      }
+    } else {
+      Dialogs.okDialog(
+          context, 'Error', 'You have denied your permission', Colors.red[200]);
+    }
+
     setState(() {
-      bill = _bill;
-      isLoading = false;
-      amountToBeGiven = amountToBeGiven + (_bill.price - _bill.givenAmount);
+      _buyerInfoController.clear();
     });
   }
 
@@ -124,7 +180,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
     print(file);
 
     String text =
-        'Dear sir/madam, your payment of ₹ ${(bill.price - bill.givenAmount).toString()} is still pending. Make payment as soon as possible';
+        'Dear sir/madam, your payment of ₹ ${(billsList[1].price - billsList[1].givenAmount).toString()} is still pending. Make payment as soon as possible';
     try {
       await Share.file('esys image', 'sample.png', png, 'image/png',
           text: text);
@@ -149,60 +205,22 @@ class _SingleBorrowState extends State<SingleBorrow> {
     });
   }
 
-  getListOfBorrow() async {
-    List<DocumentSnapshot> docs =
-        await _adminMethods.getListOfBorrow(widget.borrowId);
-    for (var doc in docs) {
-      Bill bill = await _adminMethods.getBillById(doc.data['bill_id']);
-      setState(() {
-        docList.add(bill);
-      });
-
-      setState(() {
-        amountToBeGiven = amountToBeGiven + (bill.price - bill.givenAmount);
-      });
+  getBillsByMobileNo() async {
+    List<Bill> docsList =
+        await _adminMethods.getBillByMobileNo(widget.mobileNo);
+    for (var doc in docsList) {
+      amountToBeGiven = amountToBeGiven + (doc.price - doc.givenAmount);
     }
-    print(amountToBeGiven);
+    setState(() {
+      billsList = docsList;
+    });
   }
 
   @override
   void initState() {
     super.initState();
-    getPdfDetailsBorrowById();
     getCurrentUser();
-    getListOfBorrow();
-  }
-
-  getBillDetailsById(Bill bill) async {
-    // Bill bill = await _adminMethods.getBillById(bill.billId);
-    for (dynamic i = 0; i < bill.productList.length; i++) {
-      List<dynamic> data = List();
-      Product product = await _adminMethods
-          .getProductDetailsFromProductId(bill.productListId[i]);
-      data.add(bill.productList[i]);
-      data.add(product.hsnCode);
-      data.add(bill.taxList[i]);
-      data.add(bill.qtyList[i]);
-      data.add(bill.sellingRateList[i]);
-      amount = amount +
-          ((bill.qtyList[i] * bill.sellingRateList[i]) +
-              ((bill.qtyList[i] * bill.sellingRateList[i]) *
-                  (bill.taxList[i] / 100)));
-      grossAmount = grossAmount + (bill.qtyList[i] * bill.sellingRateList[i]);
-      totalSGST = totalSGST +
-          (((bill.qtyList[i] * bill.sellingRateList[i]) *
-                  (bill.taxList[i] / 100)) /
-              2);
-      totalCGST = totalCGST +
-          (((bill.qtyList[i] * bill.sellingRateList[i]) *
-                  (bill.taxList[i] / 100)) /
-              2);
-      datas.add(data);
-      print("totalSGST:$totalSGST");
-    }
-    setState(() {
-      amounten = NumberWordsSpelling.toWord(amount.toStringAsFixed(0), 'en_US');
-    });
+    getBillsByMobileNo();
   }
 
   @override
@@ -221,7 +239,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
                 color: Variables.primaryColor,
               ),
             ),
-            centerTitle: null),
+            centerTitle: true),
         body: isLoading
             ? CustomCircularLoading()
             : SingleChildScrollView(
@@ -267,20 +285,8 @@ class _SingleBorrowState extends State<SingleBorrow> {
                 ),
               ),
               SizedBox(height: 15),
-              Container(
-                height: 25,
-                alignment: Alignment.center,
-                child: Text(
-                  bill.billNo == null ? 'Error Loading...' : bill.billNo,
-                  style: TextStyle(
-                      color: Variables.blackColor,
-                      fontWeight: FontWeight.w300,
-                      letterSpacing: 0.3),
-                ),
-              ),
-              SizedBox(height: 5),
               Column(
-                  children: List.generate(docList.length, (index) {
+                  children: List.generate(billsList.length, (index) {
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -290,52 +296,29 @@ class _SingleBorrowState extends State<SingleBorrow> {
                         FocusedMenuItem(
                             title: Text("Report"),
                             onPressed: () {
-                              if (bill.isTax == null) {
+                              if (billsList[index].isTax == null) {
                                 Dialogs.okDialog(context, 'Error',
                                     'Somthing went wrong!', Colors.red[200]);
                               } else {
-                                bill.isTax ? getBuyerName() : getKachaBill();
+                                billsList[index].isTax
+                                    ? getBuyerName(billsList[index])
+                                    : getKachaBill(billsList[index]);
                               }
                             },
                             trailingIcon: Icon(
                               FontAwesome.file_pdf_o,
                               color: Colors.red[200],
                             )),
-                        FocusedMenuItem(
-                            title: Text("Whatsapp"),
-                            onPressed: () {
-                              _showModalSheet();
-                            },
-                            trailingIcon: Icon(
-                              FontAwesome.whatsapp,
-                              color: Colors.green[200],
-                            )),
-                        FocusedMenuItem(
-                            title: Text("SMS"),
-                            onPressed: () async {
-                              var uri =
-                                  'sms:${bill.mobileNo}?body=Dear sir/madam, your payment of ₹ ${(bill.price - bill.givenAmount).toString()} is still pending. Make payment as soon as possible';
-                              if (await canLaunch(uri)) {
-                                await launch(uri);
-                              } else {
-                                Dialogs.okDialog(
-                                    context,
-                                    'Error',
-                                    'Error launching whatsapp',
-                                    Colors.red[200]);
-                              }
-                            },
-                            trailingIcon: Icon(
-                              Icons.sms,
-                              color: Colors.blue[200],
-                            ))
                       ],
                       onPressed: () {},
                       child: Container(
                         height: 25,
                         alignment: Alignment.center,
                         child: Text(
-                          docList[index].billNo.toString(),
+                          billsList[index].billNo == null ||
+                                  billsList[index].billNo == ""
+                              ? "Null"
+                              : billsList[index].billNo.toString(),
                           style: TextStyle(
                               color: Variables.blackColor,
                               fontWeight: FontWeight.w300,
@@ -362,37 +345,25 @@ class _SingleBorrowState extends State<SingleBorrow> {
                 ),
               ),
               SizedBox(height: 15),
-              Container(
-                height: 25,
-                alignment: Alignment.center,
-                child: Text(
-                  DateFormat('dd/MM/yyyy').format(bill.timestamp.toDate()),
-                  style: TextStyle(
-                      color: Variables.blackColor,
-                      fontWeight: FontWeight.w300,
-                      letterSpacing: 0.3),
-                ),
-              ),
-              SizedBox(height: 5),
               Column(
-                  children: List.generate(docList.length, (index) {
-                return Container(
-                  height: 25,
-                  alignment: Alignment.center,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
+                  children: List.generate(billsList.length, (index) {
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      height: 25,
+                      alignment: Alignment.center,
+                      child: Text(
                         DateFormat('dd/MM/yyyy')
-                            .format(docList[index].timestamp.toDate()),
+                            .format(billsList[index].timestamp.toDate()),
                         style: TextStyle(
                             color: Variables.blackColor,
                             fontWeight: FontWeight.w300,
                             letterSpacing: 0.3),
                       ),
-                      SizedBox(height: 5),
-                    ],
-                  ),
+                    ),
+                    SizedBox(height: 5),
+                  ],
                 );
               }))
             ],
@@ -410,27 +381,16 @@ class _SingleBorrowState extends State<SingleBorrow> {
                 ),
               ),
               SizedBox(height: 15),
-              Container(
-                height: 25,
-                alignment: Alignment.center,
-                child: Text(
-                  "₹${bill.price.toString()}",
-                  style: TextStyle(
-                      color: Variables.blackColor,
-                      fontWeight: FontWeight.w300,
-                      letterSpacing: 0.3),
-                ),
-              ),
               SizedBox(height: 5),
               Column(
-                  children: List.generate(docList.length, (index) {
+                  children: List.generate(billsList.length, (index) {
                 return Column(
                   children: [
                     Container(
                       height: 25,
                       alignment: Alignment.center,
                       child: Text(
-                        '₹${docList[index].price.toString()}',
+                        '₹${billsList[index].price.toString()}',
                         style: TextStyle(
                             color: Variables.blackColor,
                             fontWeight: FontWeight.w300,
@@ -456,27 +416,16 @@ class _SingleBorrowState extends State<SingleBorrow> {
                 ),
               ),
               SizedBox(height: 15),
-              Container(
-                height: 25,
-                alignment: Alignment.center,
-                child: Text(
-                  "₹${bill.givenAmount.toString()}",
-                  style: TextStyle(
-                      color: Variables.blackColor,
-                      fontWeight: FontWeight.w300,
-                      letterSpacing: 0.3),
-                ),
-              ),
               SizedBox(height: 5),
               Column(
-                  children: List.generate(docList.length, (index) {
+                  children: List.generate(billsList.length, (index) {
                 return Column(
                   children: [
                     Container(
                       height: 25,
                       alignment: Alignment.center,
                       child: Text(
-                        '₹${docList[index].givenAmount.toString()}',
+                        '₹${billsList[index].givenAmount.toString()}',
                         style: TextStyle(
                             color: Variables.blackColor,
                             fontWeight: FontWeight.w300,
@@ -501,28 +450,16 @@ class _SingleBorrowState extends State<SingleBorrow> {
                       letterSpacing: .5),
                 ),
               ),
-              SizedBox(height: 10),
-              Container(
-                height: 25,
-                alignment: Alignment.center,
-                child: Text(
-                  "₹${(bill.price - bill.givenAmount).toString()}",
-                  style: TextStyle(
-                      color: Variables.blackColor,
-                      fontWeight: FontWeight.w300,
-                      letterSpacing: 0.3),
-                ),
-              ),
-              SizedBox(height: 5),
+              SizedBox(height: 15),
               Column(
-                  children: List.generate(docList.length, (index) {
+                  children: List.generate(billsList.length, (index) {
                 return Column(
                   children: [
                     Container(
                       height: 25,
                       alignment: Alignment.center,
                       child: Text(
-                        '₹${(docList[index].price - docList[index].givenAmount).toString()}',
+                        '₹${(billsList[index].price - billsList[index].givenAmount).toStringAsFixed(2).toString()}',
                         style: TextStyle(
                             color: Variables.blackColor,
                             fontWeight: FontWeight.w300,
@@ -548,27 +485,15 @@ class _SingleBorrowState extends State<SingleBorrow> {
                 ),
               ),
               SizedBox(height: 10),
-              Container(
-                height: 25,
-                alignment: Alignment.center,
-                child: Text(
-                  bill.isPaid ? 'Yes' : 'No',
-                  style: TextStyle(
-                      color: Variables.blackColor,
-                      fontWeight: FontWeight.w300,
-                      letterSpacing: 0.3),
-                ),
-              ),
-              SizedBox(height: 5),
               Column(
-                  children: List.generate(docList.length, (index) {
+                  children: List.generate(billsList.length, (index) {
                 return Column(
                   children: [
                     Container(
                       height: 25,
                       alignment: Alignment.center,
                       child: Text(
-                        docList[index].isPaid ? 'Yes' : 'No',
+                        billsList[index].isPaid ? 'Yes' : 'No',
                         style: TextStyle(
                             color: Variables.blackColor,
                             fontWeight: FontWeight.w300,
@@ -586,7 +511,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
     );
   }
 
-  getBuyerName() {
+  getBuyerName(Bill bill) {
     return showDialog(
         context: context,
         barrierDismissible: false,
@@ -636,7 +561,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
                 color: Variables.primaryColor,
                 onPressed: () async {
                   Navigator.pop(context);
-                  generatePakkaBillPdfAndView(context);
+                  generatePdf(bill);
                 },
                 child: Text(
                   "Yes",
@@ -646,43 +571,6 @@ class _SingleBorrowState extends State<SingleBorrow> {
             ],
           );
         });
-  }
-
-  generatePakkaBillPdfAndView(context) async {
-    if (await Permission.storage.request().isGranted) {
-      try {
-        String fullPath = await Utils.generatePakkaBill(
-            bill,
-            _buyerInfoController.text,
-            datas,
-            grossAmount,
-            totalSGST,
-            totalCGST,
-            amounten,
-            amount);
-        if (fullPath == 'textfieldError') {
-          Dialogs.okDialog(context, 'Error',
-              'Dont use next line in buyer info textfield', Colors.red[200]);
-        } else {
-          Navigator.push(
-              context,
-              BouncyPageRoute(
-                  widget: PdfPreviewwScreen(
-                path: fullPath,
-              )));
-        }
-      } catch (e) {
-        Dialogs.okDialog(
-            context, 'Error', 'Something went wrong!', Colors.red[200]);
-      }
-    } else {
-      Dialogs.okDialog(
-          context, 'Error', 'You have denied your permission', Colors.red[200]);
-    }
-
-    setState(() {
-      _buyerInfoController.clear();
-    });
   }
 
   void _showModalSheet() {
@@ -721,7 +609,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
                                 fontWeight: FontWeight.w500)),
                         Text(
                             DateFormat('dd/MM/yyyy')
-                                .format(bill.timestamp.toDate()),
+                                .format(billsList[1].timestamp.toDate()),
                             style: TextStyle(
                                 color: Variables.blackColor,
                                 fontSize: 16,
@@ -749,7 +637,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
         });
   }
 
-  getKachaBill() async {
+  getKachaBill(Bill bill) async {
     File file = await Utils.generateKachaBill(bill);
     if (file == null) {
       Dialogs.okDialog(
@@ -774,36 +662,6 @@ class _SingleBorrowState extends State<SingleBorrow> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          GestureDetector(
-            onTap: () async {
-              print(bill.billNo);
-              if (bill.isTax == null) {
-                Dialogs.okDialog(
-                    context, 'Error', 'Somthing went wrong!', Colors.red[200]);
-              } else {
-                getBillDetailsById(bill);
-                bill.isTax ? getBuyerName() : getKachaBill();
-              }
-            },
-            child: Column(
-              children: [
-                Icon(
-                  FontAwesome.file_pdf_o,
-                  color: Colors.red[200],
-                ),
-                SizedBox(
-                  height: 5,
-                ),
-                Text(
-                  "Report",
-                  style: TextStyle(
-                      color: Variables.blackColor,
-                      fontWeight: FontWeight.w300,
-                      letterSpacing: 1),
-                )
-              ],
-            ),
-          ),
           GestureDetector(
             onTap: () {
               _showModalSheet();
@@ -830,7 +688,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
           GestureDetector(
             onTap: () async {
               var uri =
-                  'sms:${bill.mobileNo}?body=Dear sir/madam, your payment of ₹ ${(bill.price - bill.givenAmount).toString()} is still pending. Make payment as soon as possible';
+                  'sms:${widget.mobileNo}?body=Dear sir/madam, your payment of ₹ ${amountToBeGiven.toString()} is still pending. Make payment as soon as possible';
               if (await canLaunch(uri)) {
                 await launch(uri);
               } else {

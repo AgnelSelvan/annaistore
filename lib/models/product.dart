@@ -5,8 +5,8 @@ class Product {
   String hsnCode;
   String unit;
   int unitQty;
-  int purchaseRate;
-  int sellingRate;
+  double purchaseRate;
+  double sellingRate;
 
   Product(
       {this.name,

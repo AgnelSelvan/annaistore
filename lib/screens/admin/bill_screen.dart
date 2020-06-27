@@ -45,7 +45,7 @@ class _BillScreenState extends State<BillScreen> {
   List<String> productListId = [];
   List<String> productList = [];
   List<int> qtyList = [];
-  List<int> sellingRateList = [];
+  List<double> sellingRateList = [];
   List<int> taxList = [];
   double totalPrice;
   int tax;
@@ -96,7 +96,7 @@ class _BillScreenState extends State<BillScreen> {
                 color: Variables.primaryColor,
               ),
             ),
-            centerTitle: null),
+            centerTitle: true),
         body: ListView(
           physics: const BouncingScrollPhysics(),
           children: <Widget>[
@@ -207,7 +207,7 @@ class _BillScreenState extends State<BillScreen> {
               var sum = 0;
               tax = 0;
               for (var i = 0; i < sellingRateList.length; i++) {
-                sum += sellingRateList[i] * qtyList[i];
+                sum += sellingRateList[i].toInt() * qtyList[i];
                 tax += taxList[i];
               }
               if (!_isTaxCheckBox) {
@@ -316,8 +316,8 @@ class _BillScreenState extends State<BillScreen> {
                           billId: billId,
                           billNo: _billNumberController.text,
                           customerName: _customerNameController.text,
-                          givenAmount: totalPrice.round(),
-                          price: totalPrice.toInt(),
+                          givenAmount: totalPrice,
+                          price: totalPrice,
                           productList: productList,
                           timestamp: Timestamp.now(),
                           qtyList: qtyList,
@@ -493,7 +493,7 @@ class _BillScreenState extends State<BillScreen> {
                           totalPrice = 0;
                           if (_isTaxCheckBox) {
                             for (var i = 0; i < sellingRateList.length; i++) {
-                              sum += sellingRateList[i] * qtyList[i];
+                              sum += sellingRateList[i].toInt() * qtyList[i];
                               tax += taxList[i];
                             }
                             totalPrice = (sum + (sum * (tax / 100)));
@@ -507,7 +507,7 @@ class _BillScreenState extends State<BillScreen> {
                             });
                           } else if (!_isTaxCheckBox) {
                             for (var i = 0; i < sellingRateList.length; i++) {
-                              sum += sellingRateList[i] * qtyList[i];
+                              sum += sellingRateList[i].toInt() * qtyList[i];
                               tax += taxList[i];
                             }
                             totalPrice = sum.toDouble();
@@ -604,7 +604,7 @@ class _BillScreenState extends State<BillScreen> {
                   totalPrice = 0;
                   if (_isTaxCheckBox) {
                     for (var i = 0; i < sellingRateList.length; i++) {
-                      sum += sellingRateList[i] * qtyList[i];
+                      sum += sellingRateList[i].toInt() * qtyList[i];
                       tax += taxList[i];
                     }
                     totalPrice = (sum + (sum * (tax / 100)));
@@ -618,7 +618,7 @@ class _BillScreenState extends State<BillScreen> {
                     });
                   } else if (!_isTaxCheckBox) {
                     for (var i = 0; i < sellingRateList.length; i++) {
-                      sum += sellingRateList[i] * qtyList[i];
+                      sum += sellingRateList[i].toInt() * qtyList[i];
                       tax += taxList[i];
                     }
                     totalPrice = sum.toDouble();

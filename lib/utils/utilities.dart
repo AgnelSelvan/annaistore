@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:annaistore/models/bill.dart';
-import 'package:annaistore/models/borrow_model.dart';
 import 'package:annaistore/widgets/dialogs.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
@@ -37,7 +36,7 @@ class Utils {
     if (await Permission.storage.request().isGranted) {
       final pdf = pw.Document();
       List<List<dynamic>> datas = List();
-      int amount = 0;
+      double amount = 0;
 
       for (dynamic i = 0; i < borrowModel.productList.length; i++) {
         List<dynamic> data = List();

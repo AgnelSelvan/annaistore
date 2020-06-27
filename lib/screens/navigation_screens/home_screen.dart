@@ -1,4 +1,6 @@
+import 'package:annaistore/constants/theme.dart';
 import 'package:annaistore/flutter_barcode_scanner.dart';
+import 'package:annaistore/main.dart';
 import 'package:annaistore/models/user.dart';
 import 'package:annaistore/resources/admin_methods.dart';
 import 'package:annaistore/resources/auth_methods.dart';
@@ -7,16 +9,18 @@ import 'package:annaistore/screens/admin/product_details.dart';
 import 'package:annaistore/screens/canvas_screen.dart';
 import 'package:annaistore/screens/map_screen.dart';
 import 'package:annaistore/screens/thread_screen.dart';
+import 'package:annaistore/theme/theme_notifier.dart';
 import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/widgets/bouncy_page_route.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
-import 'package:annaistore/widgets/custom_drawer.dart';
 import 'package:annaistore/widgets/map.dart';
 import 'package:annaistore/widgets/widgets.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_icons/flutter_icons.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 AdminMethods _adminMethods = AdminMethods();
 
@@ -33,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen>
   TextEditingController phoneNumberController = TextEditingController();
   String currentUserId;
   User currentUser;
+  bool isDarkTheme = true;
 
   getCurrentUserDetails() async {
     FirebaseUser user = await _authMethods.getCurrentUser();
@@ -101,30 +106,49 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final themeNotifier = Provider.of<ThemeNotifier>(context);
     return Scaffold(
       key: _scaffoldKey,
       appBar: CustomAppBar(
-        bgColor: Colors.white,
-        title: Text("Annai Store", style: Variables.appBarTextStyle),
+        bgColor: Variables.lightGreyColor,
+        title: Text("Annai Store",
+            style: TextStyle(
+                fontSize: 20,
+                letterSpacing: 1,
+                color: Theme.of(context).accentColor,
+                fontWeight: FontWeight.w400)),
         actions: [
           IconButton(
-              icon: Icon(
-                FontAwesome.qrcode,
-                color: Variables.primaryColor,
-              ),
+              icon: Icon(FontAwesome.qrcode,
+                  color: Theme.of(context).accentColor),
               onPressed: () => scanQR())
         ],
-        leading: IconButton(
-            icon: Icon(
-              Icons.menu,
-              color: Variables.primaryColor,
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CircleAvatar(
+            radius: 10,
+            backgroundColor: Theme.of(context).primaryColor,
+            backgroundImage: isDarkTheme
+                ? AssetImage('assets/images/logo/dark-theme-logo.png')
+                : AssetImage('assets/images/logo/light-theme-logo.png'),
+            child: GestureDetector(
+              onDoubleTap: () async {
+                isDarkTheme = !isDarkTheme;
+                if (isDarkTheme) {
+                  themeNotifier.setTheme(darkTheme);
+                } else {
+                  themeNotifier.setTheme(lightTheme);
+                }
+                var prefs = await SharedPreferences.getInstance();
+                prefs.setBool('darkMode', isDarkTheme);
+
+                print("Dark Theme");
+              },
             ),
-            onPressed: () {
-              _scaffoldKey.currentState.openDrawer();
-            }),
-        centerTitle: null,
+          ),
+        ),
+        centerTitle: true,
       ),
-      drawer: customDrawer(context, currentUserId),
       body: Container(
         child: buildBody(context),
       ),

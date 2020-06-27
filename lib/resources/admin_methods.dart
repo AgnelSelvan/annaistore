@@ -1,7 +1,6 @@
 import 'package:annaistore/constants/strings.dart';
 import 'package:annaistore/models/bill.dart';
 import 'package:annaistore/models/borrow.dart';
-import 'package:annaistore/models/borrow_model.dart';
 import 'package:annaistore/models/category.dart';
 import 'package:annaistore/models/paid.dart';
 import 'package:annaistore/models/product.dart';
@@ -116,8 +115,8 @@ class AdminMethods {
     await _subCategoryCollection.document(id).delete();
   }
 
-  Future<void> addProductToDb(String code, String name, int purchaseRate,
-      int sellingRate, String hsnCode, String unit, int unitQty) async {
+  Future<void> addProductToDb(String code, String name, double purchaseRate,
+      double sellingRate, String hsnCode, String unit, int unitQty) async {
     String docId = _productCollection.document().documentID;
     Product product = Product(
         id: docId,
@@ -345,8 +344,8 @@ class AdminMethods {
 
   //   return amount;
   // }
-  Future<int> getTotalAmountByBorrowId(String borrowId) async {
-    var amount = 0;
+  Future<double> getTotalAmountByBorrowId(String borrowId) async {
+    double amount = 0;
     DocumentSnapshot doc = await _borrowsCollection.document(borrowId).get();
     DocumentSnapshot billDoc =
         await _billsCollection.document(doc.data['bill_id']).get();
@@ -386,10 +385,10 @@ class AdminMethods {
     return _borrowsCollection.snapshots();
   }
 
-  Future<int> totalAmountYouWillGet() async {
+  Future<double> totalAmountYouWillGet() async {
     QuerySnapshot docs = await _borrowsCollection.getDocuments();
     List<DocumentSnapshot> docList = docs.documents.toList();
-    int sum = 0;
+    double sum = 0;
     for (var i = 0; i < docList.length; i++) {
       Borrow borrow = Borrow.fromMap(docList[i].data);
       QuerySnapshot manyBorrow = await _borrowsCollection
@@ -451,20 +450,29 @@ class AdminMethods {
     return product;
   }
 
-  Future<List<DocumentSnapshot>> getBorrowListOfMe(User currentUser) async {
+  Future<List<Bill>> getBorrowListOfMe(User currentUser) async {
     QuerySnapshot docs = await _borrowsCollection.getDocuments();
     List<DocumentSnapshot> docsList = docs.documents.toList();
-    List<DocumentSnapshot> myBorrowList;
+    List<Bill> myBorrowList = List();
 
+    // for (var doc in docsList) {
+    //   DocumentSnapshot myBill =
+    //       await _billsCollection.document(doc['bill_id']).get();
+
+    //   QuerySnapshot myList = await _billsCollection
+    //       .where('mobile_no',
+    //           isEqualTo: currentUser.mobileNo.replaceAll(' ', ''))
+    //       .getDocuments();
+    //   myBorrowList = myList.documents.toList();
+    // }
+    print("currentUser.mobileNo:${currentUser.mobileNo}");
     for (var doc in docsList) {
-      DocumentSnapshot myBill =
-          await _billsCollection.document(doc['bill_id']).get();
-
-      QuerySnapshot myList = await _billsCollection
-          .where('mobile_no',
-              isEqualTo: currentUser.mobileNo.replaceAll(' ', ''))
-          .getDocuments();
-      myBorrowList = myList.documents.toList();
+      Borrow thisDoc = Borrow.fromMap(doc.data);
+      Bill bill = await getBillById(thisDoc.billId);
+      print("bill.mobileNo:${bill.mobileNo}");
+      if (currentUser.mobileNo == bill.mobileNo) {
+        myBorrowList.add(bill);
+      }
     }
 
     // QuerySnapshot docs = await _borrowsCollection
@@ -530,5 +538,19 @@ class AdminMethods {
     QuerySnapshot docs = await _paidsCollection.getDocuments();
     List<DocumentSnapshot> docsList = docs.documents.toList();
     return docsList;
+  }
+
+  Future<List<Bill>> getBillByMobileNo(String mobileNo) async {
+    List<Bill> billsList = List();
+    QuerySnapshot docs = await _billsCollection
+        .where('mobile_no', isEqualTo: mobileNo)
+        .getDocuments();
+    List<DocumentSnapshot> docsList = docs.documents.toList();
+
+    for (var doc in docsList) {
+      Bill bill = Bill.fromMap(doc.data);
+      billsList.add(bill);
+    }
+    return billsList;
   }
 }

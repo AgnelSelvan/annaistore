@@ -1,11 +1,15 @@
 import 'dart:io';
+import 'package:annaistore/constants/theme.dart';
 import 'package:annaistore/resources/auth_methods.dart';
 import 'package:annaistore/screens/auth_screen.dart';
 import 'package:annaistore/screens/root_screen.dart';
-import 'package:annaistore/theme/theme_controller.dart';
+import 'package:annaistore/theme/theme_notifier.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void _setTargetPlatformForDesktop() {
   if (Platform.isLinux || Platform.isWindows) {
@@ -15,7 +19,19 @@ void _setTargetPlatformForDesktop() {
 
 void main() {
   _setTargetPlatformForDesktop();
-  runApp(MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]).then((_) {
+    SharedPreferences.getInstance().then((prefs) {
+      var darkModeOn = prefs.getBool('darkMode') ?? true;
+      runApp(
+        ChangeNotifierProvider<ThemeNotifier>(
+          builder: (_) => ThemeNotifier(darkModeOn ? darkTheme : lightTheme),
+          create: (_) => ThemeNotifier(darkModeOn ? darkTheme : lightTheme),
+          child: MyApp(),
+        ),
+      );
+    });
+  });
 }
 
 class MyApp extends StatefulWidget {
@@ -28,27 +44,23 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    final themeNotifier = Provider.of<ThemeNotifier>(context);
     return MaterialApp(
-      home: StreamBuilder(
-        stream: themeController.darkThemeEnabled,
-        initialData: false,
-        builder: (context, snapshot) => MaterialApp(
-          // theme: snapshot.data ? ThemeData.dark() : ThemeData.light(),
-          // theme: AppTheme.lightTheme,
-          // darkTheme: AppTheme.darkTheme,
-          // themeMode: snapshot.data ? ThemeMode.dark : ThemeMode.light,
-          // home: HomePage(snapshot.data)
-          home: FutureBuilder(
-            future: _authMethods.getCurrentUser(),
-            builder: (context, AsyncSnapshot<FirebaseUser> snapshot) {
-              if (snapshot.hasData) {
-                return RootScreen();
-              } else {
-                return AuthScreen();
-              }
-            },
-          ),
-        ),
+      theme: themeNotifier.getTheme(),
+      // theme: snapshot.data ? ThemeData.dark() : ThemeData.light(),
+      // theme: AppTheme.lightTheme,
+      // darkTheme: AppTheme.darkTheme,
+      // themeMode: snapshot.data ? ThemeMode.dark : ThemeMode.light,
+      // home: HomePage(snapshot.data)
+      home: FutureBuilder(
+        future: _authMethods.getCurrentUser(),
+        builder: (context, AsyncSnapshot<FirebaseUser> snapshot) {
+          if (snapshot.hasData) {
+            return RootScreen();
+          } else {
+            return AuthScreen();
+          }
+        },
       ),
     );
   }
@@ -76,7 +88,7 @@ class _MyAppState extends State<MyApp> {
 //               onPressed: () {
 //                 _scaffoldKey.currentState.openDrawer();
 //               }),
-//           centerTitle: null),
+//           centerTitle: true),
 //       body: Center(child: RootScreen()),
 //       drawer: customDrawer(context),
 //     );

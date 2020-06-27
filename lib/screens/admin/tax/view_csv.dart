@@ -30,7 +30,7 @@ class _LoadAndViewCsvPageState extends State<LoadAndViewCsvPage> {
           IconButton(
               icon: Icon(
                 Icons.share,
-                color: Variables.lightGreyColor,
+                color: Variables.greyColor,
               ),
               onPressed: () {
                 ShareExtend.share(widget.path, "file");

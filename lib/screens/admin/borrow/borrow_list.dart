@@ -1,5 +1,4 @@
 import 'package:annaistore/models/bill.dart';
-import 'package:annaistore/models/borrow_model.dart';
 import 'package:annaistore/models/user.dart';
 import 'package:annaistore/resources/admin_methods.dart';
 import 'package:annaistore/resources/auth_methods.dart';
@@ -29,8 +28,8 @@ class BorrowList extends StatefulWidget {
 class _BorrowListState extends State<BorrowList> {
   User currentUser;
   bool isLoading = false;
-  List<DocumentSnapshot> myBorrowList;
-  int myAmount;
+  List<Bill> myBorrowList;
+  double myAmount;
 
   getCurrentUser() async {
     setState(() {
@@ -55,13 +54,12 @@ class _BorrowListState extends State<BorrowList> {
 
   getBorrowListOfMe() async {
     print("CurrentUser: ${currentUser.mobileNo}");
-    List<DocumentSnapshot> docs =
-        await _adminMethods.getBorrowListOfMe(currentUser);
+    List<Bill> billsList = await _adminMethods.getBorrowListOfMe(currentUser);
     setState(() {
-      myBorrowList = docs;
+      myBorrowList = billsList;
     });
     for (var borrow in myBorrowList) {
-      myAmount = borrow['price'] - borrow['given_amount'];
+      myAmount = borrow.price - borrow.givenAmount;
     }
     print('myAmount:$myAmount');
   }
@@ -88,7 +86,7 @@ class _BorrowListState extends State<BorrowList> {
               color: Variables.primaryColor,
             ),
           ),
-          centerTitle: null),
+          centerTitle: true),
       body: isLoading
           ? CustomCircularLoading()
           : SingleChildScrollView(
@@ -131,8 +129,8 @@ class _BorrowListState extends State<BorrowList> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             FutureBuilder(
-                future: _adminMethods.getTotalAmountByBorrowId(
-                    myBorrowList[0].data['borrow_id']),
+                future: _adminMethods
+                    .getTotalAmountByBorrowId(myBorrowList[0].borrowId),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return CustomCircularLoading();
@@ -169,7 +167,7 @@ class _BorrowListState extends State<BorrowList> {
         separatorBuilder: (_, __) =>
             CustomDivider(leftSpacing: 20, rightSpacing: 20),
         itemBuilder: (context, index) {
-          BorrowModel borrow = BorrowModel.fromMap(myBorrowList[index].data);
+          Bill borrow = myBorrowList[index];
           if (myBorrowList.length == 0) {
             return ListTile(
               title: Text("No borrows yet!"),
@@ -180,7 +178,7 @@ class _BorrowListState extends State<BorrowList> {
               Navigator.push(
                   context,
                   BouncyPageRoute(
-                      widget: SingleBorrow(borrowId: borrow.borrowId)));
+                      widget: SingleBorrow(mobileNo: borrow.mobileNo)));
             },
             title: Text("Annai Store"),
             subtitle: Text(borrow.mobileNo),
@@ -192,8 +190,8 @@ class _BorrowListState extends State<BorrowList> {
               ),
             ),
             trailing: FutureBuilder<Object>(
-                future: _adminMethods.getTotalAmountByBorrowId(
-                    myBorrowList[index].data['borrow_id']),
+                future: _adminMethods
+                    .getTotalAmountByBorrowId(myBorrowList[index].borrowId),
                 builder: (context, snapshot) {
                   return Text(
                     "₹ ${(snapshot.data).toString()}",
@@ -219,11 +217,12 @@ class _BorrowListState extends State<BorrowList> {
                       builder: (context, AsyncSnapshot<Bill> snapshot) {
                         return ListTile(
                           onTap: () {
+                            print(snapshot.data.mobileNo);
                             Navigator.push(
                                 context,
                                 BouncyPageRoute(
                                     widget: SingleBorrow(
-                                        borrowId: snapshot.data.borrowId)));
+                                        mobileNo: snapshot.data.mobileNo)));
                           },
                           title: Text(snapshot.data.customerName),
                           subtitle: Text(snapshot.data.mobileNo),
@@ -234,7 +233,7 @@ class _BorrowListState extends State<BorrowList> {
                               style: TextStyle(color: Colors.white),
                             ),
                           ),
-                          trailing: FutureBuilder<int>(
+                          trailing: FutureBuilder<double>(
                               future: _adminMethods.getTotalAmountByBorrowId(
                                   snapshot.data.borrowId),
                               builder: (context, snapshot) {
@@ -327,7 +326,7 @@ class _BorrowListState extends State<BorrowList> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "₹ ${snapshot.data.toString()}",
+                    "₹ ${snapshot.data.toStringAsFixed(2).toString()}",
                     style: TextStyle(
                         color: Variables.lightGreyColor,
                         fontWeight: FontWeight.w500,

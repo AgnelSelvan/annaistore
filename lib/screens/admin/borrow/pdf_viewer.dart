@@ -49,8 +49,7 @@ class PdfPreviewwScreen extends StatelessWidget {
                   color: Variables.primaryColor,
                 ),
                 onPressed: () {
-                  Navigator.push(
-                      context, BouncyPageRoute(widget: BorrowList()));
+                  Navigator.pop(context);
                 }),
             centerTitle: true,
             bgColor: Variables.lightGreyColor),
