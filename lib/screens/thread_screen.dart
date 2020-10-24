@@ -98,7 +98,8 @@ class BuildThreadCard extends StatelessWidget {
   final String imgPath;
   final bool isFavorite;
   final BuildContext context;
-  const BuildThreadCard({this.context, this.imgPath, this.isFavorite, this.name});
+  const BuildThreadCard(
+      {this.context, this.imgPath, this.isFavorite, this.name});
 
   @override
   Widget build(BuildContext context) {

@@ -7,7 +7,6 @@ import 'package:annaistore/theme/theme_notifier.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -20,17 +19,16 @@ void _setTargetPlatformForDesktop() {
 void main() {
   _setTargetPlatformForDesktop();
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]).then((_) {
-    SharedPreferences.getInstance().then((prefs) {
-      var darkModeOn = prefs.getBool('darkMode') ?? true;
-      runApp(
-        ChangeNotifierProvider<ThemeNotifier>(
-          builder: (_) => ThemeNotifier(darkModeOn ? darkTheme : lightTheme),
-          create: (_) => ThemeNotifier(darkModeOn ? darkTheme : lightTheme),
-          child: MyApp(),
-        ),
-      );
-    });
+
+  SharedPreferences.getInstance().then((prefs) {
+    var darkModeOn = prefs.getBool('darkMode') ?? true;
+    runApp(
+      ChangeNotifierProvider<ThemeNotifier>(
+        builder: (_) => ThemeNotifier(darkModeOn ? darkTheme : lightTheme),
+        create: (_) => ThemeNotifier(darkModeOn ? darkTheme : lightTheme),
+        child: MyApp(),
+      ),
+    );
   });
 }
 

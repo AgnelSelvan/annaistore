@@ -170,7 +170,7 @@ class _StockScreenState extends State<StockScreen>
     try {
       barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
           '#ff6666', 'Cancel', true, ScanMode.QR);
-      print(barcodeScanRes);
+      //print(barcodeScanRes);
     } on PlatformException {
       barcodeScanRes = 'Failed to get platform version.';
     }
@@ -192,7 +192,7 @@ class _StockScreenState extends State<StockScreen>
         createAlertDialog(context, product);
       }
     } else {
-      print('Not Exists');
+      //print('Not Exists');
     }
   }
 

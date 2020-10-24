@@ -18,7 +18,7 @@ final darkTheme = ThemeData(
   primaryColorBrightness: Brightness.dark,
   primaryColorLight: Color(0xff9e9e9e),
   primaryColorDark: Color(0xff000000),
-  accentColor: Color(0xffce93d7),
+  accentColor: Color(0xfff8c82b),
   accentColorBrightness: Brightness.dark,
   canvasColor: Color(0xff303030),
   scaffoldBackgroundColor: Color(0xff303030),
@@ -30,7 +30,7 @@ final darkTheme = ThemeData(
   selectedRowColor: Color(0xfff5f5f5),
   unselectedWidgetColor: Color(0xb3ffffff),
   disabledColor: Color(0x62ffffff),
-  buttonColor: Color(0xffc79305),
+  buttonColor: Color(0xffc68206),
   toggleableActiveColor: Color(0xff64ffda),
   secondaryHeaderColor: Color(0xff616161),
   textSelectionColor: Color(0xff64ffda),
@@ -55,14 +55,14 @@ final darkTheme = ThemeData(
       borderRadius: BorderRadius.all(Radius.circular(2.0)),
     ),
     alignedDropdown: false,
-    buttonColor: Color(0xffc79305),
+    buttonColor: Color(0xffc68206),
     disabledColor: Color(0x61ffffff),
     highlightColor: Color(0x29ffffff),
     splashColor: Color(0x1fffffff),
     focusColor: Color(0x1fffffff),
     hoverColor: Color(0x0affffff),
     colorScheme: ColorScheme(
-      primary: Color(0xfffac32d),
+      primary: Color(0xfffac35e),
       primaryVariant: Color(0xff000000),
       secondary: Color(0xff64ffda),
       secondaryVariant: Color(0xff00bfa5),
@@ -495,7 +495,6 @@ final darkTheme = ThemeData(
     borderRadius: BorderRadius.all(Radius.circular(0.0)),
   )),
 );
-
 final lightTheme = ThemeData(
   primarySwatch: MaterialColor(4294624045, {
     50: Color(0xfffef8e6),

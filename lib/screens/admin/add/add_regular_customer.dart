@@ -84,11 +84,11 @@ class _RegularCustomerState extends State<RegularCustomer> {
   }
 
   void showWidget() {
-    print(viewVisible);
+    //print(viewVisible);
     setState(() {
       viewVisible = !viewVisible;
     });
-    print(viewVisible);
+    //print(viewVisible);
   }
 
   addCustomerToDb() {
@@ -115,8 +115,7 @@ class _RegularCustomerState extends State<RegularCustomer> {
             _mobileNoController.clear();
             _gstinController.clear();
           });
-        }
-        else{
+        } else {
           SnackBar snackbar =
               customSnackBar('Data Already Exists!', Colors.red[200]);
           _scaffoldKey.currentState.showSnackBar(snackbar);
@@ -276,7 +275,7 @@ class _RegularCustomerState extends State<RegularCustomer> {
         stream: _adminMethods.fetchAllUnit(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
-            print(snapshot.error);
+            //print(snapshot.error);
           } else {
             if (!snapshot.hasData) {
               return CustomCircularLoading();

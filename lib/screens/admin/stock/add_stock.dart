@@ -59,7 +59,7 @@ class _AddStockState extends State<AddStock> {
     try {
       barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
           '#ff6666', 'Cancel', true, ScanMode.QR);
-      print(barcodeScanRes);
+      //print(barcodeScanRes);
     } on PlatformException {
       barcodeScanRes = 'Failed to get platform version.';
     }
@@ -81,7 +81,7 @@ class _AddStockState extends State<AddStock> {
         createAlertDialog(context, product);
       }
     } else {
-      print('Not Exists');
+      //print('Not Exists');
     }
   }
 
@@ -354,7 +354,7 @@ class _AddStockState extends State<AddStock> {
         stream: _adminMethods.fetchAllUnit(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
-            print(snapshot.error);
+            //print(snapshot.error);
           } else {
             if (!snapshot.hasData) {
               return CustomCircularLoading();
@@ -409,7 +409,7 @@ class _AddStockState extends State<AddStock> {
                   builder: (BuildContext context,
                       AsyncSnapshot<QuerySnapshot> snapshot) {
                     if (snapshot.hasError) {
-                      print(snapshot.error);
+                      //print(snapshot.error);
                     } else {
                       if (!snapshot.hasData) {
                         return CustomCircularLoading();

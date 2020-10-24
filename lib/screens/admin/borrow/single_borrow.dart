@@ -53,6 +53,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
   final pdf = pw.Document();
   List<Bill> billsList = List();
   double amountToBeGiven = 0;
+  List<dynamic> taxList = List();
 
   generatePdf(Bill bill) async {
     double amount = 0;
@@ -84,7 +85,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
                   (bill.taxList[i] / 100)) /
               2);
       datas.add(data);
-      print("totalSGST:$totalSGST");
+      //print("totalSGST:$totalSGST");
     }
     setState(() {
       amounten = NumberWordsSpelling.toWord(amount.toStringAsFixed(0), 'en_US');
@@ -153,7 +154,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
         isLoading = false;
       });
     }
-    print(currentUser.mobileNo);
+    //print(currentUser.mobileNo);
   }
 
   convertWidgetToImage() async {
@@ -171,16 +172,16 @@ class _SingleBorrowState extends State<SingleBorrow> {
     pngList.add(png);
     final res = await _imageSaver.saveImages(
         imageBytes: pngList, directoryName: '${dir.path}/image.jpg');
-    print(res.toString());
+    //print(res.toString());
 
-    print(dir.path);
+    //print(dir.path);
 
     final file = await new File('${dir.path}/sample.png').create();
     file.writeAsBytesSync(png);
-    print(file);
+    //print(file);
 
     String text =
-        'Dear sir/madam, your payment of ₹ ${(billsList[1].price - billsList[1].givenAmount).toString()} is still pending. Make payment as soon as possible';
+        'Dear sir/madam, your payment of ₹ ${amountToBeGiven.round().toString()} is still pending. Make payment as soon as possible';
     try {
       await Share.file('esys image', 'sample.png', png, 'image/png',
           text: text);
@@ -191,7 +192,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
 
     // String text =
     //     'Dear sir/madam, your payment of ₹ ${(borrowModel.price - borrowModel.givenAmount).toString()} is still pending. Make payment as soon as possible';
-    // print("Hii");
+    // //print("Hii");
     // var uri =
     //     "whatsapp://send?phone=${borrowModel.mobileNo}&text=$text&img=${file.path}";
     // if (await canLaunch(uri)) {
@@ -206,14 +207,30 @@ class _SingleBorrowState extends State<SingleBorrow> {
   }
 
   getBillsByMobileNo() async {
+    amountToBeGiven = 0;
     List<Bill> docsList =
         await _adminMethods.getBillByMobileNo(widget.mobileNo);
     for (var doc in docsList) {
-      amountToBeGiven = amountToBeGiven + (doc.price - doc.givenAmount);
+      int totalTax = 0;
+      for (var tax in doc.taxList) {
+        totalTax = totalTax + tax;
+      }
+      taxList.add(totalTax);
+    }
+    for (var i = 0; i < docsList.length; i++) {
+      if (docsList[i].isTax)
+        amountToBeGiven = amountToBeGiven +
+            ((docsList[i].price +
+                (docsList[i].price * (taxList[i] / 100)) -
+                docsList[i].givenAmount));
+      else
+        amountToBeGiven =
+            amountToBeGiven + (docsList[i].price - docsList[i].givenAmount);
     }
     setState(() {
       billsList = docsList;
     });
+    //print(taxList);
   }
 
   @override
@@ -262,7 +279,10 @@ class _SingleBorrowState extends State<SingleBorrow> {
   buildStickyBody() {
     return ListView(
       shrinkWrap: true,
-      children: [buildBodyHeadButtons(), buildEntries()],
+      children: [
+        currentUser.role == 'admin' ? buildBodyHeadButtons() : Container(),
+        buildEntries()
+      ],
     );
   }
 
@@ -300,14 +320,31 @@ class _SingleBorrowState extends State<SingleBorrow> {
                                 Dialogs.okDialog(context, 'Error',
                                     'Somthing went wrong!', Colors.red[200]);
                               } else {
-                                billsList[index].isTax
-                                    ? getBuyerName(billsList[index])
-                                    : getKachaBill(billsList[index]);
+                                if (currentUser.role == 'admin') {
+                                  billsList[index].isTax
+                                      ? getBuyerName(billsList[index])
+                                      : getKachaBill(billsList[index]);
+                                } else {
+                                  billsList[index].isTax
+                                      ? generatePdf(billsList[index])
+                                      : getKachaBill(billsList[index]);
+                                }
                               }
                             },
                             trailingIcon: Icon(
                               FontAwesome.file_pdf_o,
+                              size: 16,
                               color: Colors.red[200],
+                            )),
+                        FocusedMenuItem(
+                            title: Text("Update Given Amount"),
+                            onPressed: () {
+                              showUpdateGivenAmount(billsList[index]);
+                            },
+                            trailingIcon: Icon(
+                              FontAwesome.rupee,
+                              size: 16,
+                              color: Colors.orange[200],
                             )),
                       ],
                       onPressed: () {},
@@ -390,7 +427,9 @@ class _SingleBorrowState extends State<SingleBorrow> {
                       height: 25,
                       alignment: Alignment.center,
                       child: Text(
-                        '₹${billsList[index].price.toString()}',
+                        billsList[index].isTax
+                            ? '₹${(billsList[index].price + (billsList[index].price * (taxList[index] / 100))).toStringAsFixed(2).toString()}'
+                            : '₹${billsList[index].price.toStringAsFixed(2).toString()}',
                         style: TextStyle(
                             color: Variables.blackColor,
                             fontWeight: FontWeight.w300,
@@ -459,7 +498,9 @@ class _SingleBorrowState extends State<SingleBorrow> {
                       height: 25,
                       alignment: Alignment.center,
                       child: Text(
-                        '₹${(billsList[index].price - billsList[index].givenAmount).toStringAsFixed(2).toString()}',
+                        billsList[index].isTax
+                            ? '₹${((billsList[index].price + (billsList[index].price * (taxList[index] / 100))) - billsList[index].givenAmount).round().toString()}'
+                            : '₹${(billsList[index].price - billsList[index].givenAmount).round().toString()}',
                         style: TextStyle(
                             color: Variables.blackColor,
                             fontWeight: FontWeight.w300,
@@ -509,6 +550,65 @@ class _SingleBorrowState extends State<SingleBorrow> {
         ],
       ),
     );
+  }
+
+  showUpdateGivenAmount(Bill bill) {
+    TextEditingController _givenAmountController = TextEditingController();
+    return showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            title: Text('Amount'),
+            content: Container(
+              padding: EdgeInsets.symmetric(horizontal: 15),
+              decoration: BoxDecoration(
+                  color: Colors.yellow[100],
+                  borderRadius: BorderRadius.circular(8)),
+              child: TextFormField(
+                cursorColor: Variables.primaryColor,
+                keyboardType: TextInputType.number,
+                style: Variables.inputTextStyle,
+                decoration: InputDecoration(
+                    prefix: Icon(
+                      FontAwesome.rupee,
+                      size: 16,
+                      color: Colors.red[200],
+                    ),
+                    border: InputBorder.none,
+                    hintText: '200'),
+                controller: _givenAmountController,
+              ),
+            ),
+            actions: <Widget>[
+              FlatButton(
+                onPressed: () {
+                  Navigator.of(context).pop(DialogAction.Abort);
+                },
+                child: Text(
+                  "No",
+                  style: TextStyle(color: Variables.primaryColor),
+                ),
+              ),
+              RaisedButton(
+                elevation: 0,
+                color: Variables.primaryColor,
+                onPressed: () async {
+                  _adminMethods.updateGivenAmount(
+                      bill, double.parse(_givenAmountController.text));
+                  getBillsByMobileNo();
+                  Navigator.pop(context);
+                },
+                child: Text(
+                  "Yes",
+                  style: TextStyle(color: Variables.lightGreyColor),
+                ),
+              )
+            ],
+          );
+        });
   }
 
   getBuyerName(Bill bill) {
@@ -602,14 +702,14 @@ class _SingleBorrowState extends State<SingleBorrow> {
                               fontSize: 20,
                               fontWeight: FontWeight.w500),
                         ),
-                        Text("₹${amountToBeGiven.toString()}",
+                        Text("₹${amountToBeGiven.round().toString()}",
                             style: TextStyle(
                                 color: Colors.black,
                                 fontSize: 20,
                                 fontWeight: FontWeight.w500)),
                         Text(
                             DateFormat('dd/MM/yyyy')
-                                .format(billsList[1].timestamp.toDate()),
+                                .format(billsList[0].timestamp.toDate()),
                             style: TextStyle(
                                 color: Variables.blackColor,
                                 fontSize: 16,
@@ -644,7 +744,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
           context, 'Error', "Somthing went wrong!", Colors.red[200]);
     } else {
       String fullPath = file.path;
-      print('Utils working');
+      //print('Utils working');
 
       Navigator.push(
           context,
@@ -688,7 +788,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
           GestureDetector(
             onTap: () async {
               var uri =
-                  'sms:${widget.mobileNo}?body=Dear sir/madam, your payment of ₹ ${amountToBeGiven.toString()} is still pending. Make payment as soon as possible';
+                  'sms:${widget.mobileNo}?body=Dear sir/madam, your payment of ₹ ${amountToBeGiven.round().toString()} is still pending. Make payment as soon as possible';
               if (await canLaunch(uri)) {
                 await launch(uri);
               } else {
@@ -740,7 +840,7 @@ class _SingleBorrowState extends State<SingleBorrow> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                "₹ ${amountToBeGiven.toString()}",
+                "₹ ${amountToBeGiven.round().toString()}",
                 style: TextStyle(
                     color: Variables.lightGreyColor,
                     fontWeight: FontWeight.w500,

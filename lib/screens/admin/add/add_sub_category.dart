@@ -63,11 +63,11 @@ class _AddSubCategoryState extends State<AddSubCategory> {
   }
 
   void showWidget() {
-    print(viewVisible);
+    //print(viewVisible);
     setState(() {
       viewVisible = !viewVisible;
     });
-    print(viewVisible);
+    //print(viewVisible);
   }
 
   void addCategoryToDb() {
@@ -355,7 +355,7 @@ class _AddSubCategoryState extends State<AddSubCategory> {
         stream: _adminMethods.fetchAllCategory(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
-            print(snapshot.error);
+            //print(snapshot.error);
           } else {
             if (!snapshot.hasData) {
               return CustomCircularLoading();

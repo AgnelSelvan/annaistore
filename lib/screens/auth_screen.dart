@@ -47,14 +47,14 @@ class AuthScreenState extends State<AuthScreen> {
           FirebaseUser user = authResult.user;
           if (user != null) {
             authenticateUserByPhoneLogin(user);
-            print(user.phoneNumber);
-            print("Login In");
+            //print(user.phoneNumber);
+            //print("Login In");
           }
         },
         verificationFailed: (AuthException authException) {
           Dialogs.okDialog(
               context, 'Error', authException.message, Colors.red[200]);
-          print(authException.message);
+          //print(authException.message);
         },
         codeSent: (String verificationId, [int forceResendingCode]) {
           showDialog(
@@ -98,9 +98,9 @@ class AuthScreenState extends State<AuthScreen> {
                       FirebaseUser user = result.user;
                       if (user != null) {
                         authenticateUserByPhoneLogin(user);
-                        print("Login In");
+                        //print("Login In");
                       } else {
-                        print("Erro");
+                        //print("Erro");
                       }
                       Navigator.pop(context);
                       codeController.clear();
@@ -287,7 +287,7 @@ class AuthScreenState extends State<AuthScreen> {
                       buildRaisedButton('Login'.toUpperCase(),
                           Variables.primaryColor, Colors.white, () {
                         if (_formKey.currentState.validate()) {
-                          print(countryCode);
+                          //print(countryCode);
                           mobileLogin();
                         }
                       }),
@@ -666,7 +666,7 @@ class AuthScreenState extends State<AuthScreen> {
   }
 
   void performGoogleLogin() {
-    print("tring to perform login");
+    //print("tring to perform login");
 
     setState(() {
       isLoading = true;
@@ -678,10 +678,10 @@ class AuthScreenState extends State<AuthScreen> {
             context, 'Error', 'Error Signing In!', Colors.red[200]);
       }
       if (user != null) {
-        print('user.phoneNumber: ${user.phoneNumber}');
+        //print('user.phoneNumber: ${user.phoneNumber}');
         authenticateUserByGoogleLogin(user);
       } else {
-        print("There was an error");
+        //print("There was an error");
       }
     });
     setState(() {

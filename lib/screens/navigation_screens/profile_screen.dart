@@ -1,4 +1,3 @@
-import 'package:annaistore/main.dart';
 import 'package:annaistore/models/user.dart';
 import 'package:annaistore/resources/auth_methods.dart';
 import 'package:annaistore/screens/admin/add/add_category.dart';
@@ -13,6 +12,7 @@ import 'package:annaistore/screens/admin/stock/stock_screen.dart';
 import 'package:annaistore/screens/admin/tax/tax_calculator.dart';
 import 'package:annaistore/screens/admin/tax/tax_report.dart';
 import 'package:annaistore/screens/auth_screen.dart';
+import 'package:annaistore/screens/chat_screen.dart';
 import 'package:annaistore/screens/custom_loading.dart';
 import 'package:annaistore/screens/edit_profile_screen.dart';
 import 'package:annaistore/screens/report_screen.dart';
@@ -53,7 +53,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       currentUserId = firebaseUser.uid;
     });
     User user = await _authMethods.getUserDetailsById(firebaseUser.uid);
-    print("currentUser:${user.role}");
+    //print("currentUser:${user.role}");
     setState(() {
       currentUser = user;
     });
@@ -180,7 +180,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     (context, AsyncSnapshot<User> snapshot) {
                                   if (snapshot.hasData) {
                                     User currentUser = snapshot.data;
-                                    print(currentUser.role);
+                                    //print(currentUser.role);
                                     return currentUser.role == 'admin'
                                         ? ExpandableTheme(
                                             data: const ExpandableThemeData(
@@ -332,22 +332,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       BouncyPageRoute(widget: BorrowList()));
                                 },
                               ),
-                              CustomTile(
-                                text: "Tax Report",
-                                icon: FontAwesome.hand_paper_o,
-                                onTap: () {
-                                  Navigator.push(context,
-                                      BouncyPageRoute(widget: TaxReport()));
-                                },
-                              ),
-                              CustomTile(
-                                text: "History",
-                                icon: FontAwesome.history,
-                                onTap: () {
-                                  Navigator.push(context,
-                                      BouncyPageRoute(widget: HistoryScreen()));
-                                },
-                              ),
+                              isAdmin
+                                  ? CustomTile(
+                                      text: "Tax Report",
+                                      icon: FontAwesome.hand_paper_o,
+                                      onTap: () {
+                                        Navigator.push(
+                                            context,
+                                            BouncyPageRoute(
+                                                widget: TaxReport()));
+                                      },
+                                    )
+                                  : Container(),
+                              isAdmin
+                                  ? CustomTile(
+                                      text: "History",
+                                      icon: FontAwesome.history,
+                                      onTap: () {
+                                        Navigator.push(
+                                            context,
+                                            BouncyPageRoute(
+                                                widget: HistoryScreen()));
+                                      },
+                                    )
+                                  : Container(),
                               CustomTile(
                                 text: "Tax Calculator",
                                 icon: FontAwesome.calculator,
@@ -364,17 +372,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       BouncyPageRoute(widget: EditScreen()));
                                 },
                               ),
+                              isAdmin
+                                  ? CustomTile(
+                                      text: "Reports",
+                                      icon: Icons.report,
+                                      onTap: () {
+                                        Navigator.push(
+                                            context,
+                                            BouncyPageRoute(
+                                                widget: ReportScreen()));
+                                      },
+                                    )
+                                  : Container(),
                               CustomTile(
-                                text: "Reports",
-                                icon: Icons.report,
+                                text: "Give your suggestion",
+                                icon: Icons.chat,
                                 onTap: () {
                                   Navigator.push(context,
-                                      BouncyPageRoute(widget: ReportScreen()));
+                                      BouncyPageRoute(widget: ChatScreen()));
                                 },
                               ),
-                              CustomTile(
-                                  text: "Give your suggestion",
-                                  icon: Icons.chat),
                             ],
                           ),
                         ),

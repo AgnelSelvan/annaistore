@@ -19,4 +19,11 @@ class Variables {
       TextStyle(fontSize: 16, color: Color(0xff777777), letterSpacing: 0.5);
   static final TextStyle inputTextStyle =
       TextStyle(fontSize: 16, letterSpacing: 0.5, color: Color(0xff333333));
+
+  static final Color gradientColorStart = Colors.yellow[200];
+  static final Color gradientColorEnd = Colors.yellow[800];
+  static final Gradient fabGradient = LinearGradient(
+      colors: [gradientColorStart, gradientColorEnd],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight);
 }

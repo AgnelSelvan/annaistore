@@ -38,7 +38,7 @@ class AdminMethods {
       List<DocumentSnapshot> doc = docs.documents;
       return doc.length == 0 ? false : true;
     } catch (e) {
-      print(e);
+      //print(e);
       return false;
     }
   }
@@ -71,7 +71,7 @@ class AdminMethods {
       List<DocumentSnapshot> doc = docs.documents;
       return doc.length == 0 ? false : true;
     } catch (e) {
-      print(e);
+      //print(e);
       return false;
     }
   }
@@ -102,7 +102,7 @@ class AdminMethods {
       List<DocumentSnapshot> doc = docs.documents;
       return doc.length == 0 ? false : true;
     } catch (e) {
-      print(e);
+      //print(e);
       return false;
     }
   }
@@ -193,7 +193,7 @@ class AdminMethods {
         .where('hsn_code', isEqualTo: hsnCode)
         .getDocuments();
     List<DocumentSnapshot> doc = docs.documents;
-    print('doc:${doc[0].data["tax"]}');
+    //print('doc:${doc[0].data["tax"]}');
 
     Category category = Category.fromMap(doc[0].data);
 
@@ -220,14 +220,14 @@ class AdminMethods {
 
   Future<Stock> getStockDetails(String productId) async {
     Stock stock;
-    print(productId);
+    //print(productId);
     QuerySnapshot docs = await _stocksCollection
         .where('product_id', isEqualTo: productId)
         .getDocuments();
     List<DocumentSnapshot> doc = docs.documents;
-    print(doc.length);
+    //print(doc.length);
     if (doc.length == 1) {
-      print("Yes");
+      //print("Yes");
       stock = Stock.fromMap(doc[0].data);
     }
 
@@ -241,7 +241,7 @@ class AdminMethods {
   Stream<QuerySnapshot> getStockDetailsByProductId(String productId) {
     Stream<QuerySnapshot> docs =
         _stocksCollection.where('product_id', isEqualTo: productId).snapshots();
-    // print(docs.length);
+    // //print(docs.length);
     return docs;
   }
 
@@ -282,9 +282,9 @@ class AdminMethods {
   //       existsBorrowId = borrow.borrowId;
   //     }
   //   }
-  //   print(isDataExists);
+  //   //print(isDataExists);
   //   if (isDataExists) {
-  //     print(existsBorrowId);
+  //     //print(existsBorrowId);
   //     await _borrowsCollection
   //         .document(existsBorrowId)
   //         .collection('same_user_borrow')
@@ -376,7 +376,7 @@ class AdminMethods {
     List<DocumentSnapshot> docsList = docs.documents.toList();
     // for (var doc in docsList) {
     //   BorrowModel borrowModel = BorrowModel.fromMap(doc.data);
-    //   print(borrowModel.borrowId);
+    //   //print(borrowModel.borrowId);
     // }
     return docsList;
   }
@@ -419,20 +419,20 @@ class AdminMethods {
         .orderBy('bill_no', descending: false)
         .getDocuments();
     List<DocumentSnapshot> docsList = docs.documents.toList();
-    print(docsList.length);
+    //print(docsList.length);
     return docsList;
   }
 
   Future<Bill> getBillById(String billId) async {
     try {
-      print(billId);
+      //print(billId);
       DocumentSnapshot doc = await _billsCollection.document(billId).get();
 
       Bill bill = Bill.fromMap(doc.data);
-      print(bill.customerName);
+      //print(bill.customerName);
       return bill;
     } catch (e) {
-      print(e);
+      //print(e);
       return null;
     }
   }
@@ -465,11 +465,11 @@ class AdminMethods {
     //       .getDocuments();
     //   myBorrowList = myList.documents.toList();
     // }
-    print("currentUser.mobileNo:${currentUser.mobileNo}");
+    //print("currentUser.mobileNo:${currentUser.mobileNo}");
     for (var doc in docsList) {
       Borrow thisDoc = Borrow.fromMap(doc.data);
       Bill bill = await getBillById(thisDoc.billId);
-      print("bill.mobileNo:${bill.mobileNo}");
+      //print("bill.mobileNo:${bill.mobileNo}");
       if (currentUser.mobileNo == bill.mobileNo) {
         myBorrowList.add(bill);
       }
@@ -512,7 +512,7 @@ class AdminMethods {
     List<DocumentSnapshot> docsList = docs.documents.toList();
     for (var doc in docsList) {
       Bill bill = Bill.fromMap(doc.data);
-      // print(bill.isTax);
+      // //print(bill.isTax);
       if (bill.isTax) {
         billsList.add(bill);
       }
@@ -530,7 +530,7 @@ class AdminMethods {
     }
     List<DocumentSnapshot> docsList = docs.documents.toList();
 
-    print(docsList[0].data['bill_no']);
+    //print(docsList[0].data['bill_no']);
     return (int.parse(docsList[0].data['bill_no']) + 1).toString();
   }
 
@@ -552,5 +552,51 @@ class AdminMethods {
       billsList.add(bill);
     }
     return billsList;
+  }
+
+  updateGivenAmount(Bill bill, double amount) async {
+    double totalAmount = bill.givenAmount + amount;
+    await _billsCollection
+        .document(bill.billId)
+        .updateData({'given_amount': totalAmount});
+
+    Bill recentBill = await getBillById(bill.billId);
+    //print(recentBill.isPaid);
+
+    double totalTax = 0;
+    for (var tax in recentBill.taxList) {
+      totalTax = totalTax + tax;
+    }
+    if (recentBill.isTax) {
+      if (recentBill.givenAmount.round() ==
+          (recentBill.price + (recentBill.price * (totalTax / 100))).round()) {
+        //print((recentBill.price + (recentBill.price * (totalTax / 100)))
+        // .round()
+        // .toString());
+        //print(recentBill.givenAmount.toString());
+        await _billsCollection
+            .document(bill.billId)
+            .updateData({'is_paid': true});
+        await _borrowsCollection.document(recentBill.borrowId).delete();
+        await _borrowsCollection
+            .document()
+            .collection('same_user_borrow')
+            .document(recentBill.borrowId)
+            .delete();
+        String buyId = Utils.getDocId();
+        Paid paid = Paid(billId: recentBill.billId, buyId: buyId);
+        await _paidsCollection.document(buyId).setData(paid.toMap(paid));
+      }
+    } else {
+      if (recentBill.givenAmount.round() == totalAmount.round()) {
+        await _billsCollection
+            .document(bill.billId)
+            .updateData({'is_paid': true});
+        await _borrowsCollection.document(recentBill.borrowId).delete();
+        String buyId = Utils.getDocId();
+        Paid paid = Paid(billId: recentBill.billId, buyId: buyId);
+        await _paidsCollection.document(buyId).setData(paid.toMap(paid));
+      }
+    }
   }
 }

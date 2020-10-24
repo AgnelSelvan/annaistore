@@ -1,6 +1,5 @@
 import 'package:annaistore/utils/universal_variables.dart';
 import 'package:annaistore/widgets/custom_appbar.dart';
-import 'package:annaistore/widgets/custom_dropdown.dart';
 import 'package:annaistore/widgets/dialogs.dart';
 import 'package:annaistore/widgets/widgets.dart';
 import 'package:contacts_service/contacts_service.dart';
@@ -80,7 +79,7 @@ class _TaxCalculatorState extends State<TaxCalculator> {
                     setState(() {
                       selectedTax = value;
                     });
-                    print(selectedTax);
+                    //print(selectedTax);
                   },
                   items: taxList.map((String tax) {
                     return DropdownMenuItem<String>(
@@ -192,7 +191,7 @@ class _TaxCalculatorState extends State<TaxCalculator> {
     } else if (selectedTax == 'Tax Inclusive') {
       double amount = double.parse(_grossAmountController.text) /
           (1 + (double.parse(_taxController.text) / 100));
-      print(amount);
+      //print(amount);
       setState(() {
         _calculatedAmountController =
             TextEditingController(text: amount.toString());

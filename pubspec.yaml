@@ -62,9 +62,7 @@ dependencies:
   vector_math:
   matrix_gesture_detector:
   printing: ^3.5.0
-  # flutter_share_me: ^0.9.1
-  # syncfusion_flutter_pdf: ^18.1.36-beta
-    # advanced_share:
+  firebase_database: ^3.1.6
 
   
 dev_dependencies:

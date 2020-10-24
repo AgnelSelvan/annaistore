@@ -40,7 +40,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     if (billsList.length == 0) {
       Dialogs.okDialog(context, 'Error', "No Paid Bill Yet!", Colors.red[200]);
     }
-    print(billsList.length);
+    //print(billsList.length);
   }
 
   @override

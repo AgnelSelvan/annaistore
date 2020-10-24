@@ -45,7 +45,7 @@ class AuthMethods {
   Future<bool> signIn(String email, String password) async {
     try {
       AuthResult result = await _auth.signInWithEmailAndPassword(
-          email: email, password: password);  
+          email: email, password: password);
       return true;
     } catch (e) {
       return false;
@@ -89,7 +89,7 @@ class AuthMethods {
         return null;
       }
     } catch (e) {
-      print(e);
+      //print(e);
       return null;
     }
   }
@@ -169,11 +169,11 @@ class AuthMethods {
 
   Future<User> getUserDetailsById(String userId) async {
     try {
-      print("UserId: $userId");
+      //print("UserId: $userId");
       DocumentSnapshot doc = await _userCollection.document(userId).get();
       return User.fromMap(doc.data);
     } catch (e) {
-      print("get user by details error: $e");
+      //print("get user by details error: $e");
       return null;
     }
   }
@@ -214,16 +214,16 @@ class AuthMethods {
     var listener = DataConnectionChecker().onStatusChange.listen((status) {
       switch (status) {
         case DataConnectionStatus.connected:
-          print("Contection is available");
+          //print("Contection is available");
           break;
         case DataConnectionStatus.disconnected:
-          print("Contection is not available");
+          //print("Contection is not available");
           break;
       }
     });
 
-    print(await DataConnectionChecker().hasConnection);
-    print(await DataConnectionChecker().connectionStatus);
+    //print(await DataConnectionChecker().hasConnection);
+    //print(await DataConnectionChecker().connectionStatus);
 
     await Future.delayed(Duration(seconds: 10));
     await listener.cancel();

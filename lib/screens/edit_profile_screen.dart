@@ -53,7 +53,7 @@ class _EditScreenState extends State<EditScreen> {
       });
     });
 
-    print("Hahii:${currentUser.name}");
+    //print("Hahii:${currentUser.name}");
   }
 
   @override
@@ -95,7 +95,7 @@ class _EditScreenState extends State<EditScreen> {
   //   );
   //   setState(() {
   //     _image = file;
-  //     print(_image);
+  //     //print(_image);
   //   });
   //   if (_image != null) {
   //     cropImageAndCompress(context);
@@ -107,7 +107,7 @@ class _EditScreenState extends State<EditScreen> {
   //   var file = await ImagePicker.pickImage(source: ImageSource.gallery);
   //   setState(() {
   //     _image = file;
-  //     print(_image);
+  //     //print(_image);
   //   });
   //   if (_image != null) {
   //     // cropImageAndCompress(context);
@@ -135,7 +135,7 @@ class _EditScreenState extends State<EditScreen> {
   //         minimumAspectRatio: 1.0,
   //       ));
 
-  //   print("Crop Size:${_image.lengthSync()}");
+  //   //print("Crop Size:${_image.lengthSync()}");
 
   //   // File result = await FlutterImageCompress.compressAndGetFile(
   //   //     croppedImage.path, _image.path,
@@ -148,10 +148,10 @@ class _EditScreenState extends State<EditScreen> {
   //     rotate: 180,
   //   );
 
-  //   print(croppedImage.lengthSync());
-  //   print(result.lengthSync());
+  //   //print(croppedImage.lengthSync());
+  //   //print(result.lengthSync());
 
-  //   print(result.path);
+  //   //print(result.path);
   //   // handleUploadPicture(context);
   // }
 
@@ -188,7 +188,7 @@ class _EditScreenState extends State<EditScreen> {
   // _deleteImageFromFirestorage() async {
   //   var fileUrl = Uri.decodeFull(basename(currentUser.photoUrl))
   //       .replaceAll(new RegExp(r'(\?alt).*'), '');
-  //   // print(fileUrl);
+  //   // //print(fileUrl);
   //   var downloadUrl = FirebaseStorage.instance.ref().child(fileUrl).getName();
   //   if (downloadUrl != null) {
   //     FirebaseStorage.instance
@@ -197,7 +197,7 @@ class _EditScreenState extends State<EditScreen> {
   //         .delete()
   //         .then((value) {})
   //         .catchError((onError) {
-  //       print(onError.message);
+  //       //print(onError.message);
   //     });
   //   }
   // }

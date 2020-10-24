@@ -64,11 +64,11 @@ class _AddCategoryState extends State<AddCategory> {
   }
 
   void showWidget() {
-    print(viewVisible);
+    //print(viewVisible);
     setState(() {
       viewVisible = !viewVisible;
     });
-    print(viewVisible);
+    //print(viewVisible);
   }
 
   void addCategoryToDb() {

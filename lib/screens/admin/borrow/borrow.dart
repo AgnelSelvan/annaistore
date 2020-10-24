@@ -82,7 +82,7 @@ class _BorrowScreenState extends State<BorrowScreen> {
   }
 
   void updateTotalAmount() {
-    print(customerGivenMoney.text);
+    //print(customerGivenMoney.text);
     setState(() {
       double totalPrice =
           widget.totalPrice - int.parse(customerGivenMoney.text);
@@ -411,7 +411,7 @@ class _BorrowScreenState extends State<BorrowScreen> {
                 if (isBillAdded) {
                   _adminMethods.addBorrowToDb(borrow);
                   Navigator.pushAndRemoveUntil(context,
-                      BouncyPageRoute(widget: RootScreen()), (route) => true);
+                      BouncyPageRoute(widget: RootScreen()), (route) => false);
                   Dialogs.okDialog(context, 'Successfull', 'Added Successfully',
                       Colors.green[200]);
                 } else {
@@ -686,10 +686,10 @@ class _BorrowScreenState extends State<BorrowScreen> {
 //                     qtyList.add(int.parse(qtyController.text));
 //                   }
 //                   Navigator.of(context).pop(DialogAction.Abort);
-//                   print(productList);
-//                   print(qtyList);
-//                   print(taxList);
-//                   print(sellingRateList);
+//                   //print(productList);
+//                   //print(qtyList);
+//                   //print(taxList);
+//                   //print(sellingRateList);
 //                   var sum = 0;
 //                   tax = 0;
 //                   totalPrice = 0;
@@ -723,7 +723,7 @@ class _BorrowScreenState extends State<BorrowScreen> {
 //     try {
 //       barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
 //           '#ff6666', 'Cancel', true, ScanMode.QR);
-//       print(barcodeScanRes);
+//       //print(barcodeScanRes);
 //     } on PlatformException {
 //       barcodeScanRes = 'Failed to get platform version.';
 //     }
@@ -792,15 +792,15 @@ class _BorrowScreenState extends State<BorrowScreen> {
 //   }
 
 //   void showWidget() {
-//     print(viewVisible);
+//     //print(viewVisible);
 //     setState(() {
 //       viewVisible = !viewVisible;
 //     });
-//     print(viewVisible);
+//     //print(viewVisible);
 //   }
 
 //   addCustomerToDb() {
-//     print(productList);
+//     //print(productList);
 //   }
 
 //   Card buildCustomerCard() {
@@ -826,7 +826,7 @@ class _BorrowScreenState extends State<BorrowScreen> {
 //                           focusColor: Variables.primaryColor,
 //                           value: _checkBoxValue,
 //                           onChanged: (bool value) {
-//                             print(value);
+//                             //print(value);
 //                             setState(() {
 //                               _checkBoxValue = value;
 //                             });
@@ -946,9 +946,9 @@ class _BorrowScreenState extends State<BorrowScreen> {
 
 //         try {
 //           await FlutterEmailSender.send(email);
-//           print("SUCESS");
+//           //print("SUCESS");
 //         } catch (error) {
-//           print(error);
+//           //print(error);
 //         }
 
 //         if (!mounted) return;
@@ -1165,7 +1165,7 @@ class _BorrowScreenState extends State<BorrowScreen> {
 //                       builder: (BuildContext context,
 //                           AsyncSnapshot<QuerySnapshot> snapshot) {
 //                         if (snapshot.hasError) {
-//                           print(snapshot.error);
+//                           //print(snapshot.error);
 //                         } else {
 //                           if (!snapshot.hasData) {
 //                             return CustomCircularLoading();
@@ -1190,7 +1190,7 @@ class _BorrowScreenState extends State<BorrowScreen> {
 //                                   }
 //                                 }
 //                               });
-//                               // print(currentProduct);
+//                               // //print(currentProduct);
 //                             },
 //                             hint: currentProduct == null
 //                                 ? Text('Select Product')
@@ -1318,9 +1318,9 @@ class _BorrowScreenState extends State<BorrowScreen> {
 //               stream: _adminMethods.fetchAllCustomer(),
 //               builder: (BuildContext context,
 //                   AsyncSnapshot<QuerySnapshot> snapshot) {
-//                 print(snapshot.data.documents.length);
+//                 //print(snapshot.data.documents.length);
 //                 if (snapshot.hasError) {
-//                   print(snapshot.error);
+//                   //print(snapshot.error);
 //                 } else {
 //                   if (!snapshot.hasData) {
 //                     return CustomCircularLoading();
@@ -1344,7 +1344,7 @@ class _BorrowScreenState extends State<BorrowScreen> {
 //                           _mobileNoController = TextEditingController(
 //                               text: newValue.data['mobile_no'].toString());
 //                           _selectedUser = User.fromMap(newValue.data);
-//                           print(currentName);
+//                           //print(currentName);
 //                         });
 //                       },
 //                       hint: currentName == null
@@ -1352,7 +1352,7 @@ class _BorrowScreenState extends State<BorrowScreen> {
 //                           : Text(currentName),
 //                       items: snapshot.data.documents
 //                           .map((DocumentSnapshot document) {
-//                         print(document);
+//                         //print(document);
 //                         return new DropdownMenuItem<DocumentSnapshot>(
 //                             value: document,
 //                             child: new Text(

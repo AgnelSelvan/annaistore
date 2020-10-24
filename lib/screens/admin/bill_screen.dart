@@ -71,11 +71,11 @@ class _BillScreenState extends State<BillScreen> {
   }
 
   void showWidget() {
-    print(viewVisible);
+    //print(viewVisible);
     setState(() {
       viewVisible = !viewVisible;
     });
-    print(viewVisible);
+    //print(viewVisible);
   }
 
   @override
@@ -200,7 +200,7 @@ class _BillScreenState extends State<BillScreen> {
             focusColor: Variables.primaryColor,
             value: _isTaxCheckBox,
             onChanged: (bool value) {
-              print(value);
+              //print(value);
               setState(() {
                 _isTaxCheckBox = value;
               });
@@ -211,7 +211,7 @@ class _BillScreenState extends State<BillScreen> {
                 tax += taxList[i];
               }
               if (!_isTaxCheckBox) {
-                print(sum);
+                //print(sum);
                 setState(() {
                   totalPrice = sum.toDouble();
                   _totalPriceController =
@@ -219,7 +219,7 @@ class _BillScreenState extends State<BillScreen> {
                 });
               }
               if (_isTaxCheckBox) {
-                print(tax);
+                //print(tax);
 
                 totalPrice = (sum + (sum * (tax / 100)));
                 setState(() {
@@ -309,7 +309,7 @@ class _BillScreenState extends State<BillScreen> {
                     buildRaisedButton(
                         "Confirm", Variables.primaryColor, Colors.white,
                         () async {
-                      print(_customerNameController.text);
+                      //print(_customerNameController.text);
                       String billId = Utils.getDocId();
                       String paidId = Utils.getDocId();
                       Bill bill = Bill(
@@ -477,10 +477,10 @@ class _BillScreenState extends State<BillScreen> {
                           color: Colors.red[200],
                         ),
                         onPressed: () {
-                          print(productList[index]);
+                          //print(productList[index]);
                           int productIndex =
                               productList.indexOf(productList[index]);
-                          print(productIndex);
+                          //print(productIndex);
                           setState(() {
                             productList.removeAt(productIndex);
                             productListId.removeAt(productIndex);
@@ -520,12 +520,12 @@ class _BillScreenState extends State<BillScreen> {
                                   TextEditingController(text: tax.toString());
                             });
                           }
-                          print(productListId);
-                          print(productList);
-                          print(totalPrice);
-                          print(qtyList);
-                          print(taxList);
-                          print(sellingRateList);
+                          //print(productListId);
+                          //print(productList);
+                          //print(totalPrice);
+                          //print(qtyList);
+                          //print(taxList);
+                          //print(sellingRateList);
                         })
                   ],
                 ),
@@ -584,7 +584,7 @@ class _BillScreenState extends State<BillScreen> {
 
                   Category category =
                       await _adminMethods.getTaxFromHsn(currentProduct.hsnCode);
-                  print('category.hsnCode:${category.tax}');
+                  //print('category.hsnCode:${category.tax}');
 
                   if (productList.contains(currentProduct.name)) {
                     int productIndex = productList.indexOf(currentProduct.name);
@@ -598,15 +598,19 @@ class _BillScreenState extends State<BillScreen> {
                     taxList.add(category.tax);
                     sellingRateList.add(currentProduct.sellingRate);
                   }
+                  print(sellingRateList);
 
-                  var sum = 0;
+                  double sum = 0;
                   tax = 0;
                   totalPrice = 0;
                   if (_isTaxCheckBox) {
                     for (var i = 0; i < sellingRateList.length; i++) {
-                      sum += sellingRateList[i].toInt() * qtyList[i];
+                      double qty = qtyList[i].toDouble();
+                      sum += sellingRateList[i] * qty;
+                      print(sellingRateList[i].toInt());
                       tax += taxList[i];
                     }
+                    // print(sum);
                     totalPrice = (sum + (sum * (tax / 100)));
                     setState(() {
                       _totalPriceController =
@@ -632,11 +636,11 @@ class _BillScreenState extends State<BillScreen> {
                     });
                   }
 
-                  print(productList);
-                  print(qtyList);
-                  print(taxList);
-                  print(sellingRateList);
-                  print(productListId);
+                  //print(productList);
+                  //print(qtyList);
+                  //print(taxList);
+                  //print(sellingRateList);
+                  //print(productListId);
                 },
                 child: Text(
                   "Yes",
@@ -677,7 +681,7 @@ class _BillScreenState extends State<BillScreen> {
                       builder: (BuildContext context,
                           AsyncSnapshot<QuerySnapshot> snapshot) {
                         if (snapshot.hasError) {
-                          print(snapshot.error);
+                          //print(snapshot.error);
                         } else {
                           if (!snapshot.hasData) {
                             return CustomCircularLoading();
@@ -723,7 +727,7 @@ class _BillScreenState extends State<BillScreen> {
     try {
       barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
           '#ff6666', 'Cancel', true, ScanMode.QR);
-      print(barcodeScanRes);
+      //print(barcodeScanRes);
     } on PlatformException {
       barcodeScanRes = 'Failed to get platform version.';
     }

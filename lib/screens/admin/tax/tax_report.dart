@@ -209,24 +209,26 @@ class _TaxReportState extends State<TaxReport> {
     for (var bill in billsList) {
       for (var i = 0; i < bill.taxList.length; i++) {
         List<dynamic> data = List();
-        print(i);
-        print(bill.taxList[i]);
+        //print(i);
+        //print(bill.taxList[i]);
         data.add(bill.billNo);
         data.add(bill.customerName);
         data.add(DateFormat('dd-MM-yyyy')
             .format(bill.timestamp.toDate())
             .toString());
-        data.add(bill.sellingRateList[i] * bill.qtyList[i]);
-        print(bill.sellingRateList[i]);
+        data.add(
+            (bill.sellingRateList[i] * bill.qtyList[i]).toStringAsFixed(2));
+        //print(bill.sellingRateList[i]);
         data.add(bill.taxList[i]);
-        data.add((bill.sellingRateList[i] * bill.qtyList[i]) +
-            ((bill.sellingRateList[i] * bill.qtyList[i]) *
-                (bill.taxList[i] / 100)));
+        data.add(((bill.sellingRateList[i] * bill.qtyList[i]) +
+                ((bill.sellingRateList[i] * bill.qtyList[i]) *
+                    (bill.taxList[i] / 100)))
+            .toStringAsFixed(2));
         datas.add(data);
       }
       // datas.add(data);
     }
-    print(datas);
+    //print(datas);
 
     String fromDate =
         DateFormat('dd-MM-yyyy').format(startDate.toDate()).toString();

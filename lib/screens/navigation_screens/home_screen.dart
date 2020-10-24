@@ -37,12 +37,13 @@ class _HomeScreenState extends State<HomeScreen>
   TextEditingController phoneNumberController = TextEditingController();
   String currentUserId;
   User currentUser;
-  bool isDarkTheme = true;
+  bool isDarkTheme = false;
+  var darkModeOn = false;
 
   getCurrentUserDetails() async {
     FirebaseUser user = await _authMethods.getCurrentUser();
     _authMethods.isPhoneNoExists(user).then((bool isPhoneExists) {
-      print('isPhoneExists:$isPhoneExists');
+      //print('isPhoneExists:$isPhoneExists');
       if (!isPhoneExists) {
         showDialog(
             context: context,
@@ -93,15 +94,13 @@ class _HomeScreenState extends State<HomeScreen>
 
     currentUserId = user.uid;
     currentUser = await _authMethods.getUserDetailsById(currentUserId);
-    print('user:${currentUser.role}');
+    //print('user:${currentUser.role}');
   }
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-
-    getCurrentUserDetails();
   }
 
   @override
@@ -110,7 +109,9 @@ class _HomeScreenState extends State<HomeScreen>
     return Scaffold(
       key: _scaffoldKey,
       appBar: CustomAppBar(
-        bgColor: Variables.lightGreyColor,
+        bgColor: isDarkTheme
+            ? Theme.of(context).primaryColorDark
+            : Variables.lightGreyColor,
         title: Text("Annai Store",
             style: TextStyle(
                 fontSize: 20,
@@ -142,7 +143,7 @@ class _HomeScreenState extends State<HomeScreen>
                 var prefs = await SharedPreferences.getInstance();
                 prefs.setBool('darkMode', isDarkTheme);
 
-                print("Dark Theme");
+                //print("Dark Theme");
               },
             ),
           ),
@@ -161,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen>
     try {
       barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
           "#ff6666", "Cancel", true, ScanMode.QR);
-      print(barcodeScanRes);
+      //print(barcodeScanRes);
     } on PlatformException {
       barcodeScanRes = 'Failed to get platform version.';
     }
@@ -202,7 +203,7 @@ class _HomeScreenState extends State<HomeScreen>
         TabBar(
             controller: _tabController,
             indicatorColor: Colors.transparent,
-            labelColor: Variables.primaryColor,
+            labelColor: Theme.of(context).accentColor,
             isScrollable: false,
             labelPadding: EdgeInsets.only(right: 45.0),
             unselectedLabelColor: Color(0xFFCDCDCD),

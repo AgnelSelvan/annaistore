@@ -53,7 +53,7 @@ class _BorrowListState extends State<BorrowList> {
   }
 
   getBorrowListOfMe() async {
-    print("CurrentUser: ${currentUser.mobileNo}");
+    //print("CurrentUser: ${currentUser.mobileNo}");
     List<Bill> billsList = await _adminMethods.getBorrowListOfMe(currentUser);
     setState(() {
       myBorrowList = billsList;
@@ -61,7 +61,7 @@ class _BorrowListState extends State<BorrowList> {
     for (var borrow in myBorrowList) {
       myAmount = borrow.price - borrow.givenAmount;
     }
-    print('myAmount:$myAmount');
+    //print('myAmount:$myAmount');
   }
 
   @override
@@ -217,7 +217,7 @@ class _BorrowListState extends State<BorrowList> {
                       builder: (context, AsyncSnapshot<Bill> snapshot) {
                         return ListTile(
                           onTap: () {
-                            print(snapshot.data.mobileNo);
+                            //print(snapshot.data.mobileNo);
                             Navigator.push(
                                 context,
                                 BouncyPageRoute(

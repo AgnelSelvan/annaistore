@@ -65,16 +65,17 @@ class _AddUnitState extends State<AddUnit> {
 
   handleDeleteUnit(String unitId) {
     _adminMethods.deleteUnit(unitId);
-    final snackBar = customSnackBar('Delete Successfull!', Variables.blackColor);
+    final snackBar =
+        customSnackBar('Delete Successfull!', Variables.blackColor);
     _scaffoldKey.currentState.showSnackBar(snackBar);
   }
 
   void showWidget() {
-    print(viewVisible);
+    //print(viewVisible);
     setState(() {
       viewVisible = !viewVisible;
     });
-    print(viewVisible);
+    //print(viewVisible);
   }
 
   addUnitToDb() {
@@ -85,15 +86,16 @@ class _AddUnitState extends State<AddUnit> {
         if (!isUnitExists) {
           _adminMethods.addSymbolToDb(
               _formalFieldController.text, _symbolFieldController.text);
-          final snackBar = customSnackBar("Added Successfully!", Variables.blackColor);
+          final snackBar =
+              customSnackBar("Added Successfully!", Variables.blackColor);
           _scaffoldKey.currentState.showSnackBar(snackBar);
           setState(() {
             _symbolFieldController.clear();
             _formalFieldController.clear();
           });
         } else {
-          final snackBar =
-              customSnackBar("${_symbolFieldController.text} already exists!", Colors.red);
+          final snackBar = customSnackBar(
+              "${_symbolFieldController.text} already exists!", Colors.red);
           _scaffoldKey.currentState.showSnackBar(snackBar);
         }
       });
@@ -395,5 +397,4 @@ class _AddUnitState extends State<AddUnit> {
       ],
     );
   }
-
 }

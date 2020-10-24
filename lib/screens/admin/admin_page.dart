@@ -75,7 +75,7 @@ class _MakeAdminScreenState extends State<MakeAdminScreen> {
               builder: (BuildContext context,
                   AsyncSnapshot<QuerySnapshot> snapshot) {
                 if (snapshot.hasError) {
-                  print(snapshot.error);
+                  //print(snapshot.error);
                 } else {
                   if (!snapshot.hasData) {
                     return CustomCircularLoading();
@@ -136,7 +136,7 @@ class _MakeAdminScreenState extends State<MakeAdminScreen> {
   }
 
   makeAdmin() async {
-    print(currentSelectedUser);
+    //print(currentSelectedUser);
     if (currentSelectedUser == null) {
       Dialogs.okDialog(context, 'Error', 'No User Selected', Colors.red[200]);
     } else {

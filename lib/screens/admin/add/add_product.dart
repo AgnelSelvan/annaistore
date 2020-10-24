@@ -99,7 +99,7 @@ class _AddProductState extends State<AddProduct> {
     try {
       barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
           "#ff6666", "Cancel", true, ScanMode.QR);
-      print(barcodeScanRes);
+      //print(barcodeScanRes);
     } on PlatformException {
       barcodeScanRes = 'Failed to get platform version.';
     }
@@ -128,11 +128,11 @@ class _AddProductState extends State<AddProduct> {
   }
 
   void showWidget() {
-    print(viewVisible);
+    //print(viewVisible);
     setState(() {
       viewVisible = !viewVisible;
     });
-    print(viewVisible);
+    //print(viewVisible);
   }
 
   addProductToDb() {
@@ -140,7 +140,7 @@ class _AddProductState extends State<AddProduct> {
       isLoading = true;
     });
     _adminMethods.isProductExists(_codeFieldController.text).then((value) {
-      print(value);
+      //print(value);
       if (!value) {
         try {
           var purchasePrice = double.parse(_purchasePriceController.text);
@@ -148,7 +148,7 @@ class _AddProductState extends State<AddProduct> {
           int unitQty = _unitQtyFieldController.text == ''
               ? 0
               : int.parse(_unitQtyFieldController.text);
-          print(unitQty);
+          //print(unitQty);
           _adminMethods.addProductToDb(
               _codeFieldController.text,
               _nameFieldController.text,
@@ -170,7 +170,7 @@ class _AddProductState extends State<AddProduct> {
             currentUnit = null;
           });
         } catch (e) {
-          print(e);
+          //print(e);
         }
       } else {
         SnackBar snackbar = customSnackBar(
@@ -516,7 +516,7 @@ class _AddProductState extends State<AddProduct> {
         stream: _adminMethods.fetchAllUnit(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
-            print(snapshot.error);
+            //print(snapshot.error);
           } else {
             if (!snapshot.hasData) {
               return CustomCircularLoading();
@@ -572,7 +572,7 @@ class _AddProductState extends State<AddProduct> {
         stream: _adminMethods.fetchAllCategory(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
-            print(snapshot.error);
+            //print(snapshot.error);
           } else {
             if (!snapshot.hasData) {
               return CustomCircularLoading();

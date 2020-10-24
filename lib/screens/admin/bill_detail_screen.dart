@@ -62,7 +62,7 @@ class _BillDetailsState extends State<BillDetails> {
                   (currentBill.taxList[i] / 100)) /
               2);
       datas.add(data);
-      print("totalSGST:$totalSGST");
+      //print("totalSGST:$totalSGST");
     }
     setState(() {
       amounten = NumberWordsSpelling.toWord(amount.toStringAsFixed(0), 'en_US');
@@ -285,8 +285,14 @@ class _BillDetailsState extends State<BillDetails> {
                             Row(
                               children: List.generate(
                                 currentBill.productList.length,
-                                (index) => Text(
-                                    "${currentBill.productList[index]}(${currentBill.qtyList[index]}) ,"),
+                                (index) => Column(
+                                  children: [
+                                    Text(
+                                        "${currentBill.productList[index]}(${currentBill.qtyList[index]})\t,"),
+                                    Text(
+                                        " ₹${currentBill.qtyList[index] * currentBill.sellingRateList[index]}")
+                                  ],
+                                ),
                               ),
                             )
                           ],

@@ -364,7 +364,7 @@ class Utils {
                                         pw.CrossAxisAlignment.start,
                                     children: [
                                       pw.Text(
-                                        'VITY UNION BANK',
+                                        'CITY UNION BANK',
                                       ),
                                       pw.Text(
                                         'A/C No: 510909010138545',
